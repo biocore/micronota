@@ -1,0 +1,38 @@
+MICRONOTA
+---------
+
+micronota is an open-source, BSD-licensed package to annotate microbial genomes and metagenomes.
+
+Installing
+----------
+
+To install the latest release of micronota::
+
+  pip install micronota
+
+Getting help
+------------
+
+To get help with micronota, you should use the `micronota <https://biostars.org/t/micronota>`_ tag on Biostars. The developers regularly monitor the ``micronota`` tag on Biostars.
+
+
+Developing
+----------
+If you're interested in getting involved in micronota development, see `CONTRIBUTING.md <https://github.com/biocore/micronota/blob/master/CONTRIBUTING.md>`_.
+
+See the list of `micronota's contributors
+<https://github.com/biocore/micronota/graphs/contributors>`_.
+
+
+Licensing
+---------
+
+micronota is available under the new BSD license. See
+`COPYING.txt <https://github.com/biocore/micronota/blob/master/COPYING.txt>`_ for micronota's license, and the
+`licenses directory <https://github.com/biocore/micronota/tree/master/licenses>`_ for the licenses of third-party software that is
+(either partially or entirely) distributed with micronota.
+
+
+TODO
+----
+1. conda installable
