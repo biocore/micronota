@@ -15,11 +15,20 @@ class Prodigal(CommandLineApplication):
     '''Prodigal (version 2.6.2) application controller.
     '''
     _command = 'prodigal'
-    _valued_options = [
+    _valued_path_options = [
         # Write protein translations to the selected file.
         '-a',
         # Write nucleotide sequences of genes to the selected file.
         '-d',
+        # Write all potential genes (with scores) to the selected file.
+        '-s',
+        # Write a training file (if none exists);
+        # otherwise, read and use the specified training file.
+        '-t',
+        # Specify output file (default writes to stdout).
+        '-o',
+    ]
+    _valued_nonpath_options = [
         # Select output format (gbk, gff, or sco).  Default is gbk.
         '-f',
         # Specify a translation table to use (default 11).
@@ -28,15 +37,8 @@ class Prodigal(CommandLineApplication):
         '-i',
         # Treat runs of N as masked sequence; don't build genes across them.
         '-m',
-        # Specify output file (default writes to stdout).
-        '-o',
         # Select procedure (single or meta).  Default is single.
         '-p',
-        # Write all potential genes (with scores) to the selected file.
-        '-s',
-        # Write a training file (if none exists);
-        # otherwise, read and use the specified training file.
-        '-t',
     ]
     _flag_options = [
         # Closed ends.  Do not allow genes to run off edges.
@@ -55,8 +57,8 @@ class Prodigal(CommandLineApplication):
     _parameters.update({
         i: ValuedParameter(
             Prefix=i[0], Name=i[1:], Delimiter=' ',
-            IsPath=True if i in ['-i', '-o'] else False)
-        for i in _valued_options})
+            IsPath=True if i in _valued_path_options else False)
+        for i in _valued_path_options + _valued_nonpath_options})
     _parameters.update({
         i: FlagParameter(
             Prefix=i[0], Name=i[1:])
