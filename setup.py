@@ -64,8 +64,7 @@ setup(name='micronota',
           'scikit-bio >= 0.4.0',
           'burrito >= 0.9.1'
       ],
-      extras_require={'test': ["nose", "pep8", "flake8",
-                               "check-manifest"],
+      extras_require={'test': ["nose", "pep8", "flake8"],
                       'doc': ["Sphinx == 1.2.2", "sphinx-bootstrap-theme"]},
       entry_points={
           'console_scripts': [
