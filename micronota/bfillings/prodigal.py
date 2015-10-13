@@ -8,13 +8,13 @@
 
 from os import makedirs
 from os.path import join
+
 from burrito.parameters import FlagParameter, ValuedParameter
 from burrito.util import CommandLineApplication, ResultPath
 
 
 class Prodigal(CommandLineApplication):
-    '''Prodigal (version 2.6.2) application controller.
-    '''
+    '''Prodigal (version 2.6.2) application controller.'''
     _command = 'prodigal'
     _valued_path_options = [
         # Specify FASTA/Genbank input file (default reads from stdin).
@@ -71,29 +71,31 @@ class Prodigal(CommandLineApplication):
     _suppress_stderr = False
 
     def _accept_exit_status(self, exit_status):
-        if exit_status == 0:
-            return True
-        else:
-            return False
+        return exit_status == 0
 
     def _get_result_paths(self, data):
         result = {}
-        for i in ['-a', '-d', '-t', '-o', '-s']:
-            o = self.Parameters[i]
-            if o.isOn():
-                out_fp = self._absolute(o.Value)
-                result[i] = ResultPath(Path=out_fp, IsWritten=True)
+        for i in self._valued_path_options:
+            if i != '-i':
+                o = self.Parameters[i]
+                if o.isOn():
+                    out_fp = self._absolute(o.Value)
+                    result[i] = ResultPath(Path=out_fp, IsWritten=True)
         return result
 
 
 def predict_genes(in_fp, out_dir, prefix, params=None):
     '''Predict genes for the input file.
 
-    It will create 3 output:
+    Notes
+    -----
+    It will create 3 output files:
       1. the annotation file in format of GFF3 or
-         GenBank feature table.
-      2. the nucleotide sequences for each predicted gene.
-      3. the protein sequence translated from each gene.
+         GenBank feature table with .gbk suffix.
+      2. the nucleotide sequences for each predicted gene
+         with file suffix of .fna.
+      3. the protein sequence translated from each gene
+         with file suffix of .faa.
 
     Parameters
     ----------
@@ -111,6 +113,10 @@ def predict_genes(in_fp, out_dir, prefix, params=None):
     Returns
     -------
     burrito.util.CommandLineAppResult
+        It contains opened file handlers of stdout, stderr, and the 3
+        output files, which can be accessed in a dict style with the
+        keys of "StdOut", "StdErr", "-o", "-d", "-a". The exit status
+        of the run can be similarly fetched with the key of "ExitStatus".
     '''
     # create dir if not exist
     makedirs(out_dir, exist_ok=True)

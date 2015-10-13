@@ -8,13 +8,15 @@
 # The full license is in the file COPYING.txt, distributed with this software.
 # ----------------------------------------------------------------------------
 
-from os import getcwd
 import tempfile
 import shutil
+from os import getcwd
 from unittest import TestCase, main
-from micronota.bfillings.prodigal import Prodigal, predict_genes
+
 from skbio.util import get_data_path
 from burrito.util import ApplicationError
+
+from micronota.bfillings.prodigal import Prodigal, predict_genes
 
 
 class ProdigalTests(TestCase):
