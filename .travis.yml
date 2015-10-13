@@ -17,11 +17,10 @@ before_install:
 install:
   - conda create --yes -n env_name python=$PYTHON_VERSION flake8 nose pep8 scikit-bio click
   - source activate env_name
-  - pip install burrito
+  - pip install burrito coveralls
   - pip install . --no-deps
 script:
-  - nosetests --with-doctest
-  - flake8 micronota setup.py
+  - WITH_COVERAGE=TRUE make test
 after_success:
   - coveralls
 notifications:
