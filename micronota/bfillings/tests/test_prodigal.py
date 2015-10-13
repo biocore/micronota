@@ -63,7 +63,7 @@ class ProdigalTests(TestCase):
 
     def test_predict_genes_wrong_input(self):
         for fp in self.negative_fps:
-            with self.assertRaisesRegexp(
+            with self.assertRaisesRegex(
                     ApplicationError,
                     r'Sequence read failed \(file must be Fasta, '
                     'Genbank, or EMBL format\).'):
