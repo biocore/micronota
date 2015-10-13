@@ -1,0 +1,116 @@
+LOCUS       NC_018498             2757 bp    DNA     circular CON 11-JUN-2013
+DEFINITION  Mycoplasma genitalium M2288 chromosome, partial genome.
+ACCESSION   NC_018498
+VERSION     NC_018498.1  GI:402552294
+DBLINK      Project: 173372
+KEYWORDS    .
+SOURCE      Mycoplasma genitalium M2288
+  ORGANISM  Mycoplasma genitalium M2288
+            Bacteria; Tenericutes; Mollicutes; Mycoplasmataceae; Mycoplasma.
+REFERENCE   1  (bases 1 to 579558)
+  AUTHORS   McGowin,C.L., Ma,L., Jensen,J.S., Mancuso,M.M., Hamasuna,R.,
+            Adegboye,D. and Martin,D.H.
+  TITLE     Draft genome sequences of four axenic Mycoplasma genitalium strains
+            isolated from Denmark, Japan, and Australia
+  JOURNAL   J. Bacteriol. 194 (21), 6010-6011 (2012)
+   PUBMED   23045512
+COMMENT     PROVISIONAL REFSEQ: This record has not yet been subject to final
+            NCBI review. The reference sequence is identical to CP003773.
+            Annotation was added by the NCBI Prokaryotic Genomes Automatic
+            Annotation Pipeline Group. Information about the Pipeline can be
+            found here:
+            http://www.ncbi.nlm.nih.gov/genomes/static/Pipeline.html. Please be
+            aware that the annotation is done automatically with little or no
+            manual curation.
+FEATURES             Location/Qualifiers
+     source          1..2757
+                     /organism="Mycoplasma genitalium M2288"
+                     /mol_type="genomic DNA"
+                     /strain="M2288"
+                     /db_xref="taxon:662947"
+     gene            686..1828
+                     /locus_tag="CM5_00005"
+                     /db_xref="GeneID:13492420"
+     CDS             686..1828
+                     /locus_tag="CM5_00005"
+                     /note="COG0592 DNA polymerase sliding clamp subunit (PCNA
+                     homolog)"
+                     /codon_start=1
+                     /transl_table=4
+                     /product="DNA polymerase III subunit beta"
+                     /protein_id="YP_006601012.1"
+                     /db_xref="GI:402552295"
+                     /db_xref="GeneID:13492420"
+                     /translation="MKILINKSELNKILKKMNNVIISNNKIKPHHSYFLIEAKEKEIN
+                     FYANNEYFSVKCNLNKNIDILEQGSLIVKGKIFNDLINGIKEEIITIQEKDQTLLVKT
+                     KKTSINLNTINVNEFPRIRFNEKNDLSEFNQFKINYSLLVKGIKKIFHSVSNNREISS
+                     KFNGVNFNGSNGKEIFLEASDTYKLSVFEIKQETEPFDFILESNLLSFINSFNPEEDK
+                     SIVFYYRKDNKDSFSTEMLISMDNFMISYTSVNEKFPEVNYFFEFEPETKIVVQKNEL
+                     KDALQRIQTLAQNERTFLCDMQINSSELKIRATVNNIGNSLEEISCLKFEGYKLNISF
+                     NPSSLLDHIESFESNEINFDFQGNSKYFLITSKSEPELKQILVPSR"
+     gene            1828..>2757
+                     /locus_tag="CM5_00010"
+                     /db_xref="GeneID:13492510"
+     CDS             1828..>2757
+                     /locus_tag="CM5_00010"
+                     /note="COG2214 DnaJ-class molecular chaperone"
+                     /codon_start=1
+                     /transl_table=4
+                     /product="DnaJ domain-containing protein"
+                     /protein_id="YP_006601013.1"
+                     /db_xref="GI:402552296"
+                     /db_xref="GeneID:13492510"
+                     /translation="MNLYDLLELPTTASIKEIKIAYKRLAKRYHPDVNKLGSQTFVEI
+                     NNAYSILSDPNQKEKYDSMLKVNDFQNRIKNLDISVRWHENFMEELELRKNWEFDFFS
+                     SDEDFFYSPFTKNKYASFLDKDVSLAFFQLYSKGKIDHQLEKSLLKRRDVKEACQQNK
+                     NFIEVIKEQYNYFGWIEAKRYFNINVELELTQREIRDRDVVNLPLKIKVINNDFPNQL
+                     WYEIYKNYSFRLSWDIKNGEIAEFFNKGNRALGWKGDLIVRMKVVNKVNKRLRIFSSF
+                     FENDKSKLWFLVPNDKQSNPNKGVFNYKTQHFI"
+ORIGIN
+        1 taagttatta tttagttaat acttttaaca atattattaa ggtatttaaa aaatactatt
+       61 atagtattta acatagttaa ataccttcct taatactgtt aaattatatt caatcaatac
+      121 atatataata ttattaaaat acttgataag tattatttag atattagaca aatactaatt
+      181 ttatattgct ttaatactta ataaatacta cttatgtatt aagtaaatat tactgtaata
+      241 ctaataacaa tattattaca atatgctaga ataatattgc tagtatcaat aattactaat
+      301 atagtattag gaaaatacca taataatatt tctacataat actaagttaa tactatgtgt
+      361 agaataataa ataatcagat taaaaaaatt ttatttatct gaaacatatt taatcaattg
+      421 aactgattat tttcagcagt aataattaca tatgtacata gtacatatgt aaaatatcat
+      481 taatttctgt tatatataat agtatctatt ttagagagta ttaattatta ctataattaa
+      541 gcatttatgc ttaattataa gctttttatg aacaaaatta tagacatttt agttcttata
+      601 ataaataata gatattaaag aaaataaaaa aatagaaata aatatcataa cccttgataa
+      661 cccagaaatt aatacttaat caaaaatgaa aatattaatt aataaaagtg aattgaataa
+      721 aattttgaaa aaaatgaata acgttattat ttccaataac aaaataaaac cacatcattc
+      781 atatttttta atagaggcaa aagaaaaaga aataaacttt tatgctaaca atgaatactt
+      841 ttctgtcaaa tgtaatttaa ataaaaatat tgatattctt gaacaaggct ccttaattgt
+      901 taaaggaaaa atttttaacg atcttattaa tggcataaaa gaagagatta ttactattca
+      961 agaaaaagat caaacacttt tggttaaaac aaaaaaaaca agtattaatt taaacacaat
+     1021 taatgtgaat gaatttccaa gaataaggtt taatgaaaaa aacgatttaa gtgaatttaa
+     1081 tcaattcaaa ataaattatt cacttttagt aaaaggcatt aaaaaaattt ttcactcagt
+     1141 ttcaaataat cgtgaaatat cttctaaatt taatggagta aatttcaatg gatccaatgg
+     1201 aaaagaaata tttttagaag cttctgacac ttataaacta tctgtttttg agataaagca
+     1261 agaaacagaa ccatttgatt tcattttgga gagtaattta cttagtttca ttaattcttt
+     1321 taatcctgaa gaagataaat ctattgtttt ttattacaga aaagataata aagatagctt
+     1381 tagtacagaa atgttgattt caatggataa ctttatgatt agttacacat cggttaatga
+     1441 aaaatttcca gaggtaaact acttttttga atttgaacct gaaactaaaa tagttgttca
+     1501 aaaaaatgaa ttaaaagatg cacttcaaag aattcaaact ttggctcaaa atgaaagaac
+     1561 ttttttatgc gatatgcaaa ttaacagttc tgaattaaaa ataagagcta ctgttaataa
+     1621 tatcggaaat tctcttgagg aaatttcttg tcttaaattt gaaggttata aacttaatat
+     1681 ttcttttaac ccaagttctc tattagatca catagagtct tttgaatcaa atgaaataaa
+     1741 ttttgatttc caaggaaata gtaagtattt tttgataacc tctaaaagtg aacctgaact
+     1801 taagcaaata ttggttcctt caagataatg aatctttacg atcttttaga actaccaact
+     1861 acagcatcaa taaaagaaat aaaaattgct tataaaagat tagcaaagcg ttatcaccct
+     1921 gatgtaaata aattaggttc gcaaactttt gttgaaatta ataatgctta ttcaatatta
+     1981 agtgatccta accaaaagga aaaatatgat tcaatgctga aagttaatga ttttcaaaat
+     2041 cgcatcaaaa atttagatat tagtgttaga tgacatgaaa atttcatgga agaactcgaa
+     2101 cttcgtaaga actgagaatt tgattttttt tcatctgatg aagatttctt ttattctcca
+     2161 tttacaaaaa acaaatatgc ttccttttta gataaagatg tttctttagc tttttttcag
+     2221 ctttacagca agggcaaaat agatcatcaa ttggaaaaat ctttattgaa aagaagagat
+     2281 gtaaaagaag cttgtcaaca gaataaaaat tttattgaag ttataaaaga gcaatataac
+     2341 tattttggtt gaattgaagc taagcgttat ttcaatatta atgttgaact tgagctcaca
+     2401 cagagagaga taagagatag agatgttgtt aacctacctt taaaaattaa agttattaat
+     2461 aatgattttc caaatcaact ctgatatgaa atttataaaa actattcatt tcgcttatct
+     2521 tgagatataa aaaatggtga aattgctgaa tttttcaata aaggtaatag agctttagga
+     2581 tgaaaaggtg acttaattgt cagaatgaaa gtagttaata aagtaaacaa aagactgcgt
+     2641 attttttcaa gcttttttga gaacgataaa tctaaattat ggttccttgt tccaaacgat
+     2701 aaacaaagta atcctaataa gggcgttttt aactataaaa ctcagcactt tattgat
+//
