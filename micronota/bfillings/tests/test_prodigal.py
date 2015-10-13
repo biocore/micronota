@@ -67,7 +67,7 @@ class ProdigalTests(TestCase):
                     ApplicationError,
                     r'Sequence read failed \(file must be Fasta, '
                     'Genbank, or EMBL format\).'):
-                predict_genes(fp, self.temp_dir, 'abc')
+                predict_genes(fp, self.temp_dir, 'foo')
 
     def test_predict_genes(self):
         for fp, params, prefix, suffix in zip(self.positive_fps,
@@ -80,6 +80,9 @@ class ProdigalTests(TestCase):
                 fp = get_data_path('.'.join([prefix, suffix[i]]))
                 with open(fp) as f:
                     self.assertEqual(f.read(), res[i].read())
+                res[i].close()
+            res['StdOut'].close()
+            res['StdErr'].close()
 
     def tearDown(self):
         # remove the tempdir and contents
