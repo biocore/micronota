@@ -1,0 +1,32 @@
+# Check on http://lint.travis-ci.org/ after modifying it!  Originally
+# modified from https://gist.github.com/dan-blanchard/7045057
+sudo: false
+language: python
+env:
+  - PYTHON_VERSION=3.4
+  - PYTHON_VERSION=3.5
+before_install:
+  - "export DISPLAY=:99.0"
+  - "sh -e /etc/init.d/xvfb start"
+  - wget http://repo.continuum.io/miniconda/Miniconda3-3.7.3-Linux-x86_64.sh -O miniconda.sh
+  - chmod +x miniconda.sh
+  - ./miniconda.sh -b
+  - export PATH=/home/travis/miniconda3/bin:$PATH
+  # Update conda itself
+  - conda update --yes conda
+install:
+  - conda create --yes -n env_name python=$PYTHON_VERSION flake8 nose pep8 scikit-bio click
+  - source activate env_name
+  - pip install burrito
+  - pip install . --no-deps
+script:
+  - nosetests --with-doctest
+  - flake8 micronota setup.py
+after_success:
+  - coveralls
+notifications:
+  webhooks:
+    urls:
+      - https://webhooks.gitter.im/e/730436c08fd7f89462b0
+    on_success: change
+    on_failure: always
