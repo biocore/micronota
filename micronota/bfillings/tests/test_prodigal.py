@@ -9,21 +9,37 @@
 # ----------------------------------------------------------------------------
 
 from os import getcwd
-from os.path import join
 import tempfile
 import shutil
 from unittest import TestCase, main
 from micronota.bfillings.prodigal import Prodigal, predict_genes
 from skbio.util import get_data_path
-from skbio import read
 from burrito.util import ApplicationError
 
 
 class ProdigalTests(TestCase):
     def setUp(self):
+        self.temp_dir = tempfile.mkdtemp()
+
         self.positive_fps = list(map(get_data_path, [
-            'prodigal_genome',
-            'prodigal_metagenome']))
+            # modified from NC_018498.gbk
+            'NC_018498_partial_1.gbk',
+            'NC_018498_partial_1.gbk',
+            'NC_018498_partial_2.gbk',
+            ]))
+        self.positive_params = [
+            {'-p': 'meta'},
+            {'-p': 'meta', '-f': 'gff'},
+            {}]
+        self.positive_prefices = [
+            'prodigal_meta',
+            'prodigal_meta',
+            'prodigal_single']
+        self.positive_suffices = [
+            {'-o': 'gbk', '-a': 'faa', '-d': 'fna'},
+            {'-o': 'gff', '-a': 'faa', '-d': 'fna'},
+            {'-o': 'gbk', '-a': 'faa', '-d': 'fna'}]
+
         self.negative_fps = list(map(get_data_path, [
             'empty',
             'whitespace_only']))
@@ -51,7 +67,24 @@ class ProdigalTests(TestCase):
                     ApplicationError,
                     r'Sequence read failed \(file must be Fasta, '
                     'Genbank, or EMBL format\).'):
-                predict_genes({'-i': fp})
+                predict_genes(fp, self.temp_dir, 'abc')
 
-    def test_predict_genes_meta(self):
-        pass
+    def test_predict_genes(self):
+        for fp, params, prefix, suffix in zip(self.positive_fps,
+                                              self.positive_params,
+                                              self.positive_prefices,
+                                              self.positive_suffices):
+            res = predict_genes(fp, self.temp_dir, prefix, params)
+            self.assertEqual(res['ExitStatus'], 0)
+            for i in ['-o', '-d', '-a']:
+                fp = get_data_path('.'.join([prefix, suffix[i]]))
+                with open(fp) as f:
+                    self.assertEqual(f.read(), res[i].read())
+
+    def tearDown(self):
+        # remove the tempdir and contents
+        shutil.rmtree(self.temp_dir)
+
+
+if __name__ == '__main__':
+    main()

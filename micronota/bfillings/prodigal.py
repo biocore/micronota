@@ -6,9 +6,10 @@
 # The full license is in the file COPYING.txt, distributed with this software.
 # ----------------------------------------------------------------------------
 
+from os import makedirs
+from os.path import join
 from burrito.parameters import FlagParameter, ValuedParameter
 from burrito.util import CommandLineApplication, ResultPath
-from skbio import read
 
 
 class Prodigal(CommandLineApplication):
@@ -16,6 +17,8 @@ class Prodigal(CommandLineApplication):
     '''
     _command = 'prodigal'
     _valued_path_options = [
+        # Specify FASTA/Genbank input file (default reads from stdin).
+        '-i',
         # Write protein translations to the selected file.
         '-a',
         # Write nucleotide sequences of genes to the selected file.
@@ -33,8 +36,6 @@ class Prodigal(CommandLineApplication):
         '-f',
         # Specify a translation table to use (default 11).
         '-g',
-        # Specify FASTA/Genbank input file (default reads from stdin).
-        '-i',
         # Treat runs of N as masked sequence; don't build genes across them.
         '-m',
         # Select procedure (single or meta).  Default is single.
@@ -57,8 +58,12 @@ class Prodigal(CommandLineApplication):
     _parameters.update({
         i: ValuedParameter(
             Prefix=i[0], Name=i[1:], Delimiter=' ',
-            IsPath=True if i in _valued_path_options else False)
-        for i in _valued_path_options + _valued_nonpath_options})
+            IsPath=True)
+        for i in _valued_path_options})
+    _parameters.update({
+        i: ValuedParameter(
+            Prefix=i[0], Name=i[1:], Delimiter=' ')
+        for i in _valued_nonpath_options})
     _parameters.update({
         i: FlagParameter(
             Prefix=i[0], Name=i[1:])
@@ -81,29 +86,51 @@ class Prodigal(CommandLineApplication):
         return result
 
 
-def predict_genes(params):
+def predict_genes(in_fp, out_dir, prefix, params=None):
     '''Predict genes for the input file.
+
+    It will create 3 output:
+      1. the annotation file in format of GFF3 or
+         GenBank feature table.
+      2. the nucleotide sequences for each predicted gene.
+      3. the protein sequence translated from each gene.
 
     Parameters
     ----------
+    in_fp : str
+        input file path
+    out_dir : str
+        output directory
+    prefix : str
+        prefix of output file name (without suffix)
     params : dict
-        Command line parameters for Prodigal. key is the option (e.g. "-p")
-        and value is the value for the option (e.g. "meta"). If the option
-        is a flag, set the value to None.
+        Other command line parameters for Prodigal. key is the option
+        (e.g. "-p") and value is the value for the option (e.g. "single").
+        If the option is a flag, set the value to None.
 
     Returns
     -------
-    generator of `skbio.DNA`
+    burrito.util.CommandLineAppResult
     '''
-    # this converts the format specification of prodigal to that of skbio
-    formats = {'gbk': 'genbank'}
+    # create dir if not exist
+    makedirs(out_dir, exist_ok=True)
+
+    if params is None:
+        params = {}
+
     # default is genbank
-    f_param = params.get('-o', 'gbk')
-    f = formats.get(f_param, f_param)
+    f_param = params.get('-f', 'gbk')
+
+    out_suffices = {
+        '-a': 'faa',
+        # Write nucleotide sequences of genes to the selected file.
+        '-d': 'fna',
+        '-o': f_param}
+    for i in out_suffices:
+        out_fp = join(out_dir, '.'.join([prefix, out_suffices[i]]))
+        params[i] = out_fp
+
+    params['-i'] = in_fp
+
     app = Prodigal(params=params)
-    res = app()
-    pred = res.get('-o', None)
-    if pred is None:
-        # the output directed to stdout
-        pred = res['StdOut']
-    return read(pred, format=f)
+    return app()
