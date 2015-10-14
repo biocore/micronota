@@ -1,10 +1,14 @@
 MICRONOTA
 ---------
 
-.. image:: https://coveralls.io/repos/RNAer/micronota/badge.svg?branch=master&service=github
-  :target: https://coveralls.io/github/RNAer/micronota?branch=master
-.. image:: https://travis-ci.org/RNAer/micronota.svg?branch=master
+.. image:: https://coveralls.io/repos/RNAer/micronota/badge.svg?branch=travis&service=github
+  :target: https://coveralls.io/github/RNAer/micronota?branch=travis
+.. image:: https://travis-ci.org/RNAer/micronota.svg?branch=travis
   :target: https://travis-ci.org/RNAer/micronota
+.. image:: https://badges.gitter.im/Join%20Chat.svg
+  :alt: Join the chat at https://gitter.im/biocore/micronota
+  :target: https://gitter.im/biocore/micronota?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge
+
 
 micronota is an open-source, BSD-licensed package to annotate microbial genomes and metagenomes.
 
