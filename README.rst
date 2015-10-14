@@ -1,7 +1,19 @@
 MICRONOTA
 ---------
 
+.. image:: https://coveralls.io/repos/RNAer/micronota/badge.svg?branch=travis&service=github
+  :target: https://coveralls.io/github/RNAer/micronota?branch=travis
+.. image:: https://travis-ci.org/RNAer/micronota.svg?branch=travis
+  :target: https://travis-ci.org/RNAer/micronota
+.. image:: https://badges.gitter.im/Join%20Chat.svg
+  :alt: Join the chat at https://gitter.im/biocore/micronota
+  :target: https://gitter.im/biocore/micronota?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge
+
+
 micronota is an open-source, BSD-licensed package to annotate microbial genomes and metagenomes.
+
+As Python 3 matures and majority python packages support Python 3, the scientific Python community is in favor of dropping Python 2 compatibility. Thus, micronota will only support Python 3. This will allow micronota to have few dependency and avoid maintenance of Python 2 legacy code.
+
 
 Installing
 ----------
@@ -9,6 +21,15 @@ Installing
 To install the latest release of micronota::
 
   pip install micronota
+
+
+Running commands
+----------------
+
+To print the configuration, database and external annotation tools::
+
+  micronota --info
+
 
 Getting help
 ------------
@@ -33,6 +54,17 @@ micronota is available under the new BSD license. See
 (either partially or entirely) distributed with micronota.
 
 
-TODO
-----
-1. conda installable
+Dependencies
+------------
+
+prodigal
+++++++++
+
+infernal
+++++++++
+
+HMMER
++++++
+
+Diamond
++++++++
