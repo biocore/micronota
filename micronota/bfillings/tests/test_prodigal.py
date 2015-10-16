@@ -12,7 +12,7 @@ import tempfile
 import shutil
 from os import getcwd
 from unittest import TestCase, main
-
+from functools import partial
 from skbio.util import get_data_path
 from burrito.util import ApplicationError
 
@@ -22,8 +22,10 @@ from micronota.bfillings.prodigal import Prodigal, predict_genes
 class ProdigalTests(TestCase):
     def setUp(self):
         self.temp_dir = tempfile.mkdtemp()
+        self.get_prodigal_path = partial(get_data_path,
+                                         subfolder='data/prodigal')
 
-        self.positive_fps = list(map(get_data_path, [
+        self.positive_fps = list(map(self.get_prodigal_path, [
             # modified from NC_018498.gbk
             'NC_018498_partial_1.gbk',
             'NC_018498_partial_1.gbk',
@@ -42,7 +44,7 @@ class ProdigalTests(TestCase):
             {'-o': 'gff', '-a': 'faa', '-d': 'fna'},
             {'-o': 'gbk', '-a': 'faa', '-d': 'fna'}]
 
-        self.negative_fps = list(map(get_data_path, [
+        self.negative_fps = list(map(self.get_prodigal_path, [
             'empty',
             'whitespace_only']))
 
@@ -79,7 +81,7 @@ class ProdigalTests(TestCase):
             res = predict_genes(fp, self.temp_dir, prefix, params)
             self.assertEqual(res['ExitStatus'], 0)
             for i in ['-o', '-d', '-a']:
-                fp = get_data_path('.'.join([prefix, suffix[i]]))
+                fp = self.get_prodigal_path('.'.join([prefix, suffix[i]]))
                 with open(fp) as f:
                     self.assertEqual(f.read(), res[i].read())
                 res[i].close()
