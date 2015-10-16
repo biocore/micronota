@@ -6,9 +6,10 @@
 # The full license is in the file COPYING.txt, distributed with this software.
 # ----------------------------------------------------------------------------
 
-from os import remove
+from os import remove, close
 from tempfile import mkstemp
 
+from skbio import DNA, RNA
 from burrito.parameters import FlagParameter, ValuedParameter
 from burrito.util import CommandLineApplication, ResultPath
 
@@ -55,7 +56,7 @@ class CMScan(CommandLineApplication):
         # configure CMs listed in file in glocal mode, others in local
         '--glist',
         # number of parallel CPU workers to use for multithreads
-        '--cpu',
+        '--cpu'
     ]
     _flag_options = [
         # report extra information; mainly useful for debugging
@@ -170,13 +171,14 @@ def cmpress_cm(cm, force=False):
 
 
 def cmscan_fasta(cm, in_fp, out_fp, evalue=0.01, cores=0, params=None):
-    '''Scan fasta file against a covariance model database.
+    '''Scan a fasta file against a covariance model database.
 
     Parameters
     ----------
     cm : str
+        The file path to CM database.
     in_fp : str
-        Input fasta file.
+        Input fasta file. It can contain multiple sequences.
     out_fp : str
         Output file path of target hits table.
     cores : int
@@ -209,7 +211,10 @@ def cmscan_sequence(cm, seq, evalue=0.01, cores=0, params=None):
     Parameters
     ----------
     cm : str
-    seq : skbio.Sequence or its child classes for nucleotide sequence
+        The file path to CM database.
+    seq : nucleotide str, skbio.Sequence, or its child classes
+        If it is a str, it must be able to read into `skbio.DNA` or
+        `skbio.RNA`.
     cores : int
         Number of CPU cores. Default to zero, i.e. running in serial-only mode.
     evalue : float
@@ -223,11 +228,16 @@ def cmscan_sequence(cm, seq, evalue=0.01, cores=0, params=None):
     -------
     Same data type as seq with added ncRNA annotation as positional_metadata.
     '''
+    if isinstance(seq, str):
+        try:
+            seq = DNA(seq)
+        except ValueError:
+            seq = RNA(seq)
     app = CMScan(InputHandler='_input_as_paths', params=params)
     app.Parameters['--incE'].on(evalue)
     app.Parameters['--cpu'].on(cores)
-    table_fp = mkstemp()
-    seq_fp = mkstemp()
+    table_fd, table_fp = mkstemp()
+    seq_fd, seq_fp = mkstemp()
     with open(seq_fp, 'w') as f:
         seq.write(f, format='fasta')
     app.Parameters['--tblout'].oin(table_fp)
@@ -237,3 +247,7 @@ def cmscan_sequence(cm, seq, evalue=0.01, cores=0, params=None):
     # remove temp files
     remove(table_fp)
     remove(seq_fp)
+    # don't forget to close the file descriptors
+    close(table_fd)
+    close(seq_fd)
+    return seq
