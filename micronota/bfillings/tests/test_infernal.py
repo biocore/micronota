@@ -8,10 +8,9 @@
 # The full license is in the file COPYING.txt, distributed with this software.
 # ----------------------------------------------------------------------------
 
-from tempfile import mkdtemp, rmtree
+from tempfile import mkdtemp
 from os import getcwd
-from os.path import join, basename
-from shutil import copy
+from shutil import rmtree
 from unittest import TestCase, main
 
 from skbio.util import get_data_path
@@ -90,18 +89,21 @@ class CMPressTests(InfernalTests):
             cmpress_cm(self.cm_fp)
 
     def test_compress_cm(self):
-        copy(self.cm_fp, self.temp_dir)
-        cm = basename(self.cm_fp)
-        res = cmpress_cm(join(self.temp_dir, cm))
-        res['StdOut'].close()
-        res['StdErr'].close()
         # .i1i file is different from run to run. skip it.
         suffices = ('i1f', 'i1m', 'i1p')
+        exp = []
         for i in suffices:
-            exp = '.'.join([self.cm_fp, i])
-            obs = '.'.join([join(self.temp_dir, cm), i])
-            with open(exp, 'rb') as f1, open(obs, 'rb') as f2:
-                self.assertEqual(f1.read(), f2.read())
+            with open('.'.join([self.cm_fp, i]), 'rb') as f:
+                exp.append(f.read())
+
+        res = cmpress_cm(self.cm_fp, True)
+        res['StdOut'].close()
+        res['StdErr'].close()
+
+        for i, e in zip(suffices, exp):
+            with open('.'.join([self.cm_fp, i]), 'rb') as f:
+                self.assertEqual(f.read(), e)
+
 
 if __name__ == '__main__':
     main()

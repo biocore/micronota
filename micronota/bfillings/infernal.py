@@ -164,7 +164,7 @@ def cmpress_cm(cm, force=False):
 
     app = CMPress(InputHandler='_input_as_path')
     if force is True:
-        app.Parameters('-F').on()
+        app.Parameters['-F'].on()
     res = app(cm)
     return res
 
