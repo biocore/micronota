@@ -8,36 +8,26 @@
 # The full license is in the file COPYING.txt, distributed with this software.
 # ----------------------------------------------------------------------------
 
-from tempfile import mkdtemp
-from os import getcwd
-from shutil import rmtree
+from tempfile import mkstemp
+from os import getcwd, remove, close
 from unittest import TestCase, main
 
 from skbio.util import get_data_path
 from burrito.util import ApplicationError
 
 from micronota.bfillings.infernal import (
-    CMScan, cmscan_sequence, cmscan_fasta,
-    CMPress, cmpress_cm)
+    CMScan, cmscan_fasta,
+    cmpress_cm)
 
 
 class InfernalTests(TestCase):
     def setUp(self):
-        self.temp_dir = mkdtemp()
+        self.temp_fd, self.temp_fp = mkstemp()
 
         self.positive_fps = list(map(get_data_path, [
             # modified from NC_018498.gbk
             'NC_018498.fna',
             ]))
-        self.positive_params = [
-            {'-p': 'meta'},
-            {'-p': 'meta', '-f': 'gff'},
-            {}]
-        self.positive_suffices = [
-            {'-o': 'gbk', '-a': 'faa', '-d': 'fna'},
-            {'-o': 'gff', '-a': 'faa', '-d': 'fna'},
-            {'-o': 'gbk', '-a': 'faa', '-d': 'fna'}]
-
         self.negative_fps = list(map(get_data_path, [
             'empty',
             'whitespace_only']))
@@ -45,7 +35,8 @@ class InfernalTests(TestCase):
 
     def tearDown(self):
         # remove the tempdir and contents
-        rmtree(self.temp_dir)
+        close(self.temp_fd)
+        remove(self.temp_fp)
 
 
 class CMScanTests(InfernalTests):
@@ -58,12 +49,14 @@ class CMScanTests(InfernalTests):
         for i in params:
             if params[i] is None:
                 c.Parameters[i].on()
-                cmd = 'cd "%s/"; %s %s' % (getcwd(), c._command, i)
+                cmd = 'cd "{d}/"; {cmd} {option}'.format(
+                    d=getcwd(), cmd=c._command, option=i)
             else:
                 c.Parameters[i].on(params[i])
                 cmd = 'cd "{d}/"; {cmd} {option} {value}'.format(
                     d=getcwd(), cmd=c._command,
                     option=i, value=params[i])
+
             self.assertEqual(c.BaseCommand, cmd)
             c.Parameters[i].off()
 
@@ -75,7 +68,19 @@ class CMScanTests(InfernalTests):
                 cmscan_fasta(self.cm_fp, fp, 'foo')
 
     def test_cmscan_fasta(self):
-        pass
+        params = {'--rfam': None, '--noali': None}
+        for f in self.positive_fps:
+            res = cmscan_fasta(self.cm_fp, f, self.temp_fp[1], 0.1, 1, params)
+            res['StdOut'].close()
+            res['StdErr'].close()
+            obs = res['--tblout']
+            out_fp = '.'.join([f, 'tblout'])
+            with open(out_fp) as exp:
+                # skip comment lines as some contain running time info
+                self.assertListEqual(
+                    [i for i in exp.readlines() if not i.startswith('#')],
+                    [j for j in obs.readlines() if not j.startswith('#')])
+            obs.close()
 
     def test_cmscan_sequence(self):
         pass

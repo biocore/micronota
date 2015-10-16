@@ -9,7 +9,7 @@
 from os import remove
 from tempfile import mkstemp
 
-from burrito.parameters import FlagParameter, ValuedParameter, FilePath
+from burrito.parameters import FlagParameter, ValuedParameter
 from burrito.util import CommandLineApplication, ResultPath
 
 from .util import _get_parameter
@@ -116,7 +116,7 @@ class CMScan(CommandLineApplication):
     def _accept_exit_status(self, exit_status):
         return exit_status == 0
 
-    def _get_result_paths(self,data):
+    def _get_result_paths(self, data):
         result = {}
         for i in self._valued_path_options:
             o = self.Parameters[i]
@@ -172,7 +172,6 @@ def cmpress_cm(cm, force=False):
 def cmscan_fasta(cm, in_fp, out_fp, evalue=0.01, cores=0, params=None):
     '''Scan fasta file against a covariance model database.
 
-    cmscan --rfam --cpu <x> -E <x> --tblout /dev/stdout -o /dev/null --noali cmdb <x.fna>
     Parameters
     ----------
     cm : str
@@ -183,7 +182,7 @@ def cmscan_fasta(cm, in_fp, out_fp, evalue=0.01, cores=0, params=None):
     cores : int
         Number of CPU cores. Default to zero, i.e. running in serial-only mode.
     evalue : float
-        Default to 0.01. It is significant if the reported E-value is <= evalue.
+        Default to 0.01. Threshold E-value.
     params : dict
         Other command line parameters for cmscan. key is the option
         (e.g. "-T") and value is the value for the option (e.g. "50").
@@ -214,7 +213,7 @@ def cmscan_sequence(cm, seq, evalue=0.01, cores=0, params=None):
     cores : int
         Number of CPU cores. Default to zero, i.e. running in serial-only mode.
     evalue : float
-        Default to 0.01. It is significant if the reported E-value is <= evalue.
+        Default to 0.01. Threshold E-value.
     params : dict
         Other command line parameters for cmscan. key is the option
         (e.g. "-T") and value is the value for the option (e.g. "50").
@@ -234,7 +233,7 @@ def cmscan_sequence(cm, seq, evalue=0.01, cores=0, params=None):
     app.Parameters['--tblout'].oin(table_fp)
     res = app([cm, seq_fp])
     # todo: read table_fp and merge it into seq object
-
+    res['--tblout']
     # remove temp files
     remove(table_fp)
     remove(seq_fp)
