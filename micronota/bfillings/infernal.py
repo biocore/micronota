@@ -18,7 +18,9 @@ from .util import _get_parameter
 class CMScan(CommandLineApplication):
     '''cmscan application controller.
 
-    INFERNAL 1.1.1 (July 2014)'''
+    cmscan is used to search a sequence against a covariance model database.
+    This wrapper is tested for INFERNAL 1.1.1 (July 2014)
+    '''
     _command = "cmscan"
     _suppress_stderr = False
 
@@ -124,6 +126,115 @@ class CMScan(CommandLineApplication):
         return result
 
 
-def cmscan_fasta():
-    '''Scan fasta file with CM models.'''
+class CMFetch(CommandLineApplication):
+    '''cmfetch application controller.
+
+    cmfetch is used to get a covariance model by name or accession
+    from a CM database.
+    This wrapper is tested for INFERNAL 1.1.1 (July 2014).
+    '''
     pass
+
+
+class CMPress(CommandLineApplication):
+    '''cmpress application controller.
+
+    cmpress is used to format a CM database into a binary format for cmscan.
+    This wrapper is tested for INFERNAL 1.1.1 (July 2014).
+    '''
+    _suppress_stderr = False
+    _command = 'cmpress'
+    _parameters = {
+        # force overwrite
+        '-F': FlagParameter(Prefix='-', Name='F')}
+
+    def _accept_exit_status(self, exit_status):
+        return exit_status == 0
+
+
+def cmpress_cm(cm, force=False):
+    '''Compress the CM database.
+
+    Parameters
+    ----------
+    cm : str
+        The file path to CM database.
+    force : boolean
+        Whether to overwrite.'''
+
+    app = CMPress(InputHandler='_input_as_path')
+    if force is True:
+        app.Parameters('-F').on()
+    res = app(cm)
+    return res
+
+
+def cmscan_fasta(cm, in_fp, out_fp, evalue=0.01, cores=0, params=None):
+    '''Scan fasta file against a covariance model database.
+
+    cmscan --rfam --cpu <x> -E <x> --tblout /dev/stdout -o /dev/null --noali cmdb <x.fna>
+    Parameters
+    ----------
+    cm : str
+    in_fp : str
+        Input fasta file.
+    out_fp : str
+        Output file path of target hits table.
+    cores : int
+        Number of CPU cores. Default to zero, i.e. running in serial-only mode.
+    evalue : float
+        Default to 0.01. It is significant if the reported E-value is <= evalue.
+    params : dict
+        Other command line parameters for cmscan. key is the option
+        (e.g. "-T") and value is the value for the option (e.g. "50").
+        If the option is a flag, set the value to None.
+
+    Returns
+    -------
+    burrito.util.CommandLineAppResult
+        It contains opened file handlers of stdout, stderr, and the 3
+        output files, which can be accessed in a dict style with the
+        keys of "StdOut", "StdErr", "--tblout". The exit status
+        of the run can be similarly fetched with the key of "ExitStatus".
+    '''
+    app = CMScan(InputHandler='_input_as_paths', params=params)
+    app.Parameters['--incE'].on(evalue)
+    app.Parameters['--cpu'].on(cores)
+    app.Parameters['--tblout'].on(out_fp)
+    return app([cm, in_fp])
+
+
+def cmscan_sequence(cm, seq, evalue=0.01, cores=0, params=None):
+    '''scan a `skbio.Sequence` against a covariance model database.
+
+    Parameters
+    ----------
+    cm : str
+    seq : skbio.Sequence or its child classes for nucleotide sequence
+    cores : int
+        Number of CPU cores. Default to zero, i.e. running in serial-only mode.
+    evalue : float
+        Default to 0.01. It is significant if the reported E-value is <= evalue.
+    params : dict
+        Other command line parameters for cmscan. key is the option
+        (e.g. "-T") and value is the value for the option (e.g. "50").
+        If the option is a flag, set the value to None.
+
+    Returns
+    -------
+    Same data type as seq with added ncRNA annotation as positional_metadata.
+    '''
+    app = CMScan(InputHandler='_input_as_paths', params=params)
+    app.Parameters['--incE'].on(evalue)
+    app.Parameters['--cpu'].on(cores)
+    table_fp = mkstemp()
+    seq_fp = mkstemp()
+    with open(seq_fp, 'w') as f:
+        seq.write(f, format='fasta')
+    app.Parameters['--tblout'].oin(table_fp)
+    res = app([cm, seq_fp])
+    # todo: read table_fp and merge it into seq object
+
+    # remove temp files
+    remove(table_fp)
+    remove(seq_fp)
