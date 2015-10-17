@@ -1,0 +1,675 @@
+# hmmscan :: search sequence(s) against a profile database
+# HMMER 3.0 (March 2010); http://hmmer.org/
+# Copyright (C) 2010 Howard Hughes Medical Institute.
+# Freely distributed under the GNU General Public License (GPLv3).
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+# query sequence file:             Pfam_B_1.fasta
+# target HMM database:             Pfam_B_1.hmm
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+Query:       A2AII2_MOUSE/9-99  [L=91]
+Description: PB000001; Pfam-B_1;
+Scores for complete sequence (score includes all domains):
+   --- full sequence ---   --- best 1 domain ---    -#dom-
+    E-value  score  bias    E-value  score  bias    exp  N  Model    Description
+    ------- ------ -----    ------- ------ -----   ---- --  -------- -----------
+    4.4e-43  132.8   0.0    4.9e-43  132.6   0.0    1.0  1  Pfam-B_1 
+
+
+Domain annotation for each model (and alignments):
+>> Pfam-B_1  
+   #    score  bias  c-Evalue  i-Evalue hmmfrom  hmm to    alifrom  ali to    envfrom  env to     acc
+ ---   ------ ----- --------- --------- ------- -------    ------- -------    ------- -------    ----
+   1 !  132.6   0.0   4.9e-43   4.9e-43       1      82 [.       7      91 .]       7      91 .] 0.97
+
+  Alignments for each domain:
+  == domain 1    score: 132.6 bits;  conditional E-value: 4.9e-43
+           Pfam-B_1  1 vvvislfscmkaapmkeasvrgqgslaypglrtrGtleslggpragsrgl..ssladTfehViEelldeeqkvqpsee.nkdadl 82
+                       ++vis+f+cmkaapmke++v gqg+laypg+rt+Gtles++gpragsrgl  +sladTfehViEellde+qkv+p+ee +kdadl
+  A2AII2_MOUSE/9-99  7 TMVISYFGCMKAAPMKEVNVHGQGNLAYPGVRTHGTLESVNGPRAGSRGLttTSLADTFEHVIEELLDEDQKVRPNEEnHKDADL 91
+                       69************************************************777**********************99999***97 PP
+
+
+
+Internal pipeline statistics summary:
+-------------------------------------
+Query sequence(s):                         1  (91 residues)
+Target model(s):                           1  (123 nodes)
+Passed MSV filter:                         1  (1); expected 0.0 (0.02)
+Passed bias filter:                        1  (1); expected 0.0 (0.02)
+Passed Vit filter:                         1  (1); expected 0.0 (0.001)
+Passed Fwd filter:                         1  (1); expected 0.0 (1e-05)
+Initial search space (Z):                  1  [actual number of targets]
+Domain search space  (domZ):               1  [number of targets reported over threshold]
+# CPU time: 0.00u 0.00s 00:00:00.00 Elapsed: 00:00:00.00
+# Mc/sec: inf
+//
+Query:       A2ICR4_AMBME/1-89  [L=89]
+Description: PB000001; Pfam-B_1;
+Scores for complete sequence (score includes all domains):
+   --- full sequence ---   --- best 1 domain ---    -#dom-
+    E-value  score  bias    E-value  score  bias    exp  N  Model    Description
+    ------- ------ -----    ------- ------ -----   ---- --  -------- -----------
+    1.4e-42  131.2   0.0    1.5e-42  131.1   0.0    1.0  1  Pfam-B_1 
+
+
+Domain annotation for each model (and alignments):
+>> Pfam-B_1  
+   #    score  bias  c-Evalue  i-Evalue hmmfrom  hmm to    alifrom  ali to    envfrom  env to     acc
+ ---   ------ ----- --------- --------- ------- -------    ------- -------    ------- -------    ----
+   1 !  131.1   0.0   1.5e-42   1.5e-42       1      82 [.       7      89 .]       7      89 .] 0.98
+
+  Alignments for each domain:
+  == domain 1    score: 131.1 bits;  conditional E-value: 1.5e-42
+           Pfam-B_1  1 vvvislfscmkaapmkeasvrgqgslaypglrtrGtleslggpragsr.glssladTfehViEelldeeqkvqpseenkdadl 82
+                       ++vis+fsc+kaapmkeas+rgqgslaypglrt+Gtles+ggp+++sr gl+sladTfe+ViEe+l++eq+++pseenkdadl
+  A2ICR4_AMBME/1-89  7 TMVISYFSCLKAAPMKEASIRGQGSLAYPGLRTHGTLESIGGPKSSSRgGLPSLADTFEQVIEEMLEDEQNMRPSEENKDADL 89
+                       69**********************************************889*******************************8 PP
+
+
+
+Internal pipeline statistics summary:
+-------------------------------------
+Query sequence(s):                         1  (89 residues)
+Target model(s):                           1  (123 nodes)
+Passed MSV filter:                         1  (1); expected 0.0 (0.02)
+Passed bias filter:                        1  (1); expected 0.0 (0.02)
+Passed Vit filter:                         1  (1); expected 0.0 (0.001)
+Passed Fwd filter:                         1  (1); expected 0.0 (1e-05)
+Initial search space (Z):                  1  [actual number of targets]
+Domain search space  (domZ):               1  [number of targets reported over threshold]
+# CPU time: 0.00u 0.00s 00:00:00.00 Elapsed: 00:00:00.01
+# Mc/sec: 1.09
+//
+Query:       A3FPG9_XENTR/1-89  [L=89]
+Description: PB000001; Pfam-B_1;
+Scores for complete sequence (score includes all domains):
+   --- full sequence ---   --- best 1 domain ---    -#dom-
+    E-value  score  bias    E-value  score  bias    exp  N  Model    Description
+    ------- ------ -----    ------- ------ -----   ---- --  -------- -----------
+    1.8e-39  121.1   0.0      2e-39  121.0   0.0    1.0  1  Pfam-B_1 
+
+
+Domain annotation for each model (and alignments):
+>> Pfam-B_1  
+   #    score  bias  c-Evalue  i-Evalue hmmfrom  hmm to    alifrom  ali to    envfrom  env to     acc
+ ---   ------ ----- --------- --------- ------- -------    ------- -------    ------- -------    ----
+   1 !  121.0   0.0     2e-39     2e-39       1      82 [.       7      89 .]       7      89 .] 0.97
+
+  Alignments for each domain:
+  == domain 1    score: 121.0 bits;  conditional E-value: 2e-39
+           Pfam-B_1  1 vvvislfscmkaapmkeasvrgqgslaypglrtrGtleslggpragsr.glssladTfehViEelldeeqkvqpseenkdadl 82
+                       ++vis+fscmkaapmkeasvrgq+ laypglrt+Gtles+gg++ +   gl+sl+dTfehViEel++eeq++++see kd+dl
+  A3FPG9_XENTR/1-89  7 TMVISYFSCMKAAPMKEASVRGQSGLAYPGLRTHGTLESIGGLGVSRGgGLPSLTDTFEHVIEELMEEEQSIRQSEESKDSDL 89
+                       69*****************************************98887789******************************97 PP
+
+
+
+Internal pipeline statistics summary:
+-------------------------------------
+Query sequence(s):                         1  (89 residues)
+Target model(s):                           1  (123 nodes)
+Passed MSV filter:                         1  (1); expected 0.0 (0.02)
+Passed bias filter:                        1  (1); expected 0.0 (0.02)
+Passed Vit filter:                         1  (1); expected 0.0 (0.001)
+Passed Fwd filter:                         1  (1); expected 0.0 (1e-05)
+Initial search space (Z):                  1  [actual number of targets]
+Domain search space  (domZ):               1  [number of targets reported over threshold]
+# CPU time: 0.00u 0.00s 00:00:00.00 Elapsed: 00:00:00.00
+# Mc/sec: inf
+//
+Query:       A9QWG9_9SARC/2-79  [L=78]
+Description: PB000001; Pfam-B_1;
+Scores for complete sequence (score includes all domains):
+   --- full sequence ---   --- best 1 domain ---    -#dom-
+    E-value  score  bias    E-value  score  bias    exp  N  Model    Description
+    ------- ------ -----    ------- ------ -----   ---- --  -------- -----------
+    4.5e-36  110.2   0.0    4.9e-36  110.0   0.0    1.0  1  Pfam-B_1 
+
+
+Domain annotation for each model (and alignments):
+>> Pfam-B_1  
+   #    score  bias  c-Evalue  i-Evalue hmmfrom  hmm to    alifrom  ali to    envfrom  env to     acc
+ ---   ------ ----- --------- --------- ------- -------    ------- -------    ------- -------    ----
+   1 !  110.0   0.0   4.9e-36   4.9e-36       5      82 ..       1      78 []       1      78 [] 0.99
+
+  Alignments for each domain:
+  == domain 1    score: 110.0 bits;  conditional E-value: 4.9e-36
+           Pfam-B_1  5 slfscmkaapmkeasvrgqgslaypglrtrGtleslggpragsrglssladTfehViEelldeeqkvqpseenkdadl 82
+                       s+fscmkaapmkea+ rg+gs+ yp lrt+Gtl+s+gg++a srglssladT ehViEelld eq+++pse +kdadl
+  A9QWG9_9SARC/2-79  1 SYFSCMKAAPMKEANTRGHGSSPYPVLRTHGTLDSIGGSKAVSRGLSSLADTVEHVIEELLDGEQNIKPSEGGKDADL 78
+                       79***************************************************************************8 PP
+
+
+
+Internal pipeline statistics summary:
+-------------------------------------
+Query sequence(s):                         1  (78 residues)
+Target model(s):                           1  (123 nodes)
+Passed MSV filter:                         1  (1); expected 0.0 (0.02)
+Passed bias filter:                        1  (1); expected 0.0 (0.02)
+Passed Vit filter:                         1  (1); expected 0.0 (0.001)
+Passed Fwd filter:                         1  (1); expected 0.0 (1e-05)
+Initial search space (Z):                  1  [actual number of targets]
+Domain search space  (domZ):               1  [number of targets reported over threshold]
+# CPU time: 0.00u 0.00s 00:00:00.00 Elapsed: 00:00:00.00
+# Mc/sec: inf
+//
+Query:       A9QWH0_9SALA/1-80  [L=80]
+Description: PB000001; Pfam-B_1;
+Scores for complete sequence (score includes all domains):
+   --- full sequence ---   --- best 1 domain ---    -#dom-
+    E-value  score  bias    E-value  score  bias    exp  N  Model    Description
+    ------- ------ -----    ------- ------ -----   ---- --  -------- -----------
+    1.6e-39  121.3   0.0    1.8e-39  121.2   0.0    1.0  1  Pfam-B_1 
+
+
+Domain annotation for each model (and alignments):
+>> Pfam-B_1  
+   #    score  bias  c-Evalue  i-Evalue hmmfrom  hmm to    alifrom  ali to    envfrom  env to     acc
+ ---   ------ ----- --------- --------- ------- -------    ------- -------    ------- -------    ----
+   1 !  121.2   0.0   1.8e-39   1.8e-39       4      82 ..       1      80 []       1      80 [] 0.98
+
+  Alignments for each domain:
+  == domain 1    score: 121.2 bits;  conditional E-value: 1.8e-39
+           Pfam-B_1  4 islfscmkaapmkeasvrgqgslaypglrtrGtleslggpragsrgl.ssladTfehViEelldeeqkvqpseenkdadl 82
+                       is+fscmkaapmke+s+r+qgslaypglrt+Gtle +ggp+++srg+ +sladTfe+ViEe+l++eq+++pseenkdadl
+  A9QWH0_9SALA/1-80  1 ISYFSCMKAAPMKEVSLRAQGSLAYPGLRTHGTLEGIGGPKTSSRGVlPSLADTFEQVIEEILEDEQSMRPSEENKDADL 80
+                       69*******************************************8779******************************8 PP
+
+
+
+Internal pipeline statistics summary:
+-------------------------------------
+Query sequence(s):                         1  (80 residues)
+Target model(s):                           1  (123 nodes)
+Passed MSV filter:                         1  (1); expected 0.0 (0.02)
+Passed bias filter:                        1  (1); expected 0.0 (0.02)
+Passed Vit filter:                         1  (1); expected 0.0 (0.001)
+Passed Fwd filter:                         1  (1); expected 0.0 (1e-05)
+Initial search space (Z):                  1  [actual number of targets]
+Domain search space  (domZ):               1  [number of targets reported over threshold]
+# CPU time: 0.00u 0.00s 00:00:00.00 Elapsed: 00:00:00.00
+# Mc/sec: inf
+//
+Query:       B4Z8K8_9AVES/1-80  [L=80]
+Description: PB000001; Pfam-B_1;
+Scores for complete sequence (score includes all domains):
+   --- full sequence ---   --- best 1 domain ---    -#dom-
+    E-value  score  bias    E-value  score  bias    exp  N  Model    Description
+    ------- ------ -----    ------- ------ -----   ---- --  -------- -----------
+    1.7e-42  130.9   0.0    1.9e-42  130.8   0.0    1.0  1  Pfam-B_1 
+
+
+Domain annotation for each model (and alignments):
+>> Pfam-B_1  
+   #    score  bias  c-Evalue  i-Evalue hmmfrom  hmm to    alifrom  ali to    envfrom  env to     acc
+ ---   ------ ----- --------- --------- ------- -------    ------- -------    ------- -------    ----
+   1 !  130.8   0.0   1.9e-42   1.9e-42       3      82 ..       1      80 []       1      80 [] 0.99
+
+  Alignments for each domain:
+  == domain 1    score: 130.8 bits;  conditional E-value: 1.9e-42
+           Pfam-B_1  3 vislfscmkaapmkeasvrgqgslaypglrtrGtleslggpragsrglssladTfehViEelldeeqkvqpseenkdadl 82
+                       vis+f+cmkaapmkeasvrg gslayp+lrt+Gtlesl+gp+ +srgl+sladTfehViEelldeeq++qpsee kdadl
+  B4Z8K8_9AVES/1-80  1 VISYFGCMKAAPMKEASVRGPGSLAYPALRTHGTLESLSGPGGASRGLPSLADTFEHVIEELLDEEQELQPSEESKDADL 80
+                       68*****************************************************************************8 PP
+
+
+
+Internal pipeline statistics summary:
+-------------------------------------
+Query sequence(s):                         1  (80 residues)
+Target model(s):                           1  (123 nodes)
+Passed MSV filter:                         1  (1); expected 0.0 (0.02)
+Passed bias filter:                        1  (1); expected 0.0 (0.02)
+Passed Vit filter:                         1  (1); expected 0.0 (0.001)
+Passed Fwd filter:                         1  (1); expected 0.0 (1e-05)
+Initial search space (Z):                  1  [actual number of targets]
+Domain search space  (domZ):               1  [number of targets reported over threshold]
+# CPU time: 0.01u 0.01s 00:00:00.02 Elapsed: 00:00:00.00
+# Mc/sec: inf
+//
+Query:       B4Z8L0_EUDEL/1-80  [L=80]
+Description: PB000001; Pfam-B_1;
+Scores for complete sequence (score includes all domains):
+   --- full sequence ---   --- best 1 domain ---    -#dom-
+    E-value  score  bias    E-value  score  bias    exp  N  Model    Description
+    ------- ------ -----    ------- ------ -----   ---- --  -------- -----------
+    2.1e-40  124.2   0.0    2.3e-40  124.0   0.0    1.0  1  Pfam-B_1 
+
+
+Domain annotation for each model (and alignments):
+>> Pfam-B_1  
+   #    score  bias  c-Evalue  i-Evalue hmmfrom  hmm to    alifrom  ali to    envfrom  env to     acc
+ ---   ------ ----- --------- --------- ------- -------    ------- -------    ------- -------    ----
+   1 !  124.0   0.0   2.3e-40   2.3e-40       3      82 ..       1      80 []       1      80 [] 0.99
+
+  Alignments for each domain:
+  == domain 1    score: 124.0 bits;  conditional E-value: 2.3e-40
+           Pfam-B_1  3 vislfscmkaapmkeasvrgqgslaypglrtrGtleslggpragsrglssladTfehViEelldeeqkvqpseenkdadl 82
+                       vis+f+cmkaapmke+svr+ gslayp+lrt+Gtle l+gp+a+srgl+sladTfehViEelldeeq + psee kdadl
+  B4Z8L0_EUDEL/1-80  1 VISYFGCMKAAPMKEVSVRAPGSLAYPALRTHGTLEGLKGPSAASRGLPSLADTFEHVIEELLDEEQALPPSEESKDADL 80
+                       68*****************************************************************************8 PP
+
+
+
+Internal pipeline statistics summary:
+-------------------------------------
+Query sequence(s):                         1  (80 residues)
+Target model(s):                           1  (123 nodes)
+Passed MSV filter:                         1  (1); expected 0.0 (0.02)
+Passed bias filter:                        1  (1); expected 0.0 (0.02)
+Passed Vit filter:                         1  (1); expected 0.0 (0.001)
+Passed Fwd filter:                         1  (1); expected 0.0 (1e-05)
+Initial search space (Z):                  1  [actual number of targets]
+Domain search space  (domZ):               1  [number of targets reported over threshold]
+# CPU time: 0.00u 0.00s 00:00:00.00 Elapsed: 00:00:00.00
+# Mc/sec: inf
+//
+Query:       B4Z8L1_NOTPE/1-80  [L=80]
+Description: PB000001; Pfam-B_1;
+Scores for complete sequence (score includes all domains):
+   --- full sequence ---   --- best 1 domain ---    -#dom-
+    E-value  score  bias    E-value  score  bias    exp  N  Model    Description
+    ------- ------ -----    ------- ------ -----   ---- --  -------- -----------
+    8.1e-41  125.5   0.0    8.8e-41  125.4   0.0    1.0  1  Pfam-B_1 
+
+
+Domain annotation for each model (and alignments):
+>> Pfam-B_1  
+   #    score  bias  c-Evalue  i-Evalue hmmfrom  hmm to    alifrom  ali to    envfrom  env to     acc
+ ---   ------ ----- --------- --------- ------- -------    ------- -------    ------- -------    ----
+   1 !  125.4   0.0   8.8e-41   8.8e-41       3      82 ..       1      80 []       1      80 [] 0.99
+
+  Alignments for each domain:
+  == domain 1    score: 125.4 bits;  conditional E-value: 8.8e-41
+           Pfam-B_1  3 vislfscmkaapmkeasvrgqgslaypglrtrGtleslggpragsrglssladTfehViEelldeeqkvqpseenkdadl 82
+                       vis+f+cmkaapmkeasvrgqg layp+lrt+Gtle l+gp+a++r l+sladTfehV+Eelldeeq++qp ee kdadl
+  B4Z8L1_NOTPE/1-80  1 VISYFGCMKAAPMKEASVRGQGGLAYPALRTHGTLEGLNGPSAAARALPSLADTFEHVLEELLDEEQELQPREERKDADL 80
+                       68*****************************************************************************8 PP
+
+
+
+Internal pipeline statistics summary:
+-------------------------------------
+Query sequence(s):                         1  (80 residues)
+Target model(s):                           1  (123 nodes)
+Passed MSV filter:                         1  (1); expected 0.0 (0.02)
+Passed bias filter:                        1  (1); expected 0.0 (0.02)
+Passed Vit filter:                         1  (1); expected 0.0 (0.001)
+Passed Fwd filter:                         1  (1); expected 0.0 (1e-05)
+Initial search space (Z):                  1  [actual number of targets]
+Domain search space  (domZ):               1  [number of targets reported over threshold]
+# CPU time: 0.00u 0.00s 00:00:00.00 Elapsed: 00:00:00.01
+# Mc/sec: 0.98
+//
+Query:       B4Z8N7_BOMGA/1-80  [L=80]
+Description: PB000001; Pfam-B_1;
+Scores for complete sequence (score includes all domains):
+   --- full sequence ---   --- best 1 domain ---    -#dom-
+    E-value  score  bias    E-value  score  bias    exp  N  Model    Description
+    ------- ------ -----    ------- ------ -----   ---- --  -------- -----------
+    6.5e-42  129.0   0.0    7.1e-42  128.9   0.0    1.0  1  Pfam-B_1 
+
+
+Domain annotation for each model (and alignments):
+>> Pfam-B_1  
+   #    score  bias  c-Evalue  i-Evalue hmmfrom  hmm to    alifrom  ali to    envfrom  env to     acc
+ ---   ------ ----- --------- --------- ------- -------    ------- -------    ------- -------    ----
+   1 !  128.9   0.0   7.1e-42   7.1e-42       3      82 ..       1      80 []       1      80 [] 0.99
+
+  Alignments for each domain:
+  == domain 1    score: 128.9 bits;  conditional E-value: 7.1e-42
+           Pfam-B_1  3 vislfscmkaapmkeasvrgqgslaypglrtrGtleslggpragsrglssladTfehViEelldeeqkvqpseenkdadl 82
+                       vis+f+cmkaapmke s+rgqgslay glrt+Gtles++gp++gsrgl+sladTfehViEelld++q++qpse nkdadl
+  B4Z8N7_BOMGA/1-80  1 VISYFTCMKAAPMKEGSLRGQGSLAYGGLRTHGTLESINGPNTGSRGLTSLADTFEHVIEELLDADQDIQPSEGNKDADL 80
+                       68*****************************************************************************8 PP
+
+
+
+Internal pipeline statistics summary:
+-------------------------------------
+Query sequence(s):                         1  (80 residues)
+Target model(s):                           1  (123 nodes)
+Passed MSV filter:                         1  (1); expected 0.0 (0.02)
+Passed bias filter:                        1  (1); expected 0.0 (0.02)
+Passed Vit filter:                         1  (1); expected 0.0 (0.001)
+Passed Fwd filter:                         1  (1); expected 0.0 (1e-05)
+Initial search space (Z):                  1  [actual number of targets]
+Domain search space  (domZ):               1  [number of targets reported over threshold]
+# CPU time: 0.00u 0.00s 00:00:00.00 Elapsed: 00:00:00.00
+# Mc/sec: inf
+//
+Query:       B4Z8V1_MERNU/1-80  [L=80]
+Description: PB000001; Pfam-B_1;
+Scores for complete sequence (score includes all domains):
+   --- full sequence ---   --- best 1 domain ---    -#dom-
+    E-value  score  bias    E-value  score  bias    exp  N  Model    Description
+    ------- ------ -----    ------- ------ -----   ---- --  -------- -----------
+    1.3e-44  137.7   0.0    1.4e-44  137.6   0.0    1.0  1  Pfam-B_1 
+
+
+Domain annotation for each model (and alignments):
+>> Pfam-B_1  
+   #    score  bias  c-Evalue  i-Evalue hmmfrom  hmm to    alifrom  ali to    envfrom  env to     acc
+ ---   ------ ----- --------- --------- ------- -------    ------- -------    ------- -------    ----
+   1 !  137.6   0.0   1.4e-44   1.4e-44       3      82 ..       1      80 []       1      80 [] 0.99
+
+  Alignments for each domain:
+  == domain 1    score: 137.6 bits;  conditional E-value: 1.4e-44
+           Pfam-B_1  3 vislfscmkaapmkeasvrgqgslaypglrtrGtleslggpragsrglssladTfehViEelldeeqkvqpseenkdadl 82
+                       vis+f+cmkaapmkea+vrgqgslaypglrt+G lesl+gp+agsrgl+sladTfehViEellde+q+vqps+e+kdadl
+  B4Z8V1_MERNU/1-80  1 VISYFGCMKAAPMKEAGVRGQGSLAYPGLRTHGALESLNGPSAGSRGLTSLADTFEHVIEELLDEDQDVQPSKEHKDADL 80
+                       68*****************************************************************************8 PP
+
+
+
+Internal pipeline statistics summary:
+-------------------------------------
+Query sequence(s):                         1  (80 residues)
+Target model(s):                           1  (123 nodes)
+Passed MSV filter:                         1  (1); expected 0.0 (0.02)
+Passed bias filter:                        1  (1); expected 0.0 (0.02)
+Passed Vit filter:                         1  (1); expected 0.0 (0.001)
+Passed Fwd filter:                         1  (1); expected 0.0 (1e-05)
+Initial search space (Z):                  1  [actual number of targets]
+Domain search space  (domZ):               1  [number of targets reported over threshold]
+# CPU time: 0.00u 0.00s 00:00:00.00 Elapsed: 00:00:00.00
+# Mc/sec: inf
+//
+Query:       B5FXH8_TAEGU/9-96  [L=88]
+Description: PB000001; Pfam-B_1;
+Scores for complete sequence (score includes all domains):
+   --- full sequence ---   --- best 1 domain ---    -#dom-
+    E-value  score  bias    E-value  score  bias    exp  N  Model    Description
+    ------- ------ -----    ------- ------ -----   ---- --  -------- -----------
+    3.2e-44  136.5   0.0    3.5e-44  136.3   0.0    1.0  1  Pfam-B_1 
+
+
+Domain annotation for each model (and alignments):
+>> Pfam-B_1  
+   #    score  bias  c-Evalue  i-Evalue hmmfrom  hmm to    alifrom  ali to    envfrom  env to     acc
+ ---   ------ ----- --------- --------- ------- -------    ------- -------    ------- -------    ----
+   1 !  136.3   0.0   3.5e-44   3.5e-44       1      82 [.       7      88 .]       7      88 .] 0.99
+
+  Alignments for each domain:
+  == domain 1    score: 136.3 bits;  conditional E-value: 3.5e-44
+           Pfam-B_1  1 vvvislfscmkaapmkeasvrgqgslaypglrtrGtleslggpragsrglssladTfehViEelldeeqkvqpseenkdadl 82
+                       ++vis+f+cmkaapmkeas+rg+gslaypglrt+Gt+es++gp+a+srgl+sladTfehViEelldeeq++qpse nkdadl
+  B5FXH8_TAEGU/9-96  7 TMVISYFTCMKAAPMKEASLRGKGSLAYPGLRTHGTIESINGPSASSRGLTSLADTFEHVIEELLDEEQDIQPSEGNKDADL 88
+                       69*******************************************************************************8 PP
+
+
+
+Internal pipeline statistics summary:
+-------------------------------------
+Query sequence(s):                         1  (88 residues)
+Target model(s):                           1  (123 nodes)
+Passed MSV filter:                         1  (1); expected 0.0 (0.02)
+Passed bias filter:                        1  (1); expected 0.0 (0.02)
+Passed Vit filter:                         1  (1); expected 0.0 (0.001)
+Passed Fwd filter:                         1  (1); expected 0.0 (1e-05)
+Initial search space (Z):                  1  [actual number of targets]
+Domain search space  (domZ):               1  [number of targets reported over threshold]
+# CPU time: 0.00u 0.00s 00:00:00.00 Elapsed: 00:00:00.00
+# Mc/sec: inf
+//
+Query:       C7S4H5_BLACI/1-81  [L=81]
+Description: PB000001; Pfam-B_1;
+Scores for complete sequence (score includes all domains):
+   --- full sequence ---   --- best 1 domain ---    -#dom-
+    E-value  score  bias    E-value  score  bias    exp  N  Model    Description
+    ------- ------ -----    ------- ------ -----   ---- --  -------- -----------
+    8.2e-43  131.9   0.0      9e-43  131.8   0.0    1.0  1  Pfam-B_1 
+
+
+Domain annotation for each model (and alignments):
+>> Pfam-B_1  
+   #    score  bias  c-Evalue  i-Evalue hmmfrom  hmm to    alifrom  ali to    envfrom  env to     acc
+ ---   ------ ----- --------- --------- ------- -------    ------- -------    ------- -------    ----
+   1 !  131.8   0.0     9e-43     9e-43       2      82 ..       1      81 []       1      81 [] 0.99
+
+  Alignments for each domain:
+  == domain 1    score: 131.8 bits;  conditional E-value: 9e-43
+           Pfam-B_1  2 vvislfscmkaapmkeasvrgqgslaypglrtrGtleslggpragsrglssladTfehViEelldeeqkvqpseenkdadl 82
+                       +vis+fscmkaapmke+s+rg gslaypglrt+G+le+lggp++++ gl+sladTfehViEellde++ +qps++nkdadl
+  C7S4H5_BLACI/1-81  1 MVISYFSCMKAAPMKEVSIRGPGSLAYPGLRTQGNLENLGGPNDAAGGLTSLADTFEHVIEELLDEQEVIQPSKQNKDADL 81
+                       79******************************************************************************8 PP
+
+
+
+Internal pipeline statistics summary:
+-------------------------------------
+Query sequence(s):                         1  (81 residues)
+Target model(s):                           1  (123 nodes)
+Passed MSV filter:                         1  (1); expected 0.0 (0.02)
+Passed bias filter:                        1  (1); expected 0.0 (0.02)
+Passed Vit filter:                         1  (1); expected 0.0 (0.001)
+Passed Fwd filter:                         1  (1); expected 0.0 (1e-05)
+Initial search space (Z):                  1  [actual number of targets]
+Domain search space  (domZ):               1  [number of targets reported over threshold]
+# CPU time: 0.00u 0.00s 00:00:00.00 Elapsed: 00:00:00.00
+# Mc/sec: inf
+//
+Query:       D2H790_AILME/1-94  [L=94]
+Description: PB000001; Pfam-B_1;
+Scores for complete sequence (score includes all domains):
+   --- full sequence ---   --- best 1 domain ---    -#dom-
+    E-value  score  bias    E-value  score  bias    exp  N  Model    Description
+    ------- ------ -----    ------- ------ -----   ---- --  -------- -----------
+    1.7e-08   21.1   1.6    1.9e-08   20.9   1.1    1.1  1  Pfam-B_1 
+
+
+Domain annotation for each model (and alignments):
+>> Pfam-B_1  
+   #    score  bias  c-Evalue  i-Evalue hmmfrom  hmm to    alifrom  ali to    envfrom  env to     acc
+ ---   ------ ----- --------- --------- ------- -------    ------- -------    ------- -------    ----
+   1 !   20.9   1.1   1.9e-08   1.9e-08       9      80 ..       9      92 ..       1      94 [] 0.74
+
+  Alignments for each domain:
+  == domain 1    score: 20.9 bits;  conditional E-value: 1.9e-08
+           Pfam-B_1  9 cmkaapmkeasvrgqgslaypglrtrGtleslggpragsr..gl................ssladTfehViEelldeeqkvqpseenkda 80
+                       +  ++p+ ++  +gq ++++++ +++G l   g+p++g++  +l                 +l  Tf+++++e+++ee++v  +   k++
+  D2H790_AILME/1-94  9 S--RTPASAMVDEGQPASEEEEEAEHGLLL--GQPSSGAAaePLeeedeegddefddeapEEL--TFASAQAEAREEERRVXDKTLLKEK 92
+                       3..48899999*******************..6666666533778877777666655533366..***************9964445555 PP
+
+
+
+Internal pipeline statistics summary:
+-------------------------------------
+Query sequence(s):                         1  (94 residues)
+Target model(s):                           1  (123 nodes)
+Passed MSV filter:                         1  (1); expected 0.0 (0.02)
+Passed bias filter:                        1  (1); expected 0.0 (0.02)
+Passed Vit filter:                         1  (1); expected 0.0 (0.001)
+Passed Fwd filter:                         1  (1); expected 0.0 (1e-05)
+Initial search space (Z):                  1  [actual number of targets]
+Domain search space  (domZ):               1  [number of targets reported over threshold]
+# CPU time: 0.00u 0.00s 00:00:00.00 Elapsed: 00:00:00.00
+# Mc/sec: inf
+//
+Query:       D3ZAQ6_RAT/1-96  [L=96]
+Description: PB000001; Pfam-B_1;
+Scores for complete sequence (score includes all domains):
+   --- full sequence ---   --- best 1 domain ---    -#dom-
+    E-value  score  bias    E-value  score  bias    exp  N  Model    Description
+    ------- ------ -----    ------- ------ -----   ---- --  -------- -----------
+    1.7e-11   30.8   1.2    2.2e-11   30.4   0.8    1.1  1  Pfam-B_1 
+
+
+Domain annotation for each model (and alignments):
+>> Pfam-B_1  
+   #    score  bias  c-Evalue  i-Evalue hmmfrom  hmm to    alifrom  ali to    envfrom  env to     acc
+ ---   ------ ----- --------- --------- ------- -------    ------- -------    ------- -------    ----
+   1 !   30.4   0.8   2.2e-11   2.2e-11       1      78 [.       1      87 [.       1      95 [. 0.82
+
+  Alignments for each domain:
+  == domain 1    score: 30.4 bits;  conditional E-value: 2.2e-11
+         Pfam-B_1  1 vvvislfscmkaapmkeasvrgqgslaypglrtrGtleslggpragsrgl...........ssladTfehViEelldeeqkvqpseenk 78
+                     +v+++++s++  ap++++  ++q ++++++ +++G l    +++a++ +l            +l  Tf+++++e+++ee +v++s +  
+  D3ZAQ6_RAT/1-96  1 MVQLRPRSSRIPAPAEAMVDEDQAASEEEEEAEHGLLLAQPSSGAAAEPLdeeedgddeapEEL--TFASAQAEAREEELRVRESARRD 87
+                     68899*********************************77777777778876666655533355..*****************987743 PP
+
+
+
+Internal pipeline statistics summary:
+-------------------------------------
+Query sequence(s):                         1  (96 residues)
+Target model(s):                           1  (123 nodes)
+Passed MSV filter:                         1  (1); expected 0.0 (0.02)
+Passed bias filter:                        1  (1); expected 0.0 (0.02)
+Passed Vit filter:                         1  (1); expected 0.0 (0.001)
+Passed Fwd filter:                         1  (1); expected 0.0 (1e-05)
+Initial search space (Z):                  1  [actual number of targets]
+Domain search space  (domZ):               1  [number of targets reported over threshold]
+# CPU time: 0.01u 0.00s 00:00:00.01 Elapsed: 00:00:00.01
+# Mc/sec: 1.18
+//
+Query:       E7DZT2_9SAUR/1-69  [L=69]
+Description: PB000001; Pfam-B_1;
+Scores for complete sequence (score includes all domains):
+   --- full sequence ---   --- best 1 domain ---    -#dom-
+    E-value  score  bias    E-value  score  bias    exp  N  Model    Description
+    ------- ------ -----    ------- ------ -----   ---- --  -------- -----------
+    2.6e-35  107.7   0.0    2.8e-35  107.6   0.0    1.0  1  Pfam-B_1 
+
+
+Domain annotation for each model (and alignments):
+>> Pfam-B_1  
+   #    score  bias  c-Evalue  i-Evalue hmmfrom  hmm to    alifrom  ali to    envfrom  env to     acc
+ ---   ------ ----- --------- --------- ------- -------    ------- -------    ------- -------    ----
+   1 !  107.6   0.0   2.8e-35   2.8e-35      14      82 ..       1      69 []       1      69 [] 0.99
+
+  Alignments for each domain:
+  == domain 1    score: 107.6 bits;  conditional E-value: 2.8e-35
+           Pfam-B_1 14 pmkeasvrgqgslaypglrtrGtleslggpragsrglssladTfehViEelldeeqkvqpseenkdadl 82
+                       pmke+s+r  gslaypglrt+Gtle+ ggp+++srgl+sladTfehViEellde+q++qps+enk+adl
+  E7DZT2_9SAUR/1-69  1 PMKEISIRSXGSLAYPGLRTQGTLENPGGPNDASRGLTSLADTFEHVIEELLDEQQDIQPSKENKEADL 69
+                       8*******************************************************************8 PP
+
+
+
+Internal pipeline statistics summary:
+-------------------------------------
+Query sequence(s):                         1  (69 residues)
+Target model(s):                           1  (123 nodes)
+Passed MSV filter:                         1  (1); expected 0.0 (0.02)
+Passed bias filter:                        1  (1); expected 0.0 (0.02)
+Passed Vit filter:                         1  (1); expected 0.0 (0.001)
+Passed Fwd filter:                         1  (1); expected 0.0 (1e-05)
+Initial search space (Z):                  1  [actual number of targets]
+Domain search space  (domZ):               1  [number of targets reported over threshold]
+# CPU time: 0.00u 0.00s 00:00:00.00 Elapsed: 00:00:00.00
+# Mc/sec: inf
+//
+Query:       F1BZW2_CALMI/1-41  [L=41]
+Description: PB000001; Pfam-B_1;
+Scores for complete sequence (score includes all domains):
+   --- full sequence ---   --- best 1 domain ---    -#dom-
+    E-value  score  bias    E-value  score  bias    exp  N  Model    Description
+    ------- ------ -----    ------- ------ -----   ---- --  -------- -----------
+      9e-14   38.1   0.0    9.7e-14   38.0   0.0    1.0  1  Pfam-B_1 
+
+
+Domain annotation for each model (and alignments):
+>> Pfam-B_1  
+   #    score  bias  c-Evalue  i-Evalue hmmfrom  hmm to    alifrom  ali to    envfrom  env to     acc
+ ---   ------ ----- --------- --------- ------- -------    ------- -------    ------- -------    ----
+   1 !   38.0   0.0   9.7e-14   9.7e-14       1      35 [.       7      41 .]       7      41 .] 0.98
+
+  Alignments for each domain:
+  == domain 1    score: 38.0 bits;  conditional E-value: 9.7e-14
+           Pfam-B_1  1 vvvislfscmkaapmkeasvrgqgslaypglrtrG 35
+                       ++vis+f+c+kaapmkea+ rgqg + yp+lr +G
+  F1BZW2_CALMI/1-41  7 TMVISYFGCLKAAPMKEAGGRGQGGSLYPALRPHG 41
+                       69*******************************99 PP
+
+
+
+Internal pipeline statistics summary:
+-------------------------------------
+Query sequence(s):                         1  (41 residues)
+Target model(s):                           1  (123 nodes)
+Passed MSV filter:                         1  (1); expected 0.0 (0.02)
+Passed bias filter:                        1  (1); expected 0.0 (0.02)
+Passed Vit filter:                         1  (1); expected 0.0 (0.001)
+Passed Fwd filter:                         1  (1); expected 0.0 (1e-05)
+Initial search space (Z):                  1  [actual number of targets]
+Domain search space  (domZ):               1  [number of targets reported over threshold]
+# CPU time: 0.00u 0.00s 00:00:00.00 Elapsed: 00:00:00.00
+# Mc/sec: inf
+//
+Query:       F6JXV7_TRASC/9-96  [L=88]
+Description: PB000001; Pfam-B_1;
+Scores for complete sequence (score includes all domains):
+   --- full sequence ---   --- best 1 domain ---    -#dom-
+    E-value  score  bias    E-value  score  bias    exp  N  Model    Description
+    ------- ------ -----    ------- ------ -----   ---- --  -------- -----------
+      9e-46  141.5   0.0      1e-45  141.3   0.0    1.0  1  Pfam-B_1 
+
+
+Domain annotation for each model (and alignments):
+>> Pfam-B_1  
+   #    score  bias  c-Evalue  i-Evalue hmmfrom  hmm to    alifrom  ali to    envfrom  env to     acc
+ ---   ------ ----- --------- --------- ------- -------    ------- -------    ------- -------    ----
+   1 !  141.3   0.0     1e-45     1e-45       1      82 [.       7      88 .]       7      88 .] 0.99
+
+  Alignments for each domain:
+  == domain 1    score: 141.3 bits;  conditional E-value: 1e-45
+           Pfam-B_1  1 vvvislfscmkaapmkeasvrgqgslaypglrtrGtleslggpragsrglssladTfehViEelldeeqkvqpseenkdadl 82
+                       ++vis+fscmkaapmkeasvrg gslaypglrt+Gtlesl+gp++gsrgl+sladTfehViEelldeeq+vqpseenkdadl
+  F6JXV7_TRASC/9-96  7 TMVISYFSCMKAAPMKEASVRGLGSLAYPGLRTHGTLESLSGPNTGSRGLTSLADTFEHVIEELLDEEQDVQPSEENKDADL 88
+                       69*******************************************************************************8 PP
+
+
+
+Internal pipeline statistics summary:
+-------------------------------------
+Query sequence(s):                         1  (88 residues)
+Target model(s):                           1  (123 nodes)
+Passed MSV filter:                         1  (1); expected 0.0 (0.02)
+Passed bias filter:                        1  (1); expected 0.0 (0.02)
+Passed Vit filter:                         1  (1); expected 0.0 (0.001)
+Passed Fwd filter:                         1  (1); expected 0.0 (1e-05)
+Initial search space (Z):                  1  [actual number of targets]
+Domain search space  (domZ):               1  [number of targets reported over threshold]
+# CPU time: 0.00u 0.01s 00:00:00.01 Elapsed: 00:00:00.00
+# Mc/sec: inf
+//
+Query:       F6QKQ6_ORNAN/1-109  [L=61]
+Description: PB000001; Pfam-B_1;
+Scores for complete sequence (score includes all domains):
+   --- full sequence ---   --- best 1 domain ---    -#dom-
+    E-value  score  bias    E-value  score  bias    exp  N  Model    Description
+    ------- ------ -----    ------- ------ -----   ---- --  -------- -----------
+      1e-13   38.0   0.0    1.1e-13   37.9   0.0    1.0  1  Pfam-B_1 
+
+
+Domain annotation for each model (and alignments):
+>> Pfam-B_1  
+   #    score  bias  c-Evalue  i-Evalue hmmfrom  hmm to    alifrom  ali to    envfrom  env to     acc
+ ---   ------ ----- --------- --------- ------- -------    ------- -------    ------- -------    ----
+   1 !   37.9   0.0   1.1e-13   1.1e-13      10      79 ..       1      60 [.       1      61 [] 0.95
+
+  Alignments for each domain:
+  == domain 1    score: 37.9 bits;  conditional E-value: 1.1e-13
+            Pfam-B_1 10 mkaapmkeasvrgqgslaypglrtrGtleslggpragsr.glssladTfehViEelldeeqkvqpseenkd 79
+                        m+++++k++++++++ ++++++r+rG+++  +g+ra+s+ + s+l+++         de++++qp ++n++
+  F6QKQ6_ORNAN/1-109  1 MHRLSFKNLKSTAENLWNSHFIRLRGSIK--NGSRARSPnPTSGLSEG---------DEGRPSQPLPRNQE 60
+                        99***************************..999999997789*****.........************98 PP
+
+
+
+Internal pipeline statistics summary:
+-------------------------------------
+Query sequence(s):                         1  (61 residues)
+Target model(s):                           1  (123 nodes)
+Passed MSV filter:                         1  (1); expected 0.0 (0.02)
+Passed bias filter:                        1  (1); expected 0.0 (0.02)
+Passed Vit filter:                         1  (1); expected 0.0 (0.001)
+Passed Fwd filter:                         1  (1); expected 0.0 (1e-05)
+Initial search space (Z):                  1  [actual number of targets]
+Domain search space  (domZ):               1  [number of targets reported over threshold]
+# CPU time: 0.00u 0.00s 00:00:00.00 Elapsed: 00:00:00.00
+# Mc/sec: inf
+//
