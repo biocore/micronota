@@ -1,5 +1,4 @@
-# Check on http://lint.travis-ci.org/ after modifying it!  Originally
-# modified from https://gist.github.com/dan-blanchard/7045057
+# Check on http://lint.travis-ci.org/ after modifying it!
 sudo: false
 language: python
 env:
@@ -15,14 +14,10 @@ before_install:
   # Update conda itself
   - conda update --yes conda
 install:
-  - conda create --yes -n env_name python=$PYTHON_VERSION flake8 nose pep8 scikit-bio click
-  - source activate env_name
-  - pip install burrito coveralls
+  - conda create --yes -n test_env python=$PYTHON_VERSION --file ci/conda_requirements.txt
+  - source activate test_env
+  - pip install -r ci/pip_requirements.txt
   - pip install . --no-deps
-  - wget https://github.com/hyattpd/Prodigal/releases/download/v2.6.2/prodigal.linux
-  - mv prodigal.linux prodigal
-  - chmod +x prodigal
-  - export PATH=$PATH:$PWD
 script:
   - WITH_COVERAGE=TRUE make test
 after_success:
