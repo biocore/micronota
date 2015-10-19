@@ -19,10 +19,8 @@ install:
   - source activate env_name
   - pip install burrito coveralls
   - pip install . --no-deps
-  - wget https://github.com/hyattpd/Prodigal/releases/download/v2.6.2/prodigal.linux
-  - mv prodigal.linux prodigal
-  - chmod +x prodigal
-  - export PATH=$PATH:$PWD
+  - conda install --yes -c https://conda.anaconda.org/biocore infernal
+  - conda install --yes -c https://conda.anaconda.org/biocore prodigal
 script:
   - WITH_COVERAGE=TRUE make test
 after_success:

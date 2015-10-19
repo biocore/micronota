@@ -70,7 +70,7 @@ class CMScanTests(InfernalTests):
     def test_cmscan_fasta(self):
         params = {'--rfam': None, '--noali': None}
         for f in self.positive_fps:
-            res = cmscan_fasta(self.cm_fp, f, self.temp_fp[1], 0.1, 1, params)
+            res = cmscan_fasta(self.cm_fp, f, self.temp_fp, 0.1, 1, params)
             res['StdOut'].close()
             res['StdErr'].close()
             obs = res['--tblout']

@@ -240,7 +240,7 @@ def cmscan_sequence(cm, seq, evalue=0.01, cores=0, params=None):
     seq_fd, seq_fp = mkstemp()
     with open(seq_fp, 'w') as f:
         seq.write(f, format='fasta')
-    app.Parameters['--tblout'].oin(table_fp)
+    app.Parameters['--tblout'].on(table_fp)
     res = app([cm, seq_fp])
     # todo: read table_fp and merge it into seq object
     res['--tblout']
