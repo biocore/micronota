@@ -1,0 +1,2 @@
+BSD
+https://github.com/biocore/scikit-bio/blob/master/COPYING.txt

@@ -1,0 +1,2 @@
+GPL
+https://github.com/hyattpd/Prodigal/blob/GoogleImport/LICENSE

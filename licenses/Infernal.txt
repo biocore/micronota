@@ -1,0 +1,2 @@
+GPLv3
+http://selab.janelia.org/software/infernal/LICENSE
