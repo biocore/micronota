@@ -10,6 +10,8 @@
 
 from tempfile import mkstemp
 from os import getcwd, remove, close
+from os.path import join
+from functools import partial
 from unittest import TestCase, main
 
 from skbio.util import get_data_path
@@ -23,6 +25,8 @@ from micronota.bfillings.infernal import (
 class InfernalTests(TestCase):
     def setUp(self):
         self.temp_fd, self.temp_fp = mkstemp()
+        self.get_infernal_path = partial(
+            get_data_path, subfolder=join('data', 'infernal'))
 
         self.positive_fps = list(map(get_data_path, [
             # modified from NC_018498.gbk
@@ -31,7 +35,7 @@ class InfernalTests(TestCase):
         self.negative_fps = list(map(get_data_path, [
             'empty',
             'whitespace_only']))
-        self.cm_fp = get_data_path('RF00522.cm')
+        self.cm_fp = self.get_infernal_path('RF00522.cm')
 
     def tearDown(self):
         # remove the tempdir and contents
