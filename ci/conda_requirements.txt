@@ -2,7 +2,6 @@ pip
 nose
 pep8
 flake8
-click
 scikit-bio
 infernal
 hmmer
