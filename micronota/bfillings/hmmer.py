@@ -20,7 +20,7 @@ class HMMScan(ModelScan):
     '''hmmscan application controller.
 
     hmmscan is used to search a sequence against a covariance model database.
-    This wrapper is tested for INFERNAL 1.1.1 (July 2014)
+    This wrapper is tested for HMMER 3.1b1 (May 2013)
     '''
     _command = "hmmscan"
 
@@ -83,7 +83,7 @@ class HMMFetch(ModelFetch):
 
     hmmfetch is used to get a covariance model by name or accession
     from a HMM database.
-    This wrapper is tested for INFERNAL 1.1.1 (July 2014).
+    This wrapper is tested for HMMER 3.1b1 (May 2013).
     '''
     pass
 
@@ -92,7 +92,7 @@ class HMMPress(ModelPress):
     '''hmmpress application controller.
 
     hmmpress is used to format a HMM database into a binary format for hmmscan.
-    This wrapper is tested for INFERNAL 1.1.1 (July 2014).
+    This wrapper is tested for HMMER 3.1b1 (May 2013).
     '''
     _command = 'hmmpress'
 
