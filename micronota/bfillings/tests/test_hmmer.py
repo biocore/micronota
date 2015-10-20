@@ -8,18 +8,20 @@ from os.path import join
 from micronota.bfillings.hmmer import (HMMScan, hmmscan_fasta,
                                        hmmpress_hmm)
 
+
 class HMMERTests(TestCase):
 
     def setUp(self):
         self.get_hmmer_path = partial(
             get_data_path, subfolder=join('data', 'hmmer'))
         self.hmm_fp = self.get_hmmer_path('Pfam_B_1.hmm')
-        self.positive_fps = list(map( self.get_hmmer_path,
-                                      ['Pfam_B_1.fasta']))
+        self.positive_fps = list(map(self.get_hmmer_path,
+                                     ['Pfam_B_1.fasta']))
         self.negative_fps = list(map(get_data_path, [
             'empty',
             'whitespace_only']))
         self.temp_fd, self.temp_fp = mkstemp()
+
     def tearDown(self):
         close(self.temp_fd)
         remove(self.temp_fp)
@@ -93,5 +95,5 @@ class HMMPressTests(HMMERTests):
             with open('.'.join([self.hmm_fp, i]), 'rb') as f:
                 self.assertEqual(f.read(), e)
 
-if __name__=="__main__":
+if __name__ == "__main__":
     main()
