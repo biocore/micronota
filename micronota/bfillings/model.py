@@ -6,14 +6,8 @@
 # The full license is in the file COPYING.txt, distributed with this software.
 # ----------------------------------------------------------------------------
 
-from os import remove, close
-from tempfile import mkstemp
-
-from skbio import DNA, RNA
-from burrito.parameters import FlagParameter, ValuedParameter
+from burrito.parameters import FlagParameter
 from burrito.util import CommandLineApplication, ResultPath
-
-from .util import _get_parameter
 
 
 class ModelFetch(CommandLineApplication):
