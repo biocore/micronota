@@ -16,6 +16,9 @@ class HMMERTests(TestCase):
         self.hmm_fp = self.get_hmmer_path('Pfam_B_1.hmm')
         self.positive_fps = list(map( self.get_hmmer_path,
                                       ['Pfam_B_1.fasta']))
+        self.negative_fps = list(map(get_data_path, [
+            'empty',
+            'whitespace_only']))
         self.temp_fd, self.temp_fp = mkstemp()
     def tearDown(self):
         close(self.temp_fd)
@@ -44,6 +47,12 @@ class HMMScanTests(HMMERTests):
             self.assertEqual(c.BaseCommand, cmd)
             c.Parameters[i].off()
 
+    def test_hmmscan_fasta_wrong_input(self):
+        for fp in self.negative_fps:
+            with self.assertRaisesRegex(
+                    ApplicationError,
+                    r'Error: Sequence file .* is empty or misformatted'):
+                hmmscan_fasta(self.hmm_fp, fp, 'foo')
 
     def test_hmmscan_fasta(self):
         params = {'--noali': None}

@@ -11,6 +11,7 @@
 import tempfile
 import shutil
 from os import getcwd
+from os.path import join
 from unittest import TestCase, main
 from functools import partial
 from skbio.util import get_data_path
@@ -22,8 +23,8 @@ from micronota.bfillings.prodigal import Prodigal, predict_genes
 class ProdigalTests(TestCase):
     def setUp(self):
         self.temp_dir = tempfile.mkdtemp()
-        self.get_prodigal_path = partial(get_data_path,
-                                         subfolder='data/prodigal')
+        self.get_prodigal_path = partial(
+            get_data_path, subfolder=join('data', 'prodigal'))
 
         self.positive_fps = list(map(self.get_prodigal_path, [
             # modified from NC_018498.gbk
@@ -44,7 +45,7 @@ class ProdigalTests(TestCase):
             {'-o': 'gff', '-a': 'faa', '-d': 'fna'},
             {'-o': 'gbk', '-a': 'faa', '-d': 'fna'}]
 
-        self.negative_fps = list(map(self.get_prodigal_path, [
+        self.negative_fps = list(map(get_data_path, [
             'empty',
             'whitespace_only']))
 
