@@ -16,6 +16,7 @@ from burrito.util import CommandLineApplication, ResultPath
 from .util import _get_parameter
 from .model import ModelFetch, ModelPress, ModelScan
 
+
 class HMMScan(ModelScan):
     '''hmmscan application controller.
 
@@ -30,9 +31,10 @@ class HMMScan(ModelScan):
         '--F1',
         # Vit threshold: promote hits w/ P <= F2  [1e-3]
         '--F2',
-        #Fwd threshold: promote hits w/ P <= F3  [1e-5]
+        # Fwd threshold: promote hits w/ P <= F3  [1e-5]
         '--F3',
-        '--nobias' # turn off composition bias filter
+        # turn off composition bias filter
+        '--nobias'
     ] + ModelScan._valued_nonpath_options
 
     _flag_options = [

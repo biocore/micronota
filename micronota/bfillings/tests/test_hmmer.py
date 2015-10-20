@@ -2,9 +2,11 @@ from tempfile import mkstemp
 from os import getcwd, remove, close
 from unittest import TestCase, main
 from functools import partial
+from os.path import join
+
 from skbio.util import get_data_path
 from burrito.util import ApplicationError
-from os.path import join
+
 from micronota.bfillings.hmmer import (HMMScan, hmmscan_fasta,
                                        hmmpress_hmm)
 

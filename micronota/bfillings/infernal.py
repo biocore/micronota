@@ -16,6 +16,7 @@ from burrito.util import CommandLineApplication, ResultPath
 from .util import _get_parameter
 from .model import ModelFetch, ModelPress, ModelScan
 
+
 class CMScan(ModelScan):
     '''cmscan application controller.
 
