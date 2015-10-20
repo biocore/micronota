@@ -28,7 +28,7 @@ class InfernalTests(TestCase):
         self.get_infernal_path = partial(
             get_data_path, subfolder=join('data', 'infernal'))
 
-        self.positive_fps = list(map(get_data_path, [
+        self.positive_fps = list(map(self.get_infernal_path, [
             # modified from NC_018498.gbk
             'NC_018498.fna',
             ]))

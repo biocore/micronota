@@ -4,16 +4,16 @@ from unittest import TestCase, main
 from functools import partial
 from skbio.util import get_data_path
 from burrito.util import ApplicationError
-
-from micronota.bfillings.hmmer import HMMscan, hmmscan_fasta
-
+from os.path import join
+from micronota.bfillings.hmmer import (HMMScan, hmmscan_fasta,
+                                       hmmpress_hmm)
 
 class HMMERTests(TestCase):
 
     def setUp(self):
-        self.get_hmmer_path = partial(get_data_path,
-                                      subfolder='hmmer')
-        self.hmmdb_fp = self.get_hmmer_path('Pfam_B_1.hmm')
+        self.get_hmmer_path = partial(
+            get_data_path, subfolder=join('data', 'hmmer'))
+        self.hmm_fp = self.get_hmmer_path('Pfam_B_1.hmm')
         self.positive_fps = list(map( self.get_hmmer_path,
                                       ['Pfam_B_1.fasta']))
         self.temp_fd, self.temp_fp = mkstemp()
@@ -21,10 +21,10 @@ class HMMERTests(TestCase):
         close(self.temp_fd)
         remove(self.temp_fp)
 
-class HMMscanTest(HMMERTests):
+
+class HMMScanTests(HMMERTests):
     def test_base_command(self):
-        c = HMMscan()
-        print(c.BaseCommand)
+        c = HMMScan()
         self.assertEqual(
             c.BaseCommand,
             'cd "%s/"; %s' % (getcwd(), c._command))
@@ -44,11 +44,11 @@ class HMMscanTest(HMMERTests):
             self.assertEqual(c.BaseCommand, cmd)
             c.Parameters[i].off()
 
-    def test_scan_hmm_fasta(self):
-        params = {'--noali': None,
-                  '--tblout': self.temp_fp[1]}
+
+    def test_hmmscan_fasta(self):
+        params = {'--noali': None}
         for f in self.positive_fps:
-            res = hmmscan_fasta(self.hmmdb_fp, f, params)
+            res = hmmscan_fasta(self.hmm_fp, f, self.temp_fp, 0.1, 1, params)
             res['StdOut'].close()
             res['StdErr'].close()
             obs = res['--tblout']
@@ -70,7 +70,7 @@ class HMMPressTests(HMMERTests):
 
     def test_compress_hmm(self):
         # .i1i file is different from run to run. skip it.
-        suffices = ('i1f', 'i1m', 'i1p')
+        suffices = ('h3f', 'h3m', 'h3p')
         exp = []
         for i in suffices:
             with open('.'.join([self.hmm_fp, i]), 'rb') as f:

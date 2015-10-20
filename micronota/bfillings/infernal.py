@@ -14,33 +14,17 @@ from burrito.parameters import FlagParameter, ValuedParameter
 from burrito.util import CommandLineApplication, ResultPath
 
 from .util import _get_parameter
+from .model import ModelFetch, ModelPress, ModelScan
 
-
-class CMScan(CommandLineApplication):
+class CMScan(ModelScan):
     '''cmscan application controller.
 
     cmscan is used to search a sequence against a covariance model database.
     This wrapper is tested for INFERNAL 1.1.1 (July 2014)
     '''
     _command = "cmscan"
-    _suppress_stderr = False
-
-    _valued_path_options = [
-        # -o <f> Save the output to a file <f>. The default
-        # is to write it to standard output.
-        '-o',
-        # save parseable table of hits to file
-        '--tblout'
-    ]
+    _valued_path_options = ModelScan._valued_path_options
     _valued_nonpath_options = [
-        # report sequences <= this E-value threshold in output [10.0]  (x>0)
-        '-E',
-        # report sequences >= this score threshold in output
-        '-T',
-        # consider sequences <= this E-value threshold as significant  [0.01]
-        '--incE',
-        # consider sequences >= this score threshold as significant
-        '--incT',
         # set filters to defaults used for a search space of size Mb
         '--FZ',
         # with --mid, set P-value threshold for HMM stages to  [0.02]
@@ -51,28 +35,11 @@ class CMScan(CommandLineApplication):
         '--smxsize',
         # set W (expected max hit len) as * cm->clen (model len)
         '--wcx',
-        # assert query <seqfile> is in format: no autodetection
-        '--qformat',
         # configure CMs listed in file in glocal mode, others in local
         '--glist',
-        # number of parallel CPU workers to use for multithreads
-        '--cpu'
-    ]
+    ] + ModelScan._valued_nonpath_options
+
     _flag_options = [
-        # report extra information; mainly useful for debugging
-        '--verbose',
-        # prefer accessions over names in output
-        '--acc',
-        # dont output alignments, so output is smaller
-        '--noali',
-        # unlimit ASCII text output line width
-        '--notextw',
-        # use CM's GA gathering cutoffs as reporting thresholds
-        '--cut_ga',
-        # use CM's NC noise cutoffs as reporting thresholds
-        '--cut_nc',
-        # use CM's TC trusted cutoffs as reporting thresholds
-        '--cut_tc',
         # Options controlling acceleration heuristics*:
         # turn all heuristic filters off (slow)
         '--max',
@@ -100,7 +67,8 @@ class CMScan(CommandLineApplication):
         '--toponly',
         # only search the bottom strand
         '--bottomonly'
-    ]
+    ] + ModelScan._flag_options
+
     _parameters = {}
     _parameters.update({
         i: _get_parameter(
@@ -114,20 +82,8 @@ class CMScan(CommandLineApplication):
         i: _get_parameter(FlagParameter, i)
         for i in _flag_options})
 
-    def _accept_exit_status(self, exit_status):
-        return exit_status == 0
 
-    def _get_result_paths(self, data):
-        result = {}
-        for i in self._valued_path_options:
-            o = self.Parameters[i]
-            if o.isOn():
-                out_fp = self._absolute(o.Value)
-                result[i] = ResultPath(Path=out_fp, IsWritten=True)
-        return result
-
-
-class CMFetch(CommandLineApplication):
+class CMFetch(ModelFetch):
     '''cmfetch application controller.
 
     cmfetch is used to get a covariance model by name or accession
@@ -137,20 +93,13 @@ class CMFetch(CommandLineApplication):
     pass
 
 
-class CMPress(CommandLineApplication):
+class CMPress(ModelPress):
     '''cmpress application controller.
 
     cmpress is used to format a CM database into a binary format for cmscan.
     This wrapper is tested for INFERNAL 1.1.1 (July 2014).
     '''
-    _suppress_stderr = False
     _command = 'cmpress'
-    _parameters = {
-        # force overwrite
-        '-F': FlagParameter(Prefix='-', Name='F')}
-
-    def _accept_exit_status(self, exit_status):
-        return exit_status == 0
 
 
 def cmpress_cm(cm, force=False):
@@ -203,51 +152,3 @@ def cmscan_fasta(cm, in_fp, out_fp, evalue=0.01, cores=0, params=None):
     app.Parameters['--cpu'].on(cores)
     app.Parameters['--tblout'].on(out_fp)
     return app([cm, in_fp])
-
-
-def cmscan_sequence(cm, seq, evalue=0.01, cores=0, params=None):
-    '''scan a `skbio.Sequence` against a covariance model database.
-
-    Parameters
-    ----------
-    cm : str
-        The file path to CM database.
-    seq : nucleotide str, skbio.Sequence, or its child classes
-        If it is a str, it must be able to read into `skbio.DNA` or
-        `skbio.RNA`.
-    cores : int
-        Number of CPU cores. Default to zero, i.e. running in serial-only mode.
-    evalue : float
-        Default to 0.01. Threshold E-value.
-    params : dict
-        Other command line parameters for cmscan. key is the option
-        (e.g. "-T") and value is the value for the option (e.g. "50").
-        If the option is a flag, set the value to None.
-
-    Returns
-    -------
-    Same data type as seq with added ncRNA annotation as positional_metadata.
-    '''
-    if isinstance(seq, str):
-        try:
-            seq = DNA(seq)
-        except ValueError:
-            seq = RNA(seq)
-    app = CMScan(InputHandler='_input_as_paths', params=params)
-    app.Parameters['--incE'].on(evalue)
-    app.Parameters['--cpu'].on(cores)
-    table_fd, table_fp = mkstemp()
-    seq_fd, seq_fp = mkstemp()
-    with open(seq_fp, 'w') as f:
-        seq.write(f, format='fasta')
-    app.Parameters['--tblout'].on(table_fp)
-    res = app([cm, seq_fp])
-    # todo: read table_fp and merge it into seq object
-    res['--tblout']
-    # remove temp files
-    remove(table_fp)
-    remove(seq_fp)
-    # don't forget to close the file descriptors
-    close(table_fd)
-    close(seq_fd)
-    return seq
