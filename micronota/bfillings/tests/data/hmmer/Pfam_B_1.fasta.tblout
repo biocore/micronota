@@ -1,0 +1,31 @@
+#                                                               --- full sequence ---- --- best 1 domain ---- --- domain number estimation ----
+# target name        accession  query name           accession    E-value  score  bias   E-value  score  bias   exp reg clu  ov env dom rep inc description of target
+#------------------- ---------- -------------------- ---------- --------- ------ ----- --------- ------ -----   --- --- --- --- --- --- --- --- ---------------------
+Pfam-B_1             PB000001   A2AII2_MOUSE/9-99    -            4.4e-43  132.8   0.0   4.9e-43  132.6   0.0   1.0   1   0   0   1   1   1   1 -
+Pfam-B_1             PB000001   A2ICR4_AMBME/1-89    -            1.4e-42  131.2   0.0   1.5e-42  131.1   0.0   1.0   1   0   0   1   1   1   1 -
+Pfam-B_1             PB000001   A3FPG9_XENTR/1-89    -            1.8e-39  121.1   0.0     2e-39  121.0   0.0   1.0   1   0   0   1   1   1   1 -
+Pfam-B_1             PB000001   A9QWG9_9SARC/2-79    -            4.5e-36  110.2   0.0   4.9e-36  110.0   0.0   1.0   1   0   0   1   1   1   1 -
+Pfam-B_1             PB000001   A9QWH0_9SALA/1-80    -            1.6e-39  121.3   0.0   1.8e-39  121.2   0.0   1.0   1   0   0   1   1   1   1 -
+Pfam-B_1             PB000001   B4Z8K8_9AVES/1-80    -            1.7e-42  130.9   0.0   1.9e-42  130.8   0.0   1.0   1   0   0   1   1   1   1 -
+Pfam-B_1             PB000001   B4Z8L0_EUDEL/1-80    -            2.1e-40  124.2   0.0   2.3e-40  124.0   0.0   1.0   1   0   0   1   1   1   1 -
+Pfam-B_1             PB000001   B4Z8L1_NOTPE/1-80    -            8.1e-41  125.5   0.0   8.8e-41  125.4   0.0   1.0   1   0   0   1   1   1   1 -
+Pfam-B_1             PB000001   B4Z8N7_BOMGA/1-80    -            6.5e-42  129.0   0.0   7.1e-42  128.9   0.0   1.0   1   0   0   1   1   1   1 -
+Pfam-B_1             PB000001   B4Z8V1_MERNU/1-80    -            1.3e-44  137.7   0.0   1.4e-44  137.6   0.0   1.0   1   0   0   1   1   1   1 -
+Pfam-B_1             PB000001   B5FXH8_TAEGU/9-96    -            3.2e-44  136.5   0.0   3.5e-44  136.3   0.0   1.0   1   0   0   1   1   1   1 -
+Pfam-B_1             PB000001   C7S4H5_BLACI/1-81    -            8.2e-43  131.9   0.0     9e-43  131.8   0.0   1.0   1   0   0   1   1   1   1 -
+Pfam-B_1             PB000001   D2H790_AILME/1-94    -            1.7e-08   21.1   1.6   1.9e-08   20.9   1.6   1.1   1   0   0   1   1   1   1 -
+Pfam-B_1             PB000001   D3ZAQ6_RAT/1-96      -            1.7e-11   30.8   1.2   2.2e-11   30.4   1.2   1.1   1   0   0   1   1   1   1 -
+Pfam-B_1             PB000001   E7DZT2_9SAUR/1-69    -            2.6e-35  107.7   0.0   2.8e-35  107.6   0.0   1.0   1   0   0   1   1   1   1 -
+Pfam-B_1             PB000001   F1BZW2_CALMI/1-41    -              9e-14   38.1   0.0   9.7e-14   38.0   0.0   1.0   1   0   0   1   1   1   1 -
+Pfam-B_1             PB000001   F6JXV7_TRASC/9-96    -              9e-46  141.5   0.0     1e-45  141.3   0.0   1.0   1   0   0   1   1   1   1 -
+Pfam-B_1             PB000001   F6QKQ6_ORNAN/1-109   -              1e-13   38.0   0.0   1.1e-13   37.9   0.0   1.0   1   0   0   1   1   1   1 -
+#
+# Program:         hmmscan
+# Version:         3.1b2 (February 2015)
+# Pipeline mode:   SCAN
+# Query file:      Pfam_B_1.fasta
+# Target file:     Pfam_B_1.hmm
+# Option settings: hmmscan --tblout Pfam_B_1.fasta.tblout --incE 0.01 Pfam_B_1.hmm Pfam_B_1.fasta 
+# Current dir:     /home/mortonjt/Documents/micronota/micronota/bfillings/tests/data/hmmer
+# Date:            Tue Oct 20 14:22:47 2015
+# [ok]
