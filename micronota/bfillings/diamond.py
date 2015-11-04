@@ -155,7 +155,7 @@ def make_db(i, o, params=None):
     Parameters
     ----------
     i : str
-        Input path for the fasta file
+        Input path for the fasta file.
     o : str
         Output path for the formatted database file.
     params : dict
@@ -164,6 +164,8 @@ def make_db(i, o, params=None):
         If the option is a flag, set the value to None.
     Returns
     -------
+    int
+        The exit code of the command.
     '''
     app = DiamondMakeDB(InputHandler='_input_as_paths', params=params)
     app.Parameters['--in'].on(i)
@@ -185,8 +187,8 @@ def search_protein_homologs(query, db, out_dir, aligner='blastp', outfmt='tab',
         The file path to diamond formatted database.
     seq : str, skbio.Sequence, skbio.Protein, or its child classes
         If it is a str, it must be able to read into ``skbio.Protein``.
-    cores : int.
-        Number of CPU cores. Default to 0, i.e. use all avaiable cores.
+    cores : int
+        Number of CPU cores. Default to 0, i.e. use all available cores.
     evalue : float
         Default to 0.01. Threshold E-value.
     params : dict
@@ -195,7 +197,8 @@ def search_protein_homologs(query, db, out_dir, aligner='blastp', outfmt='tab',
         If the option is a flag, set the value to None.
     Returns
     -------
-    Same data type as seq with added annotation.
+    str
+        The file path of the blast result.
     '''
     suffix = basename(query)
     tmpd = mkdtemp(suffix='', prefix='diamond_', dir=out_dir)
@@ -204,6 +207,8 @@ def search_protein_homologs(query, db, out_dir, aligner='blastp', outfmt='tab',
         app = DiamondBlastp
     elif aligner == 'blastx':
         app = DiamondBlastx
+    else:
+        raise ValueError('unknown aliger')
 
     blast = app(InputHandler='_input_as_paths', params=params)
     blast.Parameters['--query'].on(query)
