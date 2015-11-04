@@ -7,3 +7,4 @@ scikit-bio
 infernal
 hmmer
 prodigal
+diamond

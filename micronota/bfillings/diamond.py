@@ -183,10 +183,10 @@ def search_protein_homologs(query, db, out_dir, aligner='blastp', outfmt='tab',
 
     Parameters
     ----------
+    query : str
+        The file path to the query sequence.
     db : str
         The file path to diamond formatted database.
-    seq : str, skbio.Sequence, skbio.Protein, or its child classes
-        If it is a str, it must be able to read into ``skbio.Protein``.
     cores : int
         Number of CPU cores. Default to 0, i.e. use all available cores.
     evalue : float
