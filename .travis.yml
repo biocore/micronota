@@ -1,5 +1,5 @@
 # Check on http://lint.travis-ci.org/ after modifying it!
-# sudo: false
+sudo: false
 os:
   - linux
   # - osx
@@ -10,16 +10,18 @@ python:
 before_install:
   - "export DISPLAY=:99.0"
   - "sh -e /etc/init.d/xvfb start"
-  - wget http://repo.continuum.io/miniconda/Miniconda3-3.7.3-Linux-x86_64.sh -O miniconda.sh
-  - chmod +x miniconda.sh
-  - ./miniconda.sh -b
-  - export PATH=/home/travis/miniconda3/bin:$PATH
+  - wget https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh -O miniconda.sh
+  - bash miniconda.sh -b -p $HOME/miniconda
+  - export PATH="$HOME/miniconda/bin:$PATH"
+  - conda config --set always_yes yes --set changeps1 no
+  - conda config --add channels https://conda.anaconda.org/biocore
   # Update conda itself
-  - conda update --yes conda
-  - conda create --yes -n test_env python=$TRAVIS_PYTHON_VERSION
-  - source activate test_env
+  - conda update -q conda
+  # Useful for debugging any issues with conda
+  - conda info -a
 install:
-  - conda install --yes -c https://conda.anaconda.org/biocore --file ci/conda_requirements.txt
+  - conda create -n test_env python=$TRAVIS_PYTHON_VERSION --file ci/conda_requirements.txt
+  - source activate test_env
   - pip install -r ci/pip_requirements.txt
   - pip install . --no-deps
 script:
