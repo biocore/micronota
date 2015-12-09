@@ -6,7 +6,8 @@
 Welcome to micronota's documentation!
 =====================================
 
-Contents:
+API Reference
+-------------
 
 .. toctree::
    :maxdepth: 1
