@@ -14,20 +14,25 @@
 
 import sys
 import os
-import glob
 
-
-import micronota
 
 # If extensions (or modules to document with autodoc) are in another directory,
 # add these directories to sys.path here. If the directory is relative to the
 # documentation root, use os.path.abspath to make it absolute, like shown here.
-#sys.path.insert(0, os.path.abspath('.'))
+# sys.path.insert(0, os.path.abspath('.'))
+sys.path.append(os.path.abspath('..'))
+import micronota
+
 
 # -- General configuration ------------------------------------------------
 
 # If your documentation needs a minimal Sphinx version, state it here.
-needs_sphinx = '1.3'
+# needs_sphinx = '1.3.3'
+# sphinx builtin version check does not work well. do it myself:
+sphinx_version = '1.3.3'
+import sphinx
+if sphinx.__version__ != sphinx_version:
+    raise RuntimeError("Sphinx %s required" % sphinx_version)
 
 # Add any Sphinx extension module names here, as strings. They can be
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
@@ -40,7 +45,7 @@ extensions = [
     'sphinx.ext.mathjax',
     'sphinx.ext.ifconfig',
     'sphinx.ext.viewcode',
-    'sphinx.ext.napoleon'
+    'sphinx.ext.napoleon',
 ]
 
 # Add any paths that contain templates here, relative to this directory.
@@ -128,6 +133,7 @@ autosummary_generate = True
 
 # -- Options for HTML output ----------------------------------------------
 
+# These are from sphinx_rtd_theme pypi webpage:
 # on_rtd is whether we are on readthedocs.org, this line of code grabbed from docs.readthedocs.org
 on_rtd = os.environ.get('READTHEDOCS', None) == 'True'
 
@@ -186,7 +192,7 @@ html_static_path = ['_static']
 #html_use_smartypants = True
 
 # Custom sidebar templates, maps document names to template names.
-html_sidebars = {'index': 'sidebar.html'}
+# html_sidebars = {}
 
 # Additional templates that should be rendered to pages, maps page names to
 # template names.
