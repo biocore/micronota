@@ -12,7 +12,7 @@ from os.path import abspath, join, dirname, splitext
 
 
 _CONTEXT_SETTINGS = dict(
-    # allow case insensitivity for the command options
+    # allow case insensitivity for the (sub)commands and their options
     token_normalize_func=lambda x: x.lower(),
     # set --help option for all (sub)commands
     help_option_names=['-h', '--help'])
@@ -31,7 +31,6 @@ class AliasedGroup(click.Group):
         return click.Group.get_command(self, ctx, cmd_name)
 
     def get_command(self, ctx, cmd_name):
-        # Alternative option: if we did not find an explicit alias we
         # allow automatic abbreviation of the command.  "status" for
         # instance will match "st".  We only allow that however if
         # there is only one command.
@@ -47,7 +46,7 @@ class AliasedGroup(click.Group):
 class ComplexCLI(AliasedGroup):
     '''Custom subclass to load subcommands dynamically from a plugin folder.
 
-    It looks in `commands` folder for commands.
+    It looks in `commands` folder for subcommands.
 
     This is borrowed from `click` examples of complex.
     '''
