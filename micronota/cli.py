@@ -25,9 +25,31 @@ class AliasedGroup(click.Group):
     for a command. If there were a (sub)command called "push", it would
     accept "pus" as an alias (as long as it is unique).
 
+    This is borrowed from `click` example of alias.
+    '''
+    def _get_command(self, ctx, cmd_name):
+        return click.Group.get_command(self, ctx, cmd_name)
+
+    def get_command(self, ctx, cmd_name):
+        # Alternative option: if we did not find an explicit alias we
+        # allow automatic abbreviation of the command.  "status" for
+        # instance will match "st".  We only allow that however if
+        # there is only one command.
+        matches = [x for x in self.list_commands(ctx)
+                   if x.lower().startswith(cmd_name.lower())]
+        if not matches:
+            return
+        elif len(matches) == 1:
+            return self._get_command(ctx, matches[0])
+        ctx.fail('Too many matches: %s' % ', '.join(sorted(matches)))
+
+
+class ComplexCLI(AliasedGroup):
+    '''Custom subclass to load subcommands dynamically from a plugin folder.
+
     It looks in `commands` folder for commands.
 
-    This is borrowed from `click` examples of alias and complex.
+    This is borrowed from `click` examples of complex.
     '''
     def list_commands(self, ctx):
         rv = []
@@ -35,31 +57,20 @@ class AliasedGroup(click.Group):
         for filename in listdir(cmd_folder):
             if filename.endswith('.py') and filename != '__init__.py':
                 rv.append(splitext(filename)[0])
+        rv.sort()
         return rv
 
-    def get_command(self, ctx, cmd_name):
-        # step one: if it matches the full name
-        rv = click.Group.get_command(self, ctx, cmd_name)
-        if rv is not None:
-            return rv
-        # step two: allow auto abbr. and lower/upper cases
-        matches = [x for x in self.list_commands(ctx)
-                   if x.lower().startswith(cmd_name.lower())]
-        if not matches:
-            return None
-        elif len(matches) == 1:
-            try:
-                mod = __import__('micronota.commands.' + matches[0],
-                                 None, None, ['cli'])
-            except ImportError as err:
-                print(err)
-                return
-            return mod.cli
-        else:
-            ctx.fail('Too many matches: %s' % ', '.join(sorted(matches)))
+    def _get_command(self, ctx, cmd_name):
+        try:
+            mod = __import__('micronota.commands.' + cmd_name,
+                             None, None, ['cli'])
+        except ImportError as err:
+            print(err)
+            return
+        return mod.cli
 
 
-@click.group(cls=AliasedGroup, context_settings=_CONTEXT_SETTINGS)
+@click.group(cls=ComplexCLI, context_settings=_CONTEXT_SETTINGS)
 @click.option('-v', '--verbose', count=True,
               help=("Verbosity. You can use multiple v's, "
                     "e.g. -vv, to gradually increase verbosity."))
@@ -70,5 +81,5 @@ class AliasedGroup(click.Group):
                     'and external dependencies.'))
 @click.version_option()   # add --version option
 @click.pass_context
-def cli(ctx, debug, verbose, info):
+def cmd(ctx, debug, verbose, info):
     pass

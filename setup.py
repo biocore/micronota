@@ -68,5 +68,5 @@ setup(name='micronota',
                       'doc': ["Sphinx == 1.2.2", "sphinx-bootstrap-theme"]},
       entry_points={
           'console_scripts': [
-              'micronota=micronota.cli:cli',
+              'micronota=micronota.cli:cmd',
           ]})
