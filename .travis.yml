@@ -26,7 +26,6 @@ install:
   - pip install . --no-deps
 script:
   - WITH_COVERAGE=TRUE make test
-  - make -C doc clean html
 after_success:
   - coveralls
 notifications:

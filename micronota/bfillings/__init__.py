@@ -1,35 +1,3 @@
-r'''
-Application Wrappers
-====================
-
-.. currentmodule:: micronota.bfillings
-
-This module (:mod:`micronota.bfillings`) provides wrappers of `class`
-for external bioinformatic tools such as `Prodigal`, 'HMMer`, etc.
-It also has the util functions built upon those wrappers to predict genes,
-search for homologues, etc.
-
-
-Classes
--------
-
-.. autosummary::
-   :toctree: _autosummary
-
-   Prodigal
-   CMPress
-
-
-Functions
----------
-
-.. autosummary::
-   :toctree: _autosummary
-
-   predict_genes
-
-'''
-
 # ----------------------------------------------------------------------------
 # Copyright (c) 2015--, micronota development team.
 #
@@ -37,10 +5,3 @@ Functions
 #
 # The full license is in the file COPYING.txt, distributed with this software.
 # ----------------------------------------------------------------------------
-
-
-from .prodigal import Prodigal, predict_genes
-from .infernal import CMPress
-
-
-__all__ = ['Prodigal', 'CMPress', 'predict_genes']
