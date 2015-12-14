@@ -65,6 +65,7 @@ setup(name='micronota',
           'burrito >= 0.9.1'
       ],
       extras_require={'test': ["nose", "pep8", "flake8"],
+                      'coverage': ["coverage"],
                       'doc': ["Sphinx == 1.3.3"]},
       entry_points={
           'console_scripts': [
