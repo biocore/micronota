@@ -5,7 +5,7 @@ Application Wrappers
 .. currentmodule:: micronota.bfillings
 
 This module (:mod:`micronota.bfillings`) provides wrappers of `class`
-for external bioinformatic tools such as `Prodigal`, 'HMMer`, etc.
+for external bioinformatic tools such as `Prodigal`, `HMMer`, etc.
 It also has the util functions built upon those wrappers to predict genes,
 search for homologues, etc.
 
