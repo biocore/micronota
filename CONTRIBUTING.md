@@ -111,7 +111,7 @@ micronota is hosted on [GitHub](http://www.github.com), and we use GitHub's [Pul
 Coding guidelines
 -----------------
 
-We adhere to the [PEP 8](http://www.python.org/dev/peps/pep-0008/) Python style guidelines. We also follow [the coding guidelines of scikit-bio](http://micronota.org/docs/latest/development/coding_guidelines.html). Before submitting code to micronota, you should read this document carefully and apply the guidelines in your code.
+We adhere to the [PEP 8](http://www.python.org/dev/peps/pep-0008/) Python style guidelines. We also follow [the coding guidelines of scikit-bio](http://scikit-bio.org/docs/latest/development/coding_guidelines.html). Before submitting code to micronota, you should read this document carefully and apply the guidelines in your code.
 
 Testing guidelines
 ------------------
