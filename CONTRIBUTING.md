@@ -83,7 +83,7 @@ micronota is hosted on [GitHub](http://www.github.com), and we use GitHub's [Pul
 
  What you name your topic branch is up to you, though we recommend including the issue number in the topic branch, since there is usually already an issue associated with the changes being made in the pull request. For example, if you were addressing issue number 42, you might name your topic branch ``issue-42``.
 
-7. Run ``make test`` to confirm that the tests pass before you make any changes.
+7. Run ``make`` to confirm that the tests pass before you make any changes. It will run the test code, docstring tests, pep8 check, and html doc build.
 
 8. Make your changes, add them (with ``git add``), and commit them (with ``git commit``). Don't forget to update associated tests and documentation as necessary. Write descriptive commit messages to accompany each commit. We recommend following [NumPy's commit message guidelines](http://docs.scipy.org/doc/numpy/dev/gitwash/development_workflow.html#writing-the-commit-message), including the usage of commit tags (i.e., starting commit messages with acronyms such ``ENH``, ``BUG``, etc.).
 
@@ -98,7 +98,7 @@ micronota is hosted on [GitHub](http://www.github.com), and we use GitHub's [Pul
  git merge master
  ```
 
-11. Run ``make test`` to ensure that your changes did not cause anything expected to break.
+11. Run ``make`` to ensure that your changes did not cause anything expected to break.
 
 12. Once the tests pass, you should push your changes to your forked repository on GitHub using:
 
@@ -111,7 +111,7 @@ micronota is hosted on [GitHub](http://www.github.com), and we use GitHub's [Pul
 Coding guidelines
 -----------------
 
-We adhere to the [PEP 8](http://www.python.org/dev/peps/pep-0008/) Python style guidelines. Please see micronota's [coding guidelines](http://micronota.org/docs/latest/development/coding_guidelines.html) for more details. Before submitting code to micronota, you should read this document carefully and apply the guidelines in your code.
+We adhere to the [PEP 8](http://www.python.org/dev/peps/pep-0008/) Python style guidelines. We also follow [the coding guidelines of scikit-bio](http://micronota.org/docs/latest/development/coding_guidelines.html). Before submitting code to micronota, you should read this document carefully and apply the guidelines in your code.
 
 Testing guidelines
 ------------------
@@ -135,7 +135,7 @@ Running ``make test`` locally during development will include a subset of the fu
  coverage html && open htmlcov/index.html
  ```
 
-The micronota coding guidelines describe our [expectations for unit tests](http://micronota.org/development/coding_guidelines.html). You should review the unit test section before working on your test code.
+The coding guidelines describe our [expectations for unit tests](http://scikit-bio.org/docs/latest/development/coding_guidelines.html). You should review the unit test section before working on your test code.
 
 Tests can be executed by running ``make test`` from the base directory of the project.
 
