@@ -83,7 +83,7 @@ micronota is hosted on [GitHub](http://www.github.com), and we use GitHub's [Pul
 
  What you name your topic branch is up to you, though we recommend including the issue number in the topic branch, since there is usually already an issue associated with the changes being made in the pull request. For example, if you were addressing issue number 42, you might name your topic branch ``issue-42``.
 
-7. Run ``make`` to confirm that the tests pass before you make any changes. It will run the test code, docstring tests, pep8 check, and html doc build.
+7. Run ``make all`` to confirm that the tests pass before you make any changes. It will run the test code, docstring tests, pep8 check, and html doc build.
 
 8. Make your changes, add them (with ``git add``), and commit them (with ``git commit``). Don't forget to update associated tests and documentation as necessary. Write descriptive commit messages to accompany each commit. We recommend following [NumPy's commit message guidelines](http://docs.scipy.org/doc/numpy/dev/gitwash/development_workflow.html#writing-the-commit-message), including the usage of commit tags (i.e., starting commit messages with acronyms such ``ENH``, ``BUG``, etc.).
 
@@ -98,7 +98,7 @@ micronota is hosted on [GitHub](http://www.github.com), and we use GitHub's [Pul
  git merge master
  ```
 
-11. Run ``make`` to ensure that your changes did not cause anything expected to break.
+11. Run ``make all`` to ensure that your changes did not cause anything expected to break.
 
 12. Once the tests pass, you should push your changes to your forked repository on GitHub using:
 
