@@ -60,12 +60,13 @@ setup(name='micronota',
       packages=find_packages(),
       package_data={},
       install_requires=[
-          'click >= 5.1',
+          'click >= 6',
           'scikit-bio >= 0.4.0',
           'burrito >= 0.9.1'
       ],
       extras_require={'test': ["nose", "pep8", "flake8"],
-                      'doc': ["Sphinx == 1.2.2", "sphinx-bootstrap-theme"]},
+                      'coverage': ["coverage"],
+                      'doc': ["Sphinx == 1.3.3"]},
       entry_points={
           'console_scripts': [
               'micronota=micronota.cli:cmd',
