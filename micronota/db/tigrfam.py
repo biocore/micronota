@@ -117,14 +117,14 @@ import shutil
 import gzip
 import tarfile
 from tempfile import mkdtemp
-from os.path import join
+from os.path import join, exists
 from ftplib import FTP
 from sqlite3 import connect
 
 from ..bfillings.hmmer import hmmpress_hmm
 
 
-def prepare_db(out_d, prefix='tigrfam_v15.0'):
+def prepare_db(out_d, prefix='tigrfam_v15.0', force=False):
     '''Download and prepare TIGRFAM database.
 
     Parameters
@@ -134,20 +134,21 @@ def prepare_db(out_d, prefix='tigrfam_v15.0'):
     prefix : str
         The file name (without extensions) of the output files.
     '''
-    server = 'ftp.tigr.org'
-    path = 'pub/data/TIGRFAMs'
 
     hmm = 'TIGRFAMs_15.0_HMM.LIB.gz'
     hmm_out = join(out_d, '%s.hmm' % prefix)
-
+    if exists(hmm_out) and not force:
+        print('Database %s already exists. Skip it.' % prefix)
+        return
     metadata = 'TIGRFAMs_15.0_INFO.tar.gz'
     metadata_out = join(out_d, '%s.db' % prefix)
 
+    server = 'ftp.tigr.org'
+    path = 'pub/data/TIGRFAMs'
     try:
         temp_dir = mkdtemp()
         hmm_tmp = join(temp_dir, hmm)
         metadata_tmp = join(temp_dir, metadata)
-        print(temp_dir)
         with FTP(server) as ftp:
             ftp.login()
             ftp.cwd(path)
@@ -162,8 +163,10 @@ def prepare_db(out_d, prefix='tigrfam_v15.0'):
             # fetch HMM model file
             ftp.retrbinary('RETR %s' % hmm,
                            open(hmm_tmp, 'wb').write)
+            # gunzip and move the file
             with gzip.open(hmm_tmp, 'rb') as i_f, open(hmm_out, 'wb') as o_f:
                 shutil.copyfileobj(i_f, o_f)
+            # don't forget to compress the hmm model file
             hmmpress_hmm(hmm_out)
     finally:
         shutil.rmtree(temp_dir)
@@ -196,7 +199,7 @@ def prepare_metadata(in_d, fp):
                 conn.execute('''INSERT INTO tigrfam (id, tag, value, transfer)
                                     VALUES ("%s",?,?,?);''' % tigrfam_id,
                              x)
-
+        # don't forget to index the column to speed up query
         conn.execute('CREATE INDEX id ON tigrfam (id);')
         conn.commit()
 
@@ -214,6 +217,7 @@ def _read_info(fn):
     tuple
         tag, value, int of 0 or 1
     '''
+    # the error param is for the non-utf8 symbols
     with open(fn, errors='backslashreplace') as f:
         for line in f:
             line = line.strip()
