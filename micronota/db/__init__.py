@@ -1,3 +1,21 @@
+r'''
+Databases
+=========
+
+.. currentmodule:: micronota.db
+
+This module (:mod:`micronota.db`) provides functionality to create databases
+for micronota pipeline.
+
+Supported databases
+-------------------
+
+.. automodule:: micronota.db.tigrfam
+   :members:
+
+'''
+
+
 # ----------------------------------------------------------------------------
 # Copyright (c) 2015--, micronota development team.
 #
