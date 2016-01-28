@@ -22,8 +22,8 @@ Files
 standard TIGRFAMs HMMs, ASCII. The highest accession number of the current
 release, 15.0, is TIGR04571.
 
-TIGRFAMs_15.0_INFO.tar.gz
-^^^^^^^^^^^^^^^^^^^^^^^^^
+* TIGRFAMs_15.0_INFO.tar.gz
+
 metadata for each TIGRFAMs. Each family file contains:
 
    === ========================================================================
@@ -124,7 +124,11 @@ from sqlite3 import connect
 from ..bfillings.hmmer import hmmpress_hmm
 
 
-def prepare_db(out_d, prefix='tigrfam_v15.0', force=False):
+def prepare_db(out_d, prefix='tigrfam_v15.0', force=False,
+               server='ftp.tigr.org',
+               path='pub/data/TIGRFAMs',
+               hmm='TIGRFAMs_15.0_HMM.LIB.gz',
+               metadata='TIGRFAMs_15.0_INFO.tar.gz'):
     '''Download and prepare TIGRFAM database.
 
     Parameters
@@ -133,18 +137,25 @@ def prepare_db(out_d, prefix='tigrfam_v15.0', force=False):
         The directory of output files.
     prefix : str
         The file name (without extensions) of the output files.
+    force : boolean
+        Whether to overwrite existing files
+    server : str
+        FTP server to download TIGRFAM files
+    path : str
+        The path on FTP to find files to download
+    hmm : str
+        The file name of hmm models
+    metadata : str
+        The file name of the metadata for the hmm models
     '''
 
-    hmm = 'TIGRFAMs_15.0_HMM.LIB.gz'
     hmm_out = join(out_d, '%s.hmm' % prefix)
     if exists(hmm_out) and not force:
         print('Database %s already exists. Skip it.' % prefix)
         return
-    metadata = 'TIGRFAMs_15.0_INFO.tar.gz'
+
     metadata_out = join(out_d, '%s.db' % prefix)
 
-    server = 'ftp.tigr.org'
-    path = 'pub/data/TIGRFAMs'
     try:
         temp_dir = mkdtemp()
         hmm_tmp = join(temp_dir, hmm)
@@ -181,6 +192,21 @@ def prepare_metadata(in_d, fp):
         The input directory containing XXX.INFO files.
     fp : str
         The output file path of sqlite3 database.
+
+    Notes
+    -----
+    The schema of the database file contains one table named `tigrfam` that
+    has following columns:
+
+    1. ``id``. TEXT. TIGRFAM ID.
+
+    2. ``tag``. TEXT. 2-letter tag described in the table above in this module.
+
+    3. ``value``. BLOB. The value of the tag.
+
+    4. ``transfer``. INTEGER. Used as the boolean. ``1`` means the ``value``
+       should be transferred to the query sequences as its annotation;
+       ``0`` means not.
     '''
     with connect(fp) as conn:
         conn.execute("DROP TABLE IF EXISTS tigrfam")
@@ -215,7 +241,7 @@ def _read_info(fn):
     Yields
     ------
     tuple
-        tag, value, int of 0 or 1
+        tag, value, int of 0 or 1.
     '''
     # the error param is for the non-utf8 symbols
     with open(fn, errors='backslashreplace') as f:
