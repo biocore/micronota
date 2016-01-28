@@ -1,0 +1,13 @@
+ID  S16
+AC  TIGR00002
+DE  ribosomal protein bS16
+AU  Haft DH, Richardson DL
+TC  45.30 45.30
+NC  40.60 40.60
+AL  clustalw_manual
+IT  equivalog
+EN  ribosomal protein S16
+GS  rpsP
+TP  TIGRFAMs
+CC  This model describes ribosomal S16 of bacteria and organelles.
+DR  HAMAP; MF_00385; 588 of 595

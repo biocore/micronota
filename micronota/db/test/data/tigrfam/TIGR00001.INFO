@@ -1,0 +1,13 @@
+ID  rpmI_bact
+AC  TIGR00001
+DE  ribosomal protein bL35
+AU  Haft DH, Dodson RJ, Richardson DL
+TC  51.20 51.20
+NC  23.65 23.65
+AL  clustalw
+IT  equivalog
+EN  ribosomal protein L35
+GS  rpmI
+TP  TIGRFAMs
+CC  This ribosomal protein is found in bacteria and organelles only. It is not closely related to any eukaryotic or archaeal ribosomal protein.
+DR  HAMAP; MF_00514; 522 of 531
