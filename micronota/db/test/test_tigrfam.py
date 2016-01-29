@@ -11,6 +11,7 @@
 from tempfile import mktemp
 from unittest import TestCase, main
 from os.path import dirname
+from sqlite3 import connect
 
 from micronota.bfillings.util import _get_data_dir
 from micronota.db.tigrfam import prepare_metadata
@@ -24,8 +25,12 @@ class TigrfamTests(TestCase):
 
     def test_prepare_metadata(self):
         prepare_metadata(self.d, self.obs_db_fp)
-        with open(self.obs_db_fp, 'rb') as o, open(self.exp_db_fp, 'rb') as e:
-            self.assertEqual(o.read(), e.read())
+        with connect(self.obs_db_fp) as o, connect(self.exp_db_fp) as e:
+            co = o.cursor()
+            co.execute('SELECT * from tigrfam')
+            ce = e.cursor()
+            ce.execute('SELECT * from tigrfam')
+            self.assertCountEqual(co.fetchall(), ce.fetchall())
 
 if __name__ == '__main__':
     main()
