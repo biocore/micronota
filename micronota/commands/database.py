@@ -20,7 +20,6 @@ from .. import db
 @click.pass_context
 def cli(ctx):
     '''Database operations.'''
-    print(ctx.parent.params)
     pass
 
 
@@ -30,7 +29,10 @@ def cli(ctx):
               help='Force overwrite.')
 @click.pass_context
 def create_db(ctx, databases, force):
-    '''Prepare database.'''
+    '''Prepare database.
+
+    Downloads the files for the specified DATABASES and manipulate
+    them as proper format for micronota.'''
     # this cmd is 2-level nested, so double "parent"
     verbose = ctx.parent.parent.params['verbose']
     func_name = 'prepare_db'
@@ -43,9 +45,9 @@ def create_db(ctx, databases, force):
             databases.append(modname)
     for d in databases:
         if verbose > 0:
-            print('Start creating %s database...' % d)
+            click.echo('Start creating %s database...' % d)
         submodule = importlib.import_module('.%s' % d, db.__name__)
         f = getattr(submodule, func_name)
         f(out_d, force=force)
     if verbose > 0:
-        print('Finished creating databases')
+        click.echo('Finished creating databases')

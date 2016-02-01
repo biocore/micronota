@@ -70,11 +70,10 @@ their use in annotation:
    TP  Always "TIGRFAMs", the identifier of this database
    === ========================================================================
 
-Proteins that score
-above the trusted cutoffs are believed to reside within the family and
-those falling below the noise cutoffs are believed to reside outside the
-family.  The margin of error with respect to presence or absence of a
-protein within a TIGRFAMs family is represented by the score range
+Proteins that score above the trusted cutoffs are believed to reside within
+the family and those falling below the noise cutoffs are believed to reside
+outside the family.  The margin of error with respect to presence or absence
+of a protein within a TIGRFAMs family is represented by the score range
 between noise and trusted cutoffs.
 
 Because the number of completed and nearly completed genomes
@@ -85,7 +84,7 @@ that arise within an equivalog family, although some may
 represent paralogs that are minimally derived since their
 branching from the equivalog familiy (i.e. short branch length).
 
-TIGRFAMs now includes 57 models of type "exception",  a type
+TIGRFAMs now includes 57 models of type "exception", a type
 of model that overrules annotation from an equivalog model,
 either to give more specific information or to correct annotation
 for a neofunctionalized subgroup.
@@ -207,6 +206,9 @@ def prepare_metadata(in_d, fp):
     4. ``transfer``. INTEGER. Used as the boolean. ``1`` means the ``value``
        should be transferred to the query sequences as its annotation;
        ``0`` means not.
+
+    The table in the database file will be dropped and re-created if
+    the function is re-run.
     '''
     with connect(fp) as conn:
         conn.execute("DROP TABLE IF EXISTS tigrfam")
