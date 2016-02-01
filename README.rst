@@ -20,15 +20,53 @@ Installing
 
 To install the latest release of micronota::
 
+  conda install micronota
+
+Or you can install through ``pip``::
+
   pip install micronota
 
 
-Running commands
-----------------
+Prepare Databases
+-----------------
+
+The micronota supports databases including TIGRFAM.
+
+To prepare (download and format) the files of TIGRFAM to the right form read by micronota::
+
+  micronota database prepare tigrfam
+
 
 To print the configuration, database and external annotation tools::
 
   micronota --info
+
+Sequence Features to Identify
+-----------------------------
+
++-------------------------+-----------+--------------------------------------------------+
+| Features                | Supported | Tools                                            |
++=========================+===========+==================================================+
+| coding gene             | yes       | Prodigal                                         |
++-------------------------+-----------+--------------------------------------------------+
+| tRNA                    | yes       | Aragorn                                          |
++-------------------------+-----------+--------------------------------------------------+
+| ncRNA                   | yes       | Infernal                                         |
++-------------------------+-----------+--------------------------------------------------+
+| CRISPR                  | yes       | MinCED                                           |
++-------------------------+-----------+--------------------------------------------------+
+| ribosomal binding sites | ongoing   | RBSFinder                                        |
++-------------------------+-----------+--------------------------------------------------+
+| prophage                | ongoing   | PHAST                                            |
++-------------------------+-----------+--------------------------------------------------+
+| replication origin      | \         | Ori-Finder 1 (bacteria) & Ori-Finder 2 (archaea) |
++-------------------------+-----------+--------------------------------------------------+
+| microsatellites         | \         | \                                                |
++-------------------------+-----------+--------------------------------------------------+
+| signal peptide          | ongoing   | SignalP                                          |
++-------------------------+-----------+--------------------------------------------------+
+| transmembrane proteins  | ongoing   | TMHMM                                            |
++-------------------------+-----------+--------------------------------------------------+
 
 
 Getting help
