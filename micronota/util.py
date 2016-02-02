@@ -5,7 +5,7 @@ Utility functionality
 .. currentmodule:: micronota.util
 
 This module (:mod:`micronota.util`) provides various utility functionality,
-including config parser, unit-testing convenience function.
+including config config, unit-testing convenience function.
 
 '''
 
@@ -19,15 +19,20 @@ including config parser, unit-testing convenience function.
 # ----------------------------------------------------------------------------
 
 
-from os.path import expanduser, join
+from os.path import join, expanduser
 from configparser import ConfigParser
 
 
-_config_path = join(expanduser("~"), '.micronota.config')
+_HOME = expanduser('~')
 
 
-def parse_config(fp=_config_path):
+def _create_config():
+    '''Return ``ConfigParser`` object.
     '''
-    '''
-    cfg = ConfigParser.read(fp)
-    return cfg
+    config = ConfigParser(allow_no_value=True,
+                          strict=True)
+    # Make the parser case sensitive; the default is not.
+    config.optionxform = str
+    # set the default key-value pairs
+    config['DEFAULT']['db_path'] = join(_HOME, 'micronota_db')
+    return config

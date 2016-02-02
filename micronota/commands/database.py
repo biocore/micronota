@@ -31,12 +31,14 @@ def cli(ctx):
 def create_db(ctx, databases, force):
     '''Prepare database.
 
-    Downloads the files for the specified DATABASES and manipulate
+    Download the files for the specified DATABASES and manipulate
     them as proper format for micronota.'''
     # this cmd is 2-level nested, so double "parent"
-    verbose = ctx.parent.parent.params['verbose']
+    grandparent_ctx = ctx.parent.parent
+    config = grandparent_ctx.config
+    verbose = grandparent_ctx.params['verbose']
     func_name = 'prepare_db'
-    out_d = 'micronta_db'
+    out_d = config['DEFAULT']['db_path']
     if not os.path.exists(out_d):
         os.mkdir(out_d)
     if not databases:

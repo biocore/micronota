@@ -41,6 +41,33 @@ To print the configuration, database and external annotation tools::
 
   micronota --info
 
+Config File
+-----------
+By default, micronota will read ``~/.micronota.config`` file to set up the environment or tune the parameters, if this config file exists.
+
+For example, the default directory to store the database files is ``~/micronota_db``, but you can override it to ``/home/username/db`` by setting this in ``~/.micronota.config``::
+
+  [DEFAULT]
+  db_path = /home/username/db
+
+micronota will look for the key ``db_path`` in the section ``DEFAULT`` to update the database path.
+
+Besides setting up the environment, you can also specify the parameter for each individual tools. For example, if you want to run Prodigal with genetic translation table 1, instead of the default translation table, you can create a new file run.cfg (although you can also just add into ``~/.micronota.config``)::
+
+  [DEFAULT]
+  # overwrite the default setting
+  db_path = /home/username/another_db
+
+  [prodigal]
+  # set translation table to 1
+  -t = 1
+
+Here, Prodigal has an option ``-t`` to specify translation table, so you set ``-t`` to ``1``. All the options of all the supported tools should be able to be set up this way.
+
+After creating the config file, then you can run::
+
+  micronota --config run.cfg annotate -i input.fa
+
 Sequence Features to Identify
 -----------------------------
 

@@ -8,8 +8,12 @@
 
 import click
 from os import listdir
-from os.path import abspath, join, dirname, splitext
+from os.path import abspath, join, dirname, splitext, exists
 
+from .util import _create_config, _HOME
+
+
+_CONFIG_PATH = join(_HOME, '.micronota.config')
 
 _CONTEXT_SETTINGS = dict(
     # allow case insensitivity for the (sub)commands and their options
@@ -78,7 +82,26 @@ class ComplexCLI(AliasedGroup):
 @click.option('--info', is_flag=True,
               help=('Print micronota configuration details, database info, '
                     'and external dependencies.'))
+@click.option('--config', default=None,
+              help='The config file.')
 @click.version_option()   # add --version option
 @click.pass_context
-def cmd(ctx, debug, verbose, info):
-    pass
+def cmd(ctx, debug, verbose, info, config):
+    '''Annotation pipeline for Bacterial and Archaeal (meta)genomes.
+
+    It predicts features (ncRNA, coding genes, etc.) on the input sequences
+    and assign functions to those features.
+
+    It works best on long sequences, such as assembled contigs, draft genomes,
+    or full genomes.
+
+    For more info, please check out https://github.com/biocore/micronota.
+    '''
+    # read the default config file if it exist.
+    ctx.config = _create_config()
+    if exists(_CONFIG_PATH):
+        ctx.config.read(_CONFIG_PATH)
+    # if config file is provided, also read it in and it will overwrite
+    # the previous settings.
+    if config is not None:
+        ctx.config.read(config)

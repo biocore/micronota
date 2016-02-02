@@ -7,21 +7,34 @@
 # ----------------------------------------------------------------------------
 
 from unittest import TestCase, main
-from tempfile import mktemp
 from configparser import ConfigParser
-from os.path import dirname
 
-from micronota.util import parse_config
+from skbio.util import get_data_path
+
+from micronota.util import _create_config
 
 
 class ConfigParserTests(TestCase):
-    def setUp(self):
-        self.cfg_path = mktemp()
-        self.cfg = {}
 
-    def test_parse_config(self):
-        pass
+    def test_create_config(self):
+        cfg_exp = ConfigParser()
+        cfg_exp['DEFAULT']['db_path'] = 'mn_db'
 
+        cfg_obs = _create_config()
+        cfg_obs.read(get_data_path('default.cfg'))
+        self.assertEqual(cfg_exp, cfg_obs)
+
+    def test_create_config_overwrite(self):
+        cfg_obs = _create_config()
+        cfg_obs.read(get_data_path('default.cfg'))
+        # overwrite "db_path"
+        cfg_obs.read(get_data_path('param.cfg'))
+
+        cfg_exp = ConfigParser()
+        cfg_exp['DEFAULT']['db_path'] = 'db'
+        cfg_exp.add_section('prodigal')
+        cfg_exp['prodigal']['-t'] = '1'
+        self.assertEqual(cfg_obs, cfg_exp)
 
 if __name__ == '__main__':
     main()
