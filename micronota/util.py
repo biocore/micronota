@@ -20,7 +20,7 @@ including config config, unit-testing convenience function.
 
 
 from sys import platform, version
-from os.path import join, expanduser
+from os.path import join, expanduser, exists
 from configparser import ConfigParser
 
 
@@ -29,20 +29,40 @@ _HOME = expanduser('~')
 _CONFIG_PATH = join(_HOME, '.micronota.config')
 
 
-def _create_config():
+def _create_config(fp):
     '''Return ``ConfigParser`` object.
     '''
     config = ConfigParser(allow_no_value=True,
                           strict=True)
     # Make the parser case sensitive; the default is not.
     config.optionxform = str
-    # set the default key-value pairs
+
+    # 1. set the default key-value pairs
     config['DEFAULT']['db_path'] = join(_HOME, 'micronota_db')
+
+    # 2. read the default config file
+    if exists(_CONFIG_PATH):
+        config.read(_CONFIG_PATH)
+
+    # 3. read the provided config file
+    if fp:
+        config.read(fp)
+
     return config
 
 
 def get_config_info(config):
-    '''Return the micronota config info.'''
+    '''Return the micronota config info.
+
+    Parameters
+    ----------
+    config : ConfigParser
+
+    Returns
+    -------
+    dict
+        all the information about micronota setup.
+    '''
     info = dict()
     info['system'] = {
         'OS': platform,

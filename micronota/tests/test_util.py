@@ -20,12 +20,12 @@ class ConfigParserTests(TestCase):
         cfg_exp = ConfigParser()
         cfg_exp['DEFAULT']['db_path'] = 'mn_db'
 
-        cfg_obs = _create_config()
-        cfg_obs.read(get_data_path('default.cfg'))
+        cfg_obs = _create_config(get_data_path('default.cfg'))
+
         self.assertEqual(cfg_exp, cfg_obs)
 
     def test_create_config_overwrite(self):
-        cfg_obs = _create_config()
+        cfg_obs = _create_config(None)
         cfg_obs.read(get_data_path('default.cfg'))
         # overwrite "db_path"
         cfg_obs.read(get_data_path('param.cfg'))
