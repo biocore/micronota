@@ -19,11 +19,14 @@ including config config, unit-testing convenience function.
 # ----------------------------------------------------------------------------
 
 
+from sys import platform, version
 from os.path import join, expanduser
 from configparser import ConfigParser
 
 
 _HOME = expanduser('~')
+
+_CONFIG_PATH = join(_HOME, '.micronota.config')
 
 
 def _create_config():
@@ -36,3 +39,21 @@ def _create_config():
     # set the default key-value pairs
     config['DEFAULT']['db_path'] = join(_HOME, 'micronota_db')
     return config
+
+
+def get_config_info(config):
+    '''Return the micronota config info.'''
+    info = dict()
+    info['system'] = {
+        'OS': platform,
+        'python': version}
+    info['micronota config'] = {
+        'config file': _CONFIG_PATH,
+        'database folder': config['DEFAULT']['db_path']}
+    info['micronota database'] = list_db()
+    return info
+
+
+def list_db():
+    '''Return database info.'''
+    return dict()
