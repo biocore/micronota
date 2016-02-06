@@ -24,9 +24,9 @@ class ReaderTests(EmblIOTests):
         embl = _embl_to_protein(a)
         pprint(embl)
 
-    # def test_embl_to_generator(self):
-    #     for obs in _embl_to_generator(self.multi_fp):
-    #         pprint(obs)
+    def test_embl_to_generator(self):
+        for obs in _embl_to_generator(self.multi_fp):
+            pprint(obs)
 
 
 if __name__ == '__main__':
