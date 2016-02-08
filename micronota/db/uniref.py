@@ -22,7 +22,8 @@ from skbio import read, Sequence
 def prepare_db(out_d, prefix='uniref', force=False):
     '''
     '''
-    prepare_metadata(join(expanduser('~'), 'uniref'), prefix)
+    prepare_metadata(join(expanduser('~'), 'uniref', 'uniprot_sprot.dat'),
+                     prefix)
 
 
 def prepare_metadata(in_fp, fp):

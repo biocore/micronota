@@ -15,12 +15,12 @@ from micronota.parsers.embl import _embl_to_protein, _embl_to_generator
 
 class EmblIOTests(TestCase):
     def setUp(self):
-        self.multi_fp = get_data_path('uniprot.embl')
+        self.multi_fp = get_data_path('uniprot_multi.embl')
 
 
 class ReaderTests(EmblIOTests):
     def test_embl_to_protein(self):
-        a = get_data_path('uniprot.embl')
+        a = get_data_path('uniprot_single.embl')
         embl = _embl_to_protein(a)
         pprint(embl)
 
