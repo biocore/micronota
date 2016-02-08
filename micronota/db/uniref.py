@@ -16,7 +16,7 @@ UniRef
 from os.path import join, expanduser
 from sqlite3 import connect
 
-from skbio import read
+from skbio import read, Sequence
 
 
 def prepare_db(out_d, prefix='uniref', force=False):
@@ -37,7 +37,7 @@ def prepare_metadata(in_fp, fp):
                             transfer BOOLEAN NOT NULL,
                         CHECK (transfer IN (0,1)));''')
 
-        for seq in read(in_fp, format='embl'):
+        for seq in read(in_fp, format='embl', into=Sequence):
             md = seq.metadata
             id = md['AC']
             insert = '''INSERT INTO uniref (id, tag, value, transfer)
