@@ -42,10 +42,10 @@ def prepare_metadata(in_fp, fp):
             id = md['AC']
             insert = '''INSERT INTO uniref (id, tag, value, transfer)
                         VALUES (?,?,?,?);'''
-            conn.execute(insert % (id, 'OX', md['OX'], 0))
-            conn.execute(insert % (id, 'PE', md['PE'], 0))
+            conn.execute(insert, (id, 'OX', md['OX'], 0))
+            conn.execute(insert, (id, 'PE', md['PE'], 0))
             kingdom = md['OC'].split('; ', 1)[0]
-            conn.execute(insert % (id, 'KD', kingdom, 0))
+            conn.execute(insert, (id, 'KD', kingdom, 0))
         # don't forget to index the column to speed up query
         conn.execute('CREATE INDEX id ON uniref (id);')
         conn.commit()
