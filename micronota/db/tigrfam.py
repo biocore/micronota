@@ -102,7 +102,6 @@ Reference
 
 '''
 
-
 # ----------------------------------------------------------------------------
 # Copyright (c) 2015--, micronota development team.
 #
@@ -192,6 +191,11 @@ def prepare_metadata(in_d, fp):
     fp : str
         The output file path of sqlite3 database.
 
+    Returns
+    -------
+    int
+        The number of records processed.
+
     Notes
     -----
     The schema of the database file contains one table named `tigrfam` that
@@ -210,6 +214,7 @@ def prepare_metadata(in_d, fp):
     The table in the database file will be dropped and re-created if
     the function is re-run.
     '''
+    n = 0
     with connect(fp) as conn:
         conn.execute("DROP TABLE IF EXISTS tigrfam")
         conn.execute('''CREATE TABLE tigrfam (
@@ -222,6 +227,7 @@ def prepare_metadata(in_d, fp):
         for f in os.listdir(in_d):
             if not f.endswith('.INFO'):
                 continue
+            n += 1
             tigrfam_id = f.split('.', 1)[0]
             for x in _read_info(join(in_d, f)):
                 conn.execute('''INSERT INTO tigrfam (id, tag, value, transfer)
@@ -230,6 +236,7 @@ def prepare_metadata(in_d, fp):
         # don't forget to index the column to speed up query
         conn.execute('CREATE INDEX id ON tigrfam (id);')
         conn.commit()
+    return n
 
 
 def _read_info(fn):
