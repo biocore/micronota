@@ -72,7 +72,7 @@ structure of an entry
 
 TODO
 ----
-* merge with genbank parser
+* merge with genbank parsers
   * _parse_genbanks -> _parse_records
 * sanity check the length and sequence type with ID line
 * parse Reference related lines
@@ -195,7 +195,9 @@ def _embl_to_generator(fh, constructor=None, **kwargs):
 
 @embl.reader(Sequence)
 def _embl_to_sequence(fh, seq_num=1, **kwargs):
-    pass
+    record = _get_nth_sequence(_parse_records(fh, _parse_single_embl), seq_num)
+    print(record)
+    return _construct(record, Protein, **kwargs)
 
 
 @embl.reader(Protein)
@@ -278,7 +280,7 @@ def _parse_id(lines, strict=False):
         res = dict()
         res['id'] = items[0].split()[0]
         res['size'], res['unit'] = items[-1].split()
-
+        # print(res['id'])
         return res
 
 
@@ -287,7 +289,7 @@ def _parse_ac(lines):
 
 
 def _parse_oc(lines):
-    return ' '.join(lines)
+    return ' '.join(lines).rstrip('.')
 
 
 def _parse_ox(lines):

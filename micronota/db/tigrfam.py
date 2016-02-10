@@ -4,7 +4,8 @@ TIGRFAM
 
 .. currentmodule:: micronota.db.tigrfam
 
-TIGRFAMs [1]_ may be used with HMMER3. The HMM libraries should be usable in
+This module create reference database from TIGRFAM [#]_ for micronota usage.
+TIGRFAM may be used with HMMER3. The HMM libraries should be usable in
 the same way as Pfam libraries starting from Pfam release 24.0.
 
 
@@ -19,12 +20,12 @@ Files
 -----
 * TIGRFAMs_15.0_HMM.LIB.gz
 
-standard TIGRFAMs HMMs, ASCII. The highest accession number of the current
-release, 15.0, is TIGR04571.
+  standard TIGRFAMs HMMs, ASCII. The highest accession number of the current
+  release, 15.0, is TIGR04571.
 
 * TIGRFAMs_15.0_INFO.tar.gz
 
-metadata for each TIGRFAMs. Each family file contains:
+  metadata for each TIGRFAMs. Each family file contains:
 
    === ========================================================================
    Tag Description
@@ -47,8 +48,8 @@ metadata for each TIGRFAMs. Each family file contains:
        vs. Pfam may occur.
    === ========================================================================
 
-Some tags were introduced to support definition of TIGRFAMs or
-their use in annotation:
+  Some tags were introduced to support definition of TIGRFAMs or
+  their use in annotation:
 
    === ========================================================================
    Tag Description
@@ -58,7 +59,7 @@ their use in annotation:
        for automatic annotation of protein name, prokaryotic gene symbol, EC
        (enzyme commission) number, and role category.
        An ``equivalog`` model assigns more specific annotations than a
-       ``subfamily`` model, which in turn outranks a ``domain`` model [2]_.
+       ``subfamily`` model, which in turn outranks a ``domain`` model [#]_.
    GS  Gene symbol - can be applied automatically for prokaryotic
        sequences.
    EC  Enzyme Commission number. In the format  6.1.1.7  without the EC.
@@ -70,35 +71,36 @@ their use in annotation:
    TP  Always "TIGRFAMs", the identifier of this database
    === ========================================================================
 
-Proteins that score above the trusted cutoffs are believed to reside within
-the family and those falling below the noise cutoffs are believed to reside
-outside the family.  The margin of error with respect to presence or absence
-of a protein within a TIGRFAMs family is represented by the score range
-between noise and trusted cutoffs.
+  Proteins that score above the trusted cutoffs are believed to reside within
+  the family and those falling below the noise cutoffs are believed to reside
+  outside the family.  The margin of error with respect to presence or absence
+  of a protein within a TIGRFAMs family is represented by the score range
+  between noise and trusted cutoffs.
 
-Because the number of completed and nearly completed genomes
-has now entered the thousands, protein families are becoming
-very large, and exceptions may be found in certain equivalog
-families.  Exceptions usually represent neofunctionalizations
-that arise within an equivalog family, although some may
-represent paralogs that are minimally derived since their
-branching from the equivalog familiy (i.e. short branch length).
+  Because the number of completed and nearly completed genomes
+  has now entered the thousands, protein families are becoming
+  very large, and exceptions may be found in certain equivalog
+  families.  Exceptions usually represent neofunctionalizations
+  that arise within an equivalog family, although some may
+  represent paralogs that are minimally derived since their
+  branching from the equivalog familiy (i.e. short branch length).
 
-TIGRFAMs now includes 57 models of type "exception", a type
-of model that overrules annotation from an equivalog model,
-either to give more specific information or to correct annotation
-for a neofunctionalized subgroup.
+  TIGRFAMs now includes 57 models of type "exception", a type
+  of model that overrules annotation from an equivalog model,
+  either to give more specific information or to correct annotation
+  for a neofunctionalized subgroup.
 
-TIGRFAMS_GO_LINK
-^^^^^^^^^^^^^^^^
-Gene Ontology (GO) term assignments.
-Models may have  0, 1, or several GO assignments.
+
+* TIGRFAMS_GO_LINK
+
+  Gene Ontology (GO) term assignments.
+  Models may have  0, 1, or several GO assignments.
 
 
 Reference
 ---------
-.. [1] http://www.ncbi.nlm.nih.gov/pubmed/12520025
-.. [2] http://www.ncbi.nlm.nih.gov/pubmed/23197656
+.. [#] http://www.ncbi.nlm.nih.gov/pubmed/12520025
+.. [#] http://www.ncbi.nlm.nih.gov/pubmed/23197656
 
 '''
 

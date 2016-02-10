@@ -7,12 +7,12 @@ Databases
 This module (:mod:`micronota.db`) provides functionality to create databases
 for micronota pipeline.
 
-Supported databases
--------------------
 
 .. automodule:: micronota.db.tigrfam
    :members:
 
+.. automodule:: micronota.db.uniref
+   :members:
 '''
 
 
