@@ -267,21 +267,14 @@ def _parse_single_embl(chunks):
     return sequence, metadata, positional_metadata
 
 
-def _parse_id(lines, strict=False):
-    '''Parse ID line.
-
-    Parameters
-    ----------
-    strict : bool.
-        Whether to parse strictly compliant to EMBL specifications.'''
-    # strip the ending dot
-    if not strict:
-        items = lines[0].rstrip('.').split(';')
-        res = dict()
-        res['id'] = items[0].split()[0]
-        res['size'], res['unit'] = items[-1].split()
-        # print(res['id'])
-        return res
+def _parse_id(lines):
+    '''Parse ID line.'''
+    items = lines[0].rstrip('.').split(';')
+    res = dict()
+    # quality would be "reviewed" or "unreviewed"
+    res['id'], res['quality'] = items[0].split()
+    res['size'], res['unit'] = items[-1].split()
+    return res
 
 
 def _parse_ac(lines):

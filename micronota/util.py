@@ -20,6 +20,7 @@ including config config, unit-testing convenience function.
 
 
 from sys import platform, version
+from os import remove
 from os.path import join, expanduser, exists
 from configparser import ConfigParser
 
@@ -77,3 +78,14 @@ def get_config_info(config):
 def list_db():
     '''Return database info.'''
     return dict()
+
+
+def _overwrite(fp, overwrite=False, append=False):
+    if exists(fp):
+        if overwrite:
+            remove(fp)
+        elif append:
+            return
+        else:
+            raise FileExistsError(
+                'The file %s exists. User "force" to overwrite it.' % fp)
