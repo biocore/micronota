@@ -1,74 +1,167 @@
 r'''
+UniProtKB EMBL Parser
+=====================
 
-ftp://ftp.ebi.ac.uk/pub/databases/embl/doc/usrman.txt
+UniProtKB stores each sequence and its associated metadata as an variant of
+EMBL format [#]_. The standard EMBL format is structured as:
 
-Classes of entries:
+    +--------------------------------+----------------------------------+
+    | ID - identification            | (begins each entry; 1 per entry) |
+    +--------------------------------+----------------------------------+
+    | AC - accession number          | (>=1 per entry)                  |
+    +--------------------------------+----------------------------------+
+    | PR - project identifier        | (0 or 1 per entry)               |
+    +--------------------------------+----------------------------------+
+    | DT - date                      | (2 per entry)                    |
+    +--------------------------------+----------------------------------+
+    | DE - description               | (>=1 per entry)                  |
+    +--------------------------------+----------------------------------+
+    | KW - keyword                   | (>=1 per entry)                  |
+    +--------------------------------+----------------------------------+
+    | OS - organism species          | (>=1 per entry)                  |
+    +--------------------------------+----------------------------------+
+    | OC - organism classification   | (>=1 per entry)                  |
+    +--------------------------------+----------------------------------+
+    | OG - organelle                 | (0 or 1 per entry)               |
+    +--------------------------------+----------------------------------+
+    | RN - reference number          | (>=1 per entry)                  |
+    +--------------------------------+----------------------------------+
+    | RC - reference comment         | (>=0 per entry)                  |
+    +--------------------------------+----------------------------------+
+    | RP - reference positions       | (>=1 per entry)                  |
+    +--------------------------------+----------------------------------+
+    | RX - reference cross-reference | (>=0 per entry)                  |
+    +--------------------------------+----------------------------------+
+    | RG - reference group           | (>=0 per entry)                  |
+    +--------------------------------+----------------------------------+
+    | RA - reference author(s)       | (>=0 per entry)                  |
+    +--------------------------------+----------------------------------+
+    | RT - reference title           | (>=1 per entry)                  |
+    +--------------------------------+----------------------------------+
+    | RL - reference location        | (>=1 per entry)                  |
+    +--------------------------------+----------------------------------+
+    | DR - database cross-reference  | (>=0 per entry)                  |
+    +--------------------------------+----------------------------------+
+    | CC - comments or notes         | (>=0 per entry)                  |
+    +--------------------------------+----------------------------------+
+    | AH - assembly header           | (0 or 1 per entry)               |
+    +--------------------------------+----------------------------------+
+    | AS - assembly information      | (0 or >=1 per entry)             |
+    +--------------------------------+----------------------------------+
+    | FH - feature table header      | (2 per entry)                    |
+    +--------------------------------+----------------------------------+
+    | FT - feature table data        | (>=2 per entry)                  |
+    +--------------------------------+----------------------------------+
+    | XX - spacer line               | (many per entry)                 |
+    +--------------------------------+----------------------------------+
+    | SQ - sequence header           | (1 per entry)                    |
+    +--------------------------------+----------------------------------+
+    | CO - contig/construct line     | (0 or >=1 per entry)             |
+    +--------------------------------+----------------------------------+
+    | bb - (blanks) sequence data    | (>=1 per entry)                  |
+    +--------------------------------+----------------------------------+
+    | // - termination line          | (ends each entry; 1 per entry)   |
+    +--------------------------------+----------------------------------+
 
-  Class          Definition
-  -----------    -----------------------------------------------------------
-  CON		 Entry constructed from segment entry sequences; if unannotated,
-                 annotation may be drawn from segment entries
-  PAT            Patent
-  EST            Expressed Sequence Tag
-  GSS            Genome Survey Sequence
-  HTC            High Thoughput CDNA sequencing
-  HTG            High Thoughput Genome sequencing
-  MGA            Mass Genome Annotation
-  WGS            Whole Genome Shotgun
-  TSA            Transcriptome Shotgun Assembly
-  STS            Sequence Tagged Site
-  STD            Standard (all entries not classified as above)
+
+UniProtKB's EMBL format is slightly different and its format specification
+is described in detail here:
+<http://web.expasy.org/docs/userman.html>
 
 
-Taxonomic division
-                          Division                 Code
-                          -----------------        ----
-                          Bacteriophage            PHG
-                          Environmental Sample     ENV
-                          Fungal                   FUN
-                          Human                    HUM
-                          Invertebrate             INV
-                          Other Mammal             MAM
-                          Other Vertebrate         VRT
-                          Mus musculus             MUS
-                          Plant                    PLN
-                          Prokaryote               PRO
-                          Other Rodent             ROD
-                          Synthetic                SYN
-                          Transgenic               TGN
-                          Unclassified             UNC
-                          Viral                    VRL
+Format Support
+--------------
+**Has Sniffer: Yes**
 
-structure of an entry
++------+------+---------------------------------------------------------------+
+|Reader|Writer|                          Object Class                         |
++======+======+===============================================================+
+|Yes   |No    |:mod:`skbio.sequence.Sequence`                                 |
++------+------+---------------------------------------------------------------+
+|Yes   |No    |:mod:`skbio.sequence.DNA`                                      |
++------+------+---------------------------------------------------------------+
+|Yes   |No    |:mod:`skbio.sequence.RNA`                                      |
++------+------+---------------------------------------------------------------+
+|Yes   |No    |:mod:`skbio.sequence.Protein`                                  |
++------+------+---------------------------------------------------------------+
+|Yes   |No    |generator of :mod:`skbio.sequence.Sequence` objects            |
++------+------+---------------------------------------------------------------+
 
-     ID - identification             (begins each entry; 1 per entry)
-     AC - accession number           (>=1 per entry)
-     PR - project identifier         (0 or 1 per entry)
-     DT - date                       (2 per entry)
-     DE - description                (>=1 per entry)
-     KW - keyword                    (>=1 per entry)
-     OS - organism species           (>=1 per entry)
-     OC - organism classification    (>=1 per entry)
-     OG - organelle                  (0 or 1 per entry)
-     RN - reference number           (>=1 per entry)
-     RC - reference comment          (>=0 per entry)
-     RP - reference positions        (>=1 per entry)
-     RX - reference cross-reference  (>=0 per entry)
-     RG - reference group            (>=0 per entry)
-     RA - reference author(s)        (>=0 per entry)
-     RT - reference title            (>=1 per entry)
-     RL - reference location         (>=1 per entry)
-     DR - database cross-reference   (>=0 per entry)
-     CC - comments or notes          (>=0 per entry)
-     AH - assembly header            (0 or 1 per entry)
-     AS - assembly information       (0 or >=1 per entry)
-     FH - feature table header       (2 per entry)
-     FT - feature table data         (>=2 per entry)
-     XX - spacer line                (many per entry)
-     SQ - sequence header            (1 per entry)
-     CO - contig/construct line      (0 or >=1 per entry)
-     bb - (blanks) sequence data     (>=1 per entry)
-     // - termination line           (ends each entry; 1 per entry)
+
+Examples
+--------
+
+Reading UniProt EMBL files
+^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+>>> uniprot = [
+...    'ID   A0A0D6JWX4_9EURY        Unreviewed;       218 AA.\n',
+...    'AC   A0A0D6JWX4;\n',
+...    'DT   27-MAY-2015, integrated into UniProtKB/TrEMBL.\n',
+...    'DT   27-MAY-2015, sequence version 1.\n',
+...    'DT   20-JAN-2016, entry version 5.\n',
+...    'DE   SubName: Full=Uncharacterized protein {ECO:0000313|EMBL:CQR53964.1};\n',
+...    'GN   ORFNames=BN996_03872 {ECO:0000313|EMBL:CQR53964.1}, BN996_03924\n',
+...    'GN   {ECO:0000313|EMBL:CQR54068.1};\n',
+...    'OS   Haloferax sp. Arc-Hr.\n',
+...    'OC   Archaea; Euryarchaeota; Halobacteria; Haloferacales; Haloferacaceae;\n',
+...    'OC   Haloferax.\n',
+...    'OX   NCBI_TaxID=1476858 {ECO:0000313|EMBL:CQR53964.1};\n',
+...    'RN   [1] {ECO:0000313|EMBL:CQR53964.1}\n',
+...    'RP   NUCLEOTIDE SEQUENCE.\n',
+...    'RC   STRAIN=Arc-Hr {ECO:0000313|EMBL:CQR53964.1};\n',
+...    'RA   Urmite Genomes Urmite Genomes;\n',
+...    'RL   Submitted (MAR-2015) to the EMBL/GenBank/DDBJ databases.\n',
+...    'CC   -----------------------------------------------------------------------\n',
+...    'CC   Copyrighted by the UniProt Consortium, see http://www.uniprot.org/terms\n',
+...    'CC   Distributed under the Creative Commons Attribution-NoDerivs License\n',
+...    'CC   -----------------------------------------------------------------------\n',
+...    'DR   EMBL; CSTE01000007; CQR53964.1; -; Genomic_DNA.\n',
+...    'DR   EMBL; CSTE01000007; CQR54068.1; -; Genomic_DNA.\n',
+...    'DR   Gene3D; 3.40.50.10420; -; 1.\n',
+...    'DR   InterPro; IPR024185; FTHF_cligase-like.\n',
+...    'DR   InterPro; IPR003741; LUD_dom.\n',
+...    'DR   Pfam; PF02589; DUF162; 1.\n',
+...    'PE   4: Predicted;\n',
+...    'FT   DOMAIN       27    185       DUF162. {ECO:0000259|Pfam:PF02589}.\n',
+...    'SQ   SEQUENCE   218 AA;  23872 MW;  7515B8A4A965B049 CRC64;\n',
+...    '     MSQQKSDYAD DADIDADLDR LPEDEAIEVT VENLEASGFD VVVVDTADEA LETLRSHIPA\n',
+...    '     GVSVMNGHST TLEEIGFDDY LSEGDHDWES LPDQIWSIDD DAERQAARRD SQTADYFLGG\n',
+...    '     INAISQTGDL VAADLSGSRI GAYPFAASNV VIVSGINKIV PTLDDALDRL ESVAYPLENE\n',
+...    '     RAKEAYGVES MIAKQLIFRQ EVEEGRTTVV LIREQLGY\n',
+...    '//\n']
+
+>>> from skbio import Protein
+>>> pro = Protein.read(uniprot)
+>>> pro
+Protein
+---------------------------------------------------------------------
+Metadata:
+    'AC': 'A0A0D6JWX4'
+    'CC': <class 'list'>
+    'DE': <class 'list'>
+    'DR': <class 'dict'>
+    'DT': <class 'list'>
+    'FT': <class 'list'>
+    'GN': <class 'list'>
+    'ID': <class 'dict'>
+    'OC': 'Archaea; Euryarchaeota; Halobacteria; Haloferacales;
+           Haloferacaceae; Haloferax'
+    'OS': <class 'list'>
+    'OX': '1476858 {ECO:0000313|EMBL:CQR53964.1}'
+    'PE': '4'
+Stats:
+    length: 218
+    has gaps: False
+    has degenerates: False
+    has non-degenerates: True
+    has stops: False
+---------------------------------------------------------------------
+0   MSQQKSDYAD DADIDADLDR LPEDEAIEVT VENLEASGFD VVVVDTADEA LETLRSHIPA
+60  GVSVMNGHST TLEEIGFDDY LSEGDHDWES LPDQIWSIDD DAERQAARRD SQTADYFLGG
+120 INAISQTGDL VAADLSGSRI GAYPFAASNV VIVSGINKIV PTLDDALDRL ESVAYPLENE
+180 RAKEAYGVES MIAKQLIFRQ EVEEGRTTVV LIREQLGY
+
 
 TODO
 ----
@@ -79,64 +172,20 @@ TODO
 * parse CC lines
 * parse the DR lines more thoroughly
 
-Examples
---------
 
-Reading UniProt EMBL files
-^^^^^^^^^^^^^^^^^^^^^^^^^^
-
->>> uniprot = [
-... r'ID   001R_FRG3G              Reviewed;         256 AA.\n',
-... r'AC   Q6GZX4;\N',
-... r'DT   28-JUN-2011, integrated into UniProtKB/Swiss-Prot.\n',
-... r'DT   19-JUL-2004, sequence version 1.\n',
-... r'DT   01-APR-2015, entry version 30.\n',
-... r'DE   RecName: Full=Putative transcription factor 001R;\n',
-... r'GN   ORFNames=FV3-001R;\n',
-... r'OS   Frog virus 3 (isolate Goorha) (FV-3).\n',
-... r'OC   Viruses; dsDNA viruses, no RNA stage; Iridoviridae; Ranavirus.\n',
-... r'OX   NCBI_TaxID=654924;\n',
-... r'OH   NCBI_TaxID=8295; Ambystoma (mole salamanders).\n',
-... r'OH   NCBI_TaxID=45438; Rana sylvatica (Wood frog).\n',
-... r'RN   [1]\N',
-... r'RP   NUCLEOTIDE SEQUENCE [LARGE SCALE GENOMIC DNA].\N',
-... r'RX   PubMed=15165820; DOI=10.1016/j.virol.2004.02.019;\n',
-... r'RA   Tan W.G., Barkman T.J., Gregory Chinchar V., Essani K.;\n',
-... r'RT   "Comparative genomic analyses of frog virus 3, type species of\n',
-... r'RT   the genus Ranavirus (family Iridoviridae).";\n',
-... r'RL   Virology 323:70-84(2004).\n',
-... r'CC   -!- FUNCTION: Transcription activation. {ECO:0000305}.\n',
-... r'DR   EMBL; AY548484; AAT09660.1; -; Genomic_DNA.\n',
-... r'DR   RefSeq; YP_031579.1; NC_005946.1.\n',
-... r'DR   ProteinModelPortal; Q6GZX4; -.\n',
-... r'DR   GeneID; 2947773; -.\n',
-... r'DR   KEGG; vg:2947773; -.\n',
-... r'DR   Proteomes; UP000008770; Genome.\n',
-... r'DR   GO; GO:0046782; P:regulation of transcription; IEA:InterPro.\n',
-... r'DR   GO; GO:0006351; P:transcription, DNA-templated; IEA:UniProtKB-KW.\n',
-... r'DR   InterPro; IPR007031; Poxvirus_VLTF3.\n',
-... r'DR   Pfam; PF04947; Pox_VLTF3; 1.\n',
-... r'PE   4: Predicted;\n',
-... r'KW   Activator; Complete proteome; Reference proteome; Transcription;\n',
-... r'KW   Transcription regulation.\n',
-... r'FT   CHAIN         1    256       Putative transcription factor 001R.\n',
-... r'FT                                /FTId=PRO_0000410512.\n',
-... r'FT   COMPBIAS     14     17       Poly-Arg.\n',
-... r'SQ   SEQUENCE   256 AA;  29735 MW;  B4840739BF7D4121 CRC64;\N',
-... r'     MAFSAEDVLK EYDRRRRMEA LLLSLYYPND RKLLDYKEWS PPRVQVECPK APVEWNNPPS\n',
-... r'     EKGLIVGHFS GIKYKGEKAQ ASEVDVNKMC CWVSKFKDAM RRYQGIQTCK IPGKVLSDLD\n',
-... r'     AKIKAYNLTV EGVEGFVRYS RVTKQHVAAF LKELRHSKQY ENVNLIHYIL TDKRVDIQHL\n',
-... r'     EKDLVKDFKA LVESAHRMRQ GHMINVKYIL YQLLKKHGHG PDGPDILTVK TGSKGVLYDD\n',
-... r'     SFRKIYTDLG WKFTPL\N',
-... r'//\n']
->>> from skbio import Protein
->>> pro = Protein.read(uniprot)
+Reference
+---------
+.. [#] ftp://ftp.ebi.ac.uk/pub/databases/embl/doc/usrman.txt
 '''
 
-from skbio.io import create_format
+from skbio.io import create_format, FileFormatError
 from skbio.sequence import Sequence, DNA, RNA, Protein
 from skbio.io.format._base import (
     _line_generator, _get_nth_sequence, _too_many_blanks)
+
+
+class EMBLFormatError(FileFormatError):
+    pass
 
 
 embl = create_format('embl')
@@ -166,8 +215,7 @@ _HEADERS = ['ID',  # identification            (begins each entry; 1 per entry)
             'FH',  # feature table header      (2 per entry)
             'FT',  # feature table data        (>=2 per entry)
             'SQ',  # sequence header           (1 per entry)
-            'CO',  # contig/construct line     (0 or >=1 per entry)
-            'bb']  # (blanks) sequence data    (>=1 per entry)
+            'CO']  # contig/construct line     (0 or >=1 per entry)
 
 
 @embl.sniffer()
@@ -181,8 +229,8 @@ def _embl_sniffer(fh):
         return False, {}
 
     try:
-        _parse_id([line])
-    except:
+        assert line.startswith('ID')
+    except EMBLFormatError:
         return False, {}
     return True, {}
 
@@ -196,7 +244,6 @@ def _embl_to_generator(fh, constructor=None, **kwargs):
 @embl.reader(Sequence)
 def _embl_to_sequence(fh, seq_num=1, **kwargs):
     record = _get_nth_sequence(_parse_records(fh, _parse_single_embl), seq_num)
-    print(record)
     return _construct(record, Protein, **kwargs)
 
 
@@ -208,12 +255,14 @@ def _embl_to_protein(fh, seq_num=1, **kwargs):
 
 @embl.reader(DNA)
 def _embl_to_DNA(fh, seq_num=1, **kwargs):
-    pass
+    record = _get_nth_sequence(_parse_records(fh, _parse_single_embl), seq_num)
+    return _construct(record, DNA, **kwargs)
 
 
 @embl.reader(RNA)
 def _embl_to_RNA(fh, seq_num=1, **kwargs):
-    pass
+    record = _get_nth_sequence(_parse_records(fh, _parse_single_embl), seq_num)
+    return _construct(record, RNA, **kwargs)
 
 
 def _construct(record, constructor=None, **kwargs):
