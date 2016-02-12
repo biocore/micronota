@@ -20,12 +20,13 @@ class TigrfamTests(TestCase):
         self.obs_db_fp = mktemp()
         self.exp_db_fp = _get_data_dir()('tigrfam.db')
         self.d = dirname(self.exp_db_fp)
+        self.table_name = 'metadata'
 
     def test_prepare_metadata(self):
         prepare_metadata(self.d, self.obs_db_fp)
         with connect(self.obs_db_fp) as o, connect(self.exp_db_fp) as e:
             co = o.cursor()
-            co.execute('SELECT * from tigrfam')
+            co.execute('SELECT * from {t}'.format(t=self.table_name))
             ce = e.cursor()
             ce.execute('SELECT * from tigrfam')
             self.assertCountEqual(co.fetchall(), ce.fetchall())

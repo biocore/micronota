@@ -97,6 +97,15 @@ Files
   Models may have  0, 1, or several GO assignments.
 
 
+Functions
+---------
+
+.. autosummary::
+   :toctree: generated/
+
+   prepare_db
+   prepare_metadata
+
 Reference
 ---------
 .. [#] http://www.ncbi.nlm.nih.gov/pubmed/12520025
@@ -122,6 +131,8 @@ from ftplib import FTP
 from sqlite3 import connect
 
 from ..bfillings.hmmer import hmmpress_hmm
+
+from ..util import _overwrite_file
 
 
 def prepare_db(out_d, prefix='tigrfam_v15.0', force=False,
@@ -183,15 +194,17 @@ def prepare_db(out_d, prefix='tigrfam_v15.0', force=False,
         shutil.rmtree(temp_dir)
 
 
-def prepare_metadata(in_d, fp):
+def prepare_metadata(in_d, out_fp, overwrite=True):
     '''Compile the metadata into sqlite3 database.
 
     Parameters
     ----------
     in_d : str
         The input directory containing XXX.INFO files.
-    fp : str
+    out_fp : str
         The output file path of sqlite3 database.
+    overwrite : boolean
+        Whether to overwrite if the ``out_fp` exists.
 
     Returns
     -------
@@ -203,13 +216,13 @@ def prepare_metadata(in_d, fp):
     The schema of the database file contains one table named `tigrfam` that
     has following columns:
 
-    1. ``id``. TEXT. TIGRFAM ID.
+    1. ``ac``. TEXT. TIGRFAM accession.
 
-    2. ``tag``. TEXT. 2-letter tag described in the table above in this module.
+    2. ``key``. TEXT. 2-letter key described in the table above in this module.
 
-    3. ``value``. BLOB. The value of the tag.
+    3. ``val``. BLOB. The value of the key.
 
-    4. ``transfer``. INTEGER. Used as the boolean. ``1`` means the ``value``
+    4. ``transfer``. INTEGER. Used as the boolean. ``1`` means the ``val``
        should be transferred to the query sequences as its annotation;
        ``0`` means not.
 
@@ -217,26 +230,27 @@ def prepare_metadata(in_d, fp):
     the function is re-run.
     '''
     n = 0
-    with connect(fp) as conn:
-        conn.execute("DROP TABLE IF EXISTS tigrfam")
-        conn.execute('''CREATE TABLE tigrfam (
-                            id       TEXT    NOT NULL,
-                            tag      TEXT    NOT NULL,
-                            value    BLOB    NOT NULL,
+    _overwrite_file(out_fp, overwrite)
+    with connect(out_fp) as conn:
+        table_name = 'metadata'
+        conn.execute('''CREATE TABLE IF NOT EXISTS {t} (
+                            ac       TEXT    NOT NULL,
+                            key      TEXT    NOT NULL,
+                            val      BLOB    NOT NULL,
                             transfer BOOLEAN NOT NULL,
-                        CHECK (transfer IN (0,1)));''')
+                        CHECK (transfer IN (0, 1)))'''.format(t=table_name))
 
         for f in os.listdir(in_d):
             if not f.endswith('.INFO'):
                 continue
             n += 1
             tigrfam_id = f.split('.', 1)[0]
-            for x in _read_info(join(in_d, f)):
-                conn.execute('''INSERT INTO tigrfam (id, tag, value, transfer)
-                                    VALUES ("%s",?,?,?);''' % tigrfam_id,
-                             x)
+            insert = '''INSERT INTO {t} (ac, key, val, transfer)
+                        VALUES (?,?,?,?)'''.format(t=table_name)
+            for i, j, k in _read_info(join(in_d, f)):
+                conn.execute(insert, (tigrfam_id, i, j, k))
         # don't forget to index the column to speed up query
-        conn.execute('CREATE INDEX id ON tigrfam (id);')
+        conn.execute('CREATE INDEX ac ON {t} (ac);'.format(t=table_name))
         conn.commit()
     return n
 
@@ -252,26 +266,26 @@ def _read_info(fn):
     Yields
     ------
     tuple
-        tag, value, int of 0 or 1.
+        key, val, int of 0 or 1.
     '''
     # the error param is for the non-utf8 symbols
     with open(fn, errors='backslashreplace') as f:
         for line in f:
             line = line.strip()
-            tag = line[:2]
-            value = line[2:].strip()
-            if tag in ['TC', 'NC']:
-                g, d = [float(i) for i in value.split()]
-                yield '%s_global' % tag, g, 0
-                yield '%s_domain' % tag, d, 0
-            elif tag == 'EC':
-                for n in value.split():
-                    yield tag, n, 1
-            elif tag == 'RM':
+            key = line[:2]
+            val = line[2:].strip()
+            if key in ['TC', 'NC']:
+                g, d = [float(i) for i in val.split()]
+                yield '%s_global' % key, g, 0
+                yield '%s_domain' % key, d, 0
+            elif key == 'EC':
+                for n in val.split():
+                    yield key, n, 1
+            elif key == 'RM':
                 s = 'PMID:'
-                if value.startswith(s):
-                    value = value.replace(s, '').strip()
-            elif tag in ['TP', 'AC', 'RN', 'RT', 'RA', 'RL']:
+                if val.startswith(s):
+                    val = val.replace(s, '').strip()
+            elif key in ['TP', 'AC', 'RN', 'RT', 'RA', 'RL']:
                 continue
             else:
-                yield tag, value, 1
+                yield key, val, 1
