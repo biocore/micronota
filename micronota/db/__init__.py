@@ -8,11 +8,11 @@ This module (:mod:`micronota.db`) provides functionality to create databases
 for micronota pipeline.
 
 
-.. automodule:: micronota.db.tigrfam
-   :members:
+.. autosummary::
+   :toctree: _autosummary
 
-.. automodule:: micronota.db.uniref
-   :members:
+   tigrfam
+   uniref
 '''
 
 

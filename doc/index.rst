@@ -13,6 +13,7 @@ API Reference
    :maxdepth: 1
 
    db
+   parsers
    bfillings
 
 

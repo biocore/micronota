@@ -80,7 +80,7 @@ def list_db():
     return dict()
 
 
-def _overwrite(fp, overwrite=False, append=False):
+def _overwrite_file(fp, overwrite=False, append=True):
     if exists(fp):
         if overwrite:
             remove(fp)

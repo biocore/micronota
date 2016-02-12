@@ -30,7 +30,7 @@ Release
 -------
 :version: 2016_01
 :date:    01/20/2016
-:link:    http://www.uniprot.org/downloads
+:link:    ftp://ftp.uniprot.org/pub/databases/uniprot/relnotes.txt
 
 Files
 -----
@@ -150,7 +150,7 @@ def sort_uniref(db_fp, uniref_fp, out_d):
         files[f].close()
 
 
-def prepare_metadata(in_fp, fp, force=False):
+def prepare_metadata(in_fp, fp, overwrite=False):
     '''
     Returns
     -------
@@ -175,7 +175,7 @@ def prepare_metadata(in_fp, fp, force=False):
     The table in the database file will be dropped and re-created if
     the function is re-run.
     '''
-    _overwrite(fp, force, True)
+    _overwrite(fp, overwrite)
     with connect(fp) as conn:
         table_name = 'metadata'
         conn.execute('''CREATE TABLE IF NOT EXISTS {t} (
@@ -189,21 +189,22 @@ def prepare_metadata(in_fp, fp, force=False):
                 read(in_fp, format='embl', constructor=Sequence), 1):
             md = seq.metadata
             ac = md['AC']
-            insert = '''INSERT INTO uniref (ac, key, val, transfer)
-                        VALUES (?,?,?,?);'''
+            insert = '''INSERT INTO {t} (ac, key, val, transfer)
+                        VALUES (?,?,?,?);'''.format(t=table_name)
             conn.execute(insert, (ac, 'OX', md['OX'], 0))
             conn.execute(insert, (ac, 'PE', md['PE'], 0))
             kingdom = md['OC'].split('; ', 1)[0]
             conn.execute(insert, (ac, 'KD', kingdom, 0))
-            if md['quality'] == 'Reviewed':
+            if md['ID']['quality'] == 'Reviewed':
                 group = 'sprot'
-            elif md['quality'] == 'Unreviewed':
+            elif md['ID']['quality'] == 'Unreviewed':
                 group = 'trembl'
             else:
                 raise ValueError('Unrecognized "%s"' % group)
             conn.execute(insert, (ac, 'RE', group, 0))
         # don't forget to index the column to speed up query
-        conn.execute('CREATE INDEX IF NOT EXISTS ac ON {t} (ac);'.format(t=table_name))
+        conn.execute('CREATE INDEX IF NOT EXISTS ac ON {t} (ac);'.format(
+            t=table_name))
         conn.commit()
 
     return n
