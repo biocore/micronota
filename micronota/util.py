@@ -23,9 +23,8 @@ from sys import platform, version
 from os import remove
 from os.path import join, expanduser, exists
 from configparser import ConfigParser
-from contextlib import contextmanager
-from ftplib import FTP
-from urllib.parse import urlparse
+from urllib.request import urlopen
+import shutil
 
 
 _HOME = expanduser('~')
@@ -94,28 +93,6 @@ def _overwrite_file(fp, overwrite=False, append=True):
                 'The file %s exists. User "force" to overwrite it.' % fp)
 
 
-class FTPHandler(object):
-    def __init__(self, parsed_url):
-        ''''''
-        self._ftp = FTP(parsed_url.netloc)
-        self._ftp.login(parsed_url.username, parsed_url.password)
-
-
-    def download(self, src, dst):
-        ''''''
-
-    def close(self):
-        ''''''
-        self._ftp.close()
-
-
-@contextmanager
-def get_remote_handler(url):
-    url_parsed = urlparse(url)
-    if url_parsed.scheme == 'ftp':
-        co = FTPHandler(url_parsed)
-    else:
-        raise Exception('Invalid protocol: %s' % url_parsed.scheme)
-    yield co
-    co.close()
-
+def download(src, dest):
+    with urlopen(src) as i_f, open(dest, 'wb') as o_f:
+        shutil.copyfileobj(i_f, o_f)

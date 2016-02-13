@@ -126,20 +126,17 @@ import shutil
 import gzip
 import tarfile
 from tempfile import mkdtemp
-from os.path import join, exists
-from ftplib import FTP
+from os.path import join, exists, basename
 from sqlite3 import connect
 
 from ..bfillings.hmmer import hmmpress_hmm
 
-from ..util import _overwrite_file
+from ..util import _overwrite_file, download
 
 
 def prepare_db(out_d, prefix='tigrfam_v15.0', force=False,
-               server='ftp.tigr.org',
-               path='pub/data/TIGRFAMs',
-               hmm='TIGRFAMs_15.0_HMM.LIB.gz',
-               metadata='TIGRFAMs_15.0_INFO.tar.gz'):
+               hmm='ftp://ftp.tigr.org/pub/data/TIGRFAMs/TIGRFAMs_15.0_HMM.LIB.gz',
+               metadata='ftp://ftp.tigr.org/pub/data/TIGRFAMs/TIGRFAMs_15.0_INFO.tar.gz'):
     '''Download and prepare TIGRFAM database.
 
     Parameters
@@ -150,10 +147,6 @@ def prepare_db(out_d, prefix='tigrfam_v15.0', force=False,
         The file name (without extensions) of the output files.
     force : boolean
         Whether to overwrite existing files
-    server : str
-        FTP server to download TIGRFAM files
-    path : str
-        The path on FTP to find files to download
     hmm : str
         The file name of hmm models
     metadata : str
@@ -162,34 +155,30 @@ def prepare_db(out_d, prefix='tigrfam_v15.0', force=False,
 
     hmm_out = join(out_d, '%s.hmm' % prefix)
     if exists(hmm_out) and not force:
-        print('Database %s already exists. Skip it.' % prefix)
+        print('Database %s already exists. Skipping it.' % prefix)
         return
 
     metadata_out = join(out_d, '%s.db' % prefix)
 
     try:
         temp_dir = mkdtemp()
-        hmm_tmp = join(temp_dir, hmm)
-        metadata_tmp = join(temp_dir, metadata)
-        with FTP(server) as ftp:
-            ftp.login()
-            ftp.cwd(path)
+        hmm_tmp = join(temp_dir, basename(hmm))
+        metadata_tmp = join(temp_dir, basename(metadata))
 
-            # fetch metadata file
-            ftp.retrbinary('RETR %s' % metadata,
-                           open(metadata_tmp, 'wb').write)
-            with tarfile.open(metadata_tmp) as tar:
-                tar.extractall(temp_dir)
-                prepare_metadata(temp_dir, metadata_out)
+        # fetch metadata file
+        download(metadata, metadata_tmp)
+        with tarfile.open(metadata_tmp) as tar:
+            tar.extractall(temp_dir)
+            prepare_metadata(temp_dir, metadata_out)
 
-            # fetch HMM model file
-            ftp.retrbinary('RETR %s' % hmm,
-                           open(hmm_tmp, 'wb').write)
-            # gunzip and move the file
-            with gzip.open(hmm_tmp, 'rb') as i_f, open(hmm_out, 'wb') as o_f:
-                shutil.copyfileobj(i_f, o_f)
-            # don't forget to compress the hmm model file
-            hmmpress_hmm(hmm_out)
+        # fetch HMM model file
+        download(hmm, hmm_tmp)
+        # gunzip and move the file
+        with gzip.open(hmm_tmp, 'rb') as i_f, open(hmm_out, 'wb') as o_f:
+            shutil.copyfileobj(i_f, o_f)
+
+        # don't forget to compress the hmm model file
+        hmmpress_hmm(hmm_out)
     finally:
         shutil.rmtree(temp_dir)
 
