@@ -65,8 +65,7 @@ EMBL format [#]_. The standard EMBL format is structured as:
 
 
 UniProtKB's EMBL format is slightly different and its format specification
-is described in detail here:
-<http://web.expasy.org/docs/userman.html>
+is `described in detail here <http://web.expasy.org/docs/userman.html>`_.
 
 
 Format Support
@@ -167,9 +166,13 @@ TODO
 ----
 * merge with genbank parsers
   * _parse_genbanks -> _parse_records
+
 * sanity check the length and sequence type with ID line
+
 * parse Reference related lines
+
 * parse CC lines
+
 * parse the DR lines more thoroughly
 
 
@@ -321,7 +324,13 @@ def _parse_id(lines):
     items = lines[0].rstrip('.').split(';')
     res = dict()
     # quality would be "reviewed" or "unreviewed"
-    res['id'], res['quality'] = items[0].split()
+    res['id'], rev = items[0].split()
+    if rev == 'Reviewed':
+        res['quality'] = 'sprot'
+    elif rev == 'Unreviewed':
+        res['quality'] = 'trembl'
+    else:
+        raise ValueError('Unrecognized "%s"' % rev)
     res['size'], res['unit'] = items[-1].split()
     return res
 

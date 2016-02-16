@@ -79,7 +79,7 @@ Reference
 # The full license is in the file COPYING.txt, distributed with this software.
 # ----------------------------------------------------------------------------
 
-from os.path import join, expanduser, basename
+from os.path import join, basename
 from sqlite3 import connect
 from xml.etree import ElementTree as ET
 from tempfile import mkdtemp
@@ -227,6 +227,7 @@ def sort_uniref(db_fp, uniref_fp, out_d):
     fnames.append('_other')
     files = {f: open(join(out_d, 'uniref100_%s.fasta' % f), 'w')
              for f in fnames}
+
     with connect(db_fp) as conn:
         cursor = conn.cursor()
         for seq in read(uniref_fp, format='fasta', constructor=Sequence):
@@ -241,7 +242,7 @@ def sort_uniref(db_fp, uniref_fp, out_d):
                 if taxon in ['Bacterial', 'Archaea', 'Viruses']:
                     group[1] = taxon
             seq.write(files['_'.join(group)])
-    conn.commit()
+
     for f in files:
         files[f].close()
 
