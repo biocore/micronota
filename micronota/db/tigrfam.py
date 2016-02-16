@@ -169,7 +169,7 @@ def prepare_db(out_d, prefix='tigrfam_v15.0', force=False,
         download(metadata, metadata_tmp)
         with tarfile.open(metadata_tmp) as tar:
             tar.extractall(temp_dir)
-            prepare_metadata(temp_dir, metadata_out)
+            prepare_metadata(temp_dir, metadata_out, force)
 
         # fetch HMM model file
         download(hmm, hmm_tmp)
