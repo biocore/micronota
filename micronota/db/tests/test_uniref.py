@@ -7,6 +7,7 @@
 # ----------------------------------------------------------------------------
 
 from os.path import join
+from os import remove
 from tempfile import mktemp, mkdtemp
 from unittest import TestCase, main
 from sqlite3 import connect
@@ -27,8 +28,8 @@ class UnirefTests(TestCase):
         self.trembl = [2, _get_data_dir()('uniprot_trembl.xml.gz')]
         self.table_name = 'metadata'
 
-        self.id_map_exp = _get_data_dir()('id_map.db')
         self.id_map_obs = mktemp()
+        self.id_map_exp = _get_data_dir()('id_map.db')
         self.id_map = [4, _get_data_dir()('id_map.txt.gz')]
         self.id_map_table = 'id_map'
 
@@ -74,6 +75,7 @@ class UnirefTests(TestCase):
             exp = _get_data_dir()(fp)
             with open(obs) as o, open(exp) as e:
                 self.assertEqual(o.read(), e.read())
+            remove(obs)
 
     def tearDown(self):
         shutil.rmtree(self.tmp_dir)
