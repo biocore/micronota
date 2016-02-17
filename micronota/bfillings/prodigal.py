@@ -7,8 +7,9 @@
 # ----------------------------------------------------------------------------
 
 from os import makedirs
-from os.path import join
+from os.path import join, basename, splitext
 
+from skbio.sequence import IntervalMetadata
 from burrito.parameters import FlagParameter, ValuedParameter
 from burrito.util import CommandLineApplication, ResultPath
 
@@ -140,3 +141,36 @@ def predict_genes(in_fp, out_dir, prefix, params=None):
 
     app = Prodigal(params=params)
     return app()
+
+
+def identify_features(in_fp, out_dir, params=None):
+    '''Predict genes for the sequences in the input file with ``Prodigal``.
+
+    Parameters
+    ----------
+    in_fp : str
+        input file path
+    out_dir : str
+        output directory
+
+    Returns
+    -------
+    dict
+        key is the seq id as in ``skbio.Sequence.metadata['id']``; value is
+        ``skbio.sequence.IntervalMetadata``.
+    '''
+    interval_metadata = {}
+    prefix = splitext(basename(in_fp))[0]
+    res = predict_genes(in_fp, out_dir, prefix, params)
+    if res['Exitstatus'] != 0:
+        raise RuntimeError('The prediction is finished with an error.')
+    for seq_id, imd in parse_output(res['-o']):
+        interval_metadata[seq_id] = imd
+    return interval_metadata
+
+
+def parse_output():
+    '''Parse gene prediction result from ``Prodigal``.
+
+    It is parsed into ``skbio.sequence.IntervalMetadata``.
+    '''
