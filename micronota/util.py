@@ -9,7 +9,6 @@ including config config, unit-testing convenience function.
 
 '''
 
-
 # ----------------------------------------------------------------------------
 # Copyright (c) 2015--, micronota development team.
 #
@@ -18,12 +17,13 @@ including config config, unit-testing convenience function.
 # The full license is in the file COPYING.txt, distributed with this software.
 # ----------------------------------------------------------------------------
 
-
 from sys import platform, version
 from os import remove
 from os.path import join, expanduser, exists
 from configparser import ConfigParser
 from urllib.request import urlopen
+from tempfile import mkstemp
+from contextlib import contextmanager
 import shutil
 
 
@@ -96,3 +96,11 @@ def _overwrite_file(fp, overwrite=False, append=True):
 def download(src, dest):
     with urlopen(src) as i_f, open(dest, 'wb') as o_f:
         shutil.copyfileobj(i_f, o_f)
+
+
+@contextmanager
+def _tmp_file(*args, **kwargs):
+    fh, fp = mkstemp(*args, **kwargs)
+    yield fh, fp
+    fh.close()
+    remove(fp)
