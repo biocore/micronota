@@ -82,76 +82,91 @@ Reference
 from os.path import join, basename
 from sqlite3 import connect
 from xml.etree import ElementTree as ET
-from tempfile import mkdtemp
-import shutil
 import gzip
 
 from skbio import read, Sequence
 
-from ..util import _overwrite_file, download
+from ..util import _overwrite, _download
 
 
-def prepare_db(out_d, prefix='uniref100', force=False,
+def prepare_db(out_d, downloaded, force=False,
                sprot='ftp://ftp.uniprot.org/pub/databases/uniprot/current_release/knowledgebase/complete/uniprot_sprot.xml.gz',
                trembl='ftp://ftp.uniprot.org/pub/databases/uniprot/current_release/knowledgebase/complete/uniprot_trembl.xml.gz',
                uniref100='ftp://ftp.uniprot.org/pub/databases/uniprot/uniref/uniref100/uniref100.fasta.gz',
                id_map='ftp://ftp.uniprot.org/pub/databases/uniprot/current_release/knowledgebase/idmapping/idmapping_selected.tab.gz'):
     '''Prepare reference database for UniRef.
 
+    Parameters
+    ----------
+    out_d : str
+        The output directory
+    force : boolean
+        Force overwrite the files
+    downloaded : str
+        File directory. If the files are already downloaded,
+        just use the files in the directory and skip _download.
+
     Notes
     -----
     This function creates the following files:
 
-    * ``uniref100_sprot_archaea.dmnd``
-    * ``uniref100_sprot_bacteria.dmnd``
-    * ``uniref100_sprot_viruses.dmnd``
+    * ``uniref100_sprot_Archaea.dmnd``
+    * ``uniref100_sprot_Bacteria.dmnd``
+    * ``uniref100_sprot_Viruses.dmnd``
     * ``uniref100_sprot_other.dmnd``
-    * ``uniref100_trembl_archaea.dmnd``
-    * ``uniref100_trembl_bacteria.dmnd``
-    * ``uniref100_trembl_viruses.dmnd``
+    * ``uniref100_trembl_Archaea.dmnd``
+    * ``uniref100_trembl_Bacteria.dmnd``
+    * ``uniref100_trembl_Viruses.dmnd``
     * ``uniref100_trembl_other.dmnd``
     * ``uniref100__other.dmnd``
 
     * ``uniprotkb.db``
     * ``uniprotkb_id_map.db``: the map of IDs between databases
     '''
+
+    id_map_fp = join(out_d, 'uniprotkb_id_map.db')
+    id_map_raw = join(downloaded, basename(id_map))
+    metadata_fp = join(out_d, 'uniprotkb.db')
+    sprot_raw = join(downloaded, basename(sprot))
+    trembl_raw = join(downloaded, basename(trembl))
+    uniref100_raw = join(downloaded, basename(uniref100))
     try:
-        temp_dir = mkdtemp()
+        _download(id_map, id_map_raw, overwrite=force)
+        _download(sprot, sprot_raw, overwrite=force)
+        _download(trembl, trembl_raw, overwrite=force)
+        _download(uniref100, uniref100_raw, overwrite=force)
+    except FileExistsError:
+        pass
 
-        id_map_fp = join(out_d, 'uniprotkb_id_map.db')
-        id_map_tmp = join(temp_dir, basename(id_map))
-        download(id_map, id_map_tmp)
-        create_id_map(id_map_tmp, id_map_fp)
+    create_id_map(id_map_raw, id_map_fp, force)
 
-        metadata_fp = join(out_d, 'uniprotkb.db')
-        sprot_tmp = join(temp_dir, basename(sprot))
-        download(sprot, sprot_tmp)
-        prepare_metadata(sprot_tmp, metadata_fp)
-        trembl_tmp = join(temp_dir, basename(trembl))
-        download(trembl, trembl_tmp)
-        prepare_metadata(sprot_tmp, metadata_fp)
+    prepare_metadata(sprot_raw, metadata_fp, append=force)
+    prepare_metadata(sprot_raw, metadata_fp, append=True)
 
-        uniref100_tmp = join(temp_dir, basename(uniref100))
-        download(uniref100, uniref100_tmp)
-        sort_uniref(uniref100_tmp, out_d)
-    finally:
-        shutil.rmtree(temp_dir)
-    # prepare_metadata(join(expanduser('~'), 'uniref', 'uniprot_sprot.xml.gz'),
-    #                  '%s.db' % join(out_d, prefix))
-    # prepare_metadata(join(expanduser('~'), 'uniref', 'uniprot_trembl.xml.gz'),
-    #                  '%s.db' % join(out_d, prefix))
-    # prepare_metadata(join(expanduser('~'), 'uniref', 'uniprot_trembl.dat.gz'),
-    #                  '%s.db' % join(out_d, prefix))
-    # sort_uniref('%s.db' % join(out_d, prefix), join(expanduser('~'), 'uniref', 'uniref100.fasta.gz'), out_d)
-    # create_id_map(join(expanduser('~'), 'compy', 'uniref', 'idmapping_selected.tab'),
-    #               'id_map.db')
+    sort_uniref(uniref100_raw, out_d, force)
 
 
-def create_id_map(in_fp, db_fp, overwrite=True):
+def create_id_map(in_fp, db_fp, overwrite=False):
     '''Map between UniRef100, UniRef90, UniRef50, UniProtKB and other databases.
+
+    Parameters
+    ----------
+    in_fp : str
+        The gzipped input id map file downloaded from UniProt ftp.
+    db_fp : str
+        The output database file.
+    overwrite : boolean
+        Whether to overwrite the ``db_fp`` if it is already exist.
+
+    Returns
+    -------
+    int
+        The number of records processed.
 
     Notes
     -----
+    The input ``in_fp`` should have following columns in order:
+
     1. UniProtKB_AC
     2. UniProtKB_ID
     3. GeneID (EntrezGene)
@@ -174,8 +189,11 @@ def create_id_map(in_fp, db_fp, overwrite=True):
     20. Ensembl_TRS
     21. Ensembl_PRO
     22. Additional_PubMed
+
+    All will be consumed to ``db_fp`` except 2nd column.
+
     '''
-    _overwrite_file(db_fp, overwrite)
+    _overwrite(db_fp, overwrite)
     with connect(db_fp) as conn:
         table_name = 'id_map'
         conn.execute('''CREATE TABLE IF NOT EXISTS {t} (
@@ -211,22 +229,50 @@ def create_id_map(in_fp, db_fp, overwrite=True):
             conn.execute(insert, items)
 
         # don't forget to index the column to speed up query
-        conn.execute('CREATE INDEX IF NOT EXISTS UniRef100 ON {t} (UniRef100)'.format(
-            t=table_name))
+        conn.execute('''CREATE INDEX IF NOT EXISTS
+                          UniRef100 ON {t} (UniRef100)'''.format(
+                              t=table_name))
         conn.commit()
 
     return n
 
 
-def sort_uniref(db_fp, uniref_fp, out_d):
-    '''Sort UniRef sequences into different partitions.'''
+def sort_uniref(db_fp, uniref_fp, out_d, overwrite=False):
+    '''Sort UniRef sequences into different partitions.
+
+    This will sort UniRef100 seq into following partitions based on both
+    quality and taxon:
+
+    * ``uniref100_sprot_Archaea.fasta``
+    * ``uniref100_sprot_Bacteria.fasta``
+    * ``uniref100_sprot_Viruses.fasta``
+    * ``uniref100_sprot_other.fasta``
+    * ``uniref100_trembl_Archaea.fasta``
+    * ``uniref100_trembl_Bacteria.fasta``
+    * ``uniref100_trembl_Viruses.fasta``
+    * ``uniref100_trembl_other.fasta``
+    * ``uniref100__other.fasta``
+
+    Parameters
+    ----------
+    db_fp : str
+        The database file created by ``prepare_metadata``.
+    uniref_fp : str
+        The UniRef100 fasta file. gzipped or not.
+    out_d : str
+        The output directory.
+    '''
     name_map = {'Swiss-Prot': 'sprot',
                 'TrEMBL': 'trembl'}
-    fnames = ['%s_%s' % (i, j) for i in ['sprot', 'trembl']
-              for j in ['Bacteria', 'Archaea', 'Viruses', 'other']]
-    fnames.append('_other')
-    files = {f: open(join(out_d, 'uniref100_%s.fasta' % f), 'w')
-             for f in fnames}
+    fns = ['%s_%s' % (i, j) for i in ['sprot', 'trembl']
+           for j in ['Bacteria', 'Archaea', 'Viruses', 'other']]
+    fns.append('_other')
+    fps = [join(out_d, 'uniref100_%s.fasta') % f for f in fns]
+
+    for f in fns:
+        _overwrite(f, overwrite)
+
+    files = {fn: open(fp, 'w') for fp, fn in zip(fps, fns)}
 
     with connect(db_fp) as conn:
         cursor = conn.cursor()
@@ -247,8 +293,17 @@ def sort_uniref(db_fp, uniref_fp, out_d):
         files[f].close()
 
 
-def prepare_metadata(in_fp, out_fp, overwrite=False):
+def prepare_metadata(in_fp, out_fp, append=True):
     '''
+    Parameters
+    ----------
+    in_fp : str
+        The gzipped xml file of either UniProtKB Swiss-Prot or TrEMBLE.
+    out_fp : str
+        The output database file. See ``Notes``.
+    append : boolean
+        Whether to append to the current ``out_fp`` if it exists.
+
     Returns
     -------
     int
@@ -272,7 +327,7 @@ def prepare_metadata(in_fp, out_fp, overwrite=False):
     The table in the database file will be dropped and re-created if
     the function is re-run.
     '''
-    _overwrite_file(out_fp, overwrite)
+    _overwrite(out_fp, append=append)
     with connect(out_fp) as conn:
         table_name = 'metadata'
         conn.execute('''CREATE TABLE IF NOT EXISTS {t} (
@@ -297,10 +352,11 @@ def prepare_metadata(in_fp, out_fp, overwrite=False):
 def _parse_xml(in_fp):
     def fixtag(ns, tag, nsmap):
         return '{%s}%s' % (nsmap[ns], tag)
-
+    # this is the namespace for uniprot xml files.
     ns_map = {'xmlns': 'http://uniprot.org/uniprot',
               'xsi': 'http://www.w3.org/2001/XMLSchema-instance'}
-    # it is very important to set the events to 'end'
+    # it is very important to set the events to 'end'; otherwise,
+    # elem would be an incomplete record.
     for event, elem in ET.iterparse(gzip.open(in_fp), events=['end']):
         if elem.tag == fixtag('xmlns', 'entry', ns_map):
             yield _process_entry(elem, ns_map)

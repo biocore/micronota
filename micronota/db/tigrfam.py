@@ -125,16 +125,15 @@ import os
 import shutil
 import gzip
 import tarfile
-from tempfile import mkdtemp
-from os.path import join, exists, basename
+from os.path import join, basename
 from sqlite3 import connect
 
 from ..bfillings.hmmer import hmmpress_hmm
 
-from ..util import _overwrite_file, download
+from ..util import _overwrite, _download
 
 
-def prepare_db(out_d, prefix='tigrfam_v15.0', force=False,
+def prepare_db(out_d, downloaded, prefix='tigrfam_v15.0', force=False,
                hmm='ftp://ftp.tigr.org/pub/data/TIGRFAMs/TIGRFAMs_15.0_HMM.LIB.gz',
                metadata='ftp://ftp.tigr.org/pub/data/TIGRFAMs/TIGRFAMs_15.0_INFO.tar.gz'):
     '''Download and prepare TIGRFAM database.
@@ -143,6 +142,8 @@ def prepare_db(out_d, prefix='tigrfam_v15.0', force=False,
     ----------
     out_d : str
         The directory of output files.
+    downloaded : str
+        The directory of downloaded files.
     prefix : str
         The file name (without extensions) of the output files.
     force : boolean
@@ -153,34 +154,29 @@ def prepare_db(out_d, prefix='tigrfam_v15.0', force=False,
         The file name of the metadata for the hmm models
     '''
 
-    hmm_out = join(out_d, '%s.hmm' % prefix)
-    if exists(hmm_out) and not force:
-        print('Database %s already exists. Skipping it.' % prefix)
-        return
-
-    metadata_out = join(out_d, '%s.db' % prefix)
-
+    hmm_fp = join(out_d, '%s.hmm' % prefix)
+    hmm_raw = join(downloaded, basename(hmm))
+    metadata_fp = join(out_d, '%s.db' % prefix)
+    metadata_raw = join(downloaded, basename(metadata))
+    metadata_dir = join(downloaded, '%s_INFO' % prefix)
     try:
-        temp_dir = mkdtemp()
-        hmm_tmp = join(temp_dir, basename(hmm))
-        metadata_tmp = join(temp_dir, basename(metadata))
-
         # fetch metadata file
-        download(metadata, metadata_tmp)
-        with tarfile.open(metadata_tmp) as tar:
-            tar.extractall(temp_dir)
-            prepare_metadata(temp_dir, metadata_out, force)
-
+        _download(metadata, metadata_raw, overwrite=force)
         # fetch HMM model file
-        download(hmm, hmm_tmp)
-        # gunzip and move the file
-        with gzip.open(hmm_tmp, 'rb') as i_f, open(hmm_out, 'wb') as o_f:
-            shutil.copyfileobj(i_f, o_f)
+        _download(hmm, hmm_raw, overwrite=force)
+    except FileExistsError:
+        pass
 
-        # don't forget to compress the hmm model file
-        hmmpress_hmm(hmm_out)
-    finally:
-        shutil.rmtree(temp_dir)
+    with tarfile.open(metadata_raw) as tar:
+        tar.extractall(metadata_dir)
+        prepare_metadata(metadata_dir, metadata_fp, force)
+
+    # gunzip and move the file
+    with gzip.open(hmm_raw, 'rb') as i_f, open(hmm_fp, 'wb') as o_f:
+        shutil.copyfileobj(i_f, o_f)
+
+    # don't forget to compress the hmm file
+    hmmpress_hmm(hmm_fp)
 
 
 def prepare_metadata(in_d, out_fp, overwrite=True):
@@ -219,7 +215,7 @@ def prepare_metadata(in_d, out_fp, overwrite=True):
     the function is re-run.
     '''
     n = 0
-    _overwrite_file(out_fp, overwrite)
+    _overwrite(out_fp, overwrite)
     with connect(out_fp) as conn:
         table_name = 'metadata'
         conn.execute('''CREATE TABLE IF NOT EXISTS {t} (

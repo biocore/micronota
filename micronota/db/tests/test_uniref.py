@@ -59,7 +59,7 @@ class UnirefTests(TestCase):
             self.assertCountEqual(co.fetchall(), ce.fetchall())
 
     def test_create_id_map(self):
-        n = create_id_map(self.id_map[1], self.id_map_obs)
+        n = create_id_map(self.id_map[1], self.id_map_obs, overwrite=True)
         self.assertEqual(n, self.id_map[0])
         with connect(self.id_map_obs) as o, connect(self.id_map_exp) as e:
             co = o.cursor()

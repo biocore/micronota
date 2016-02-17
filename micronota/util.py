@@ -82,18 +82,18 @@ def list_db():
     return dict()
 
 
-def _overwrite_file(fp, overwrite=False, append=True):
+def _overwrite(fp, overwrite=False, append=False):
     if exists(fp):
         if overwrite:
             remove(fp)
         elif append:
             return
         else:
-            raise FileExistsError(
-                'The file %s exists. User "force" to overwrite it.' % fp)
+            raise FileExistsError('The file %s exists.' % fp)
 
 
-def download(src, dest):
+def _download(src, dest, **kwargs):
+    _overwrite(dest, **kwargs)
     with urlopen(src) as i_f, open(dest, 'wb') as o_f:
         shutil.copyfileobj(i_f, o_f)
 
