@@ -25,10 +25,13 @@ def cli(ctx):
 
 @cli.command('prepare')
 @click.argument('databases', nargs=-1)
+@click.option('-d', '--cache_dir', type=str, required=True,
+              help=('The directory to cache the downloaded files so that file '
+                    'do not need to be downloaded again if it exists there.'))
 @click.option('-f', '--force', is_flag=True,
               help='Force overwrite.')
 @click.pass_context
-def create_db(ctx, databases, force):
+def create_db(ctx, databases, cache_dir, force):
     '''Prepare database.
 
     Download the files for the specified DATABASES and manipulate
@@ -50,6 +53,6 @@ def create_db(ctx, databases, force):
             click.echo('Start creating %s database...' % d)
         submodule = importlib.import_module('.%s' % d, db.__name__)
         f = getattr(submodule, func_name)
-        f(out_d, force=force)
+        f(out_d, cache_dir, force=force)
     if verbose > 0:
         click.echo('Finished creating databases')
