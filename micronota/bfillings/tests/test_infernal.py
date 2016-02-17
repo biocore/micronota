@@ -89,28 +89,23 @@ class CMScanTests(InfernalTests):
 
 
 class CMPressTests(InfernalTests):
-    def test_cmpress_cm_exist(self):
-        with self.assertRaisesRegex(
-                ApplicationError,
-                r'Error: Looks like .* is already pressed'):
-            cmpress_cm(self.cm_fp)
-
     def test_compress_cm(self):
-        # .i1i file is different from run to run. skip it.
-        suffices = ('i1f', 'i1m', 'i1p')
-        exp = []
-        for i in suffices:
-            with open('.'.join([self.cm_fp, i]), 'rb') as f:
-                exp.append(f.read())
+        # .i1i, ilm and i1p files are different from run to run. skip it.
+        suffix = 'i1f'
+        with open('.'.join([self.cm_fp, suffix]), 'rb') as f:
+            exp = f.read()
 
         res = cmpress_cm(self.cm_fp, True)
         res['StdOut'].close()
         res['StdErr'].close()
 
-        for i, e in zip(suffices, exp):
-            with open('.'.join([self.cm_fp, i]), 'rb') as f:
-                self.assertEqual(f.read(), e)
+        with open('.'.join([self.cm_fp, suffix]), 'rb') as f:
+                self.assertEqual(f.read(), exp)
 
+        with self.assertRaisesRegex(
+                ApplicationError,
+                r'Error: Looks like .* is already pressed'):
+            cmpress_cm(self.cm_fp)
 
 if __name__ == '__main__':
     main()
