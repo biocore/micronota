@@ -35,13 +35,13 @@ class UnirefTests(TestCase):
 
         self.uniref_fp = _get_data_dir()('uniref100.fasta.gz')
         self.uniref_res = [
-            'uniref100_sprot_archaea.fasta',
-            'uniref100_sprot_bacteria.fasta',
-            'uniref100_sprot_viruses.fasta',
+            'uniref100_sprot_Archaea.fasta',
+            'uniref100_sprot_Bacteria.fasta',
+            'uniref100_sprot_Viruses.fasta',
             'uniref100_sprot_other.fasta',
-            'uniref100_trembl_archaea.fasta',
-            'uniref100_trembl_bacteria.fasta',
-            'uniref100_trembl_viruses.fasta',
+            'uniref100_trembl_Archaea.fasta',
+            'uniref100_trembl_Bacteria.fasta',
+            'uniref100_trembl_Viruses.fasta',
             'uniref100_trembl_other.fasta',
             'uniref100__other.fasta']
 
