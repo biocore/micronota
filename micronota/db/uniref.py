@@ -140,8 +140,8 @@ def prepare_db(out_d, downloaded, force=False,
 
     create_id_map(id_map_raw, id_map_fp, force)
 
-    prepare_metadata(sprot_raw, metadata_fp, append=force)
-    prepare_metadata(sprot_raw, metadata_fp, append=True)
+    prepare_metadata(sprot_raw, metadata_fp, append=False)
+    prepare_metadata(trembl_raw, metadata_fp, append=True)
 
     sort_uniref(uniref100_raw, out_d, force)
 
