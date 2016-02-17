@@ -83,27 +83,23 @@ class HMMScanTests(HMMERTests):
 
 
 class HMMPressTests(HMMERTests):
-    def test_hmmpress_hmm_exist(self):
-        with self.assertRaisesRegex(
-                ApplicationError,
-                r'Error: Looks like .* is already pressed'):
-            hmmpress_hmm(self.hmm_fp)
-
     def test_compress_hmm(self):
         # .i1i file is different from run to run. skip it.
-        suffices = ('h3f', 'h3m', 'h3p')
-        exp = []
-        for i in suffices:
-            with open('.'.join([self.hmm_fp, i]), 'rb') as f:
-                exp.append(f.read())
+        suffix = 'h3f'
+        with open('.'.join([self.hmm_fp, suffix]), 'rb') as f:
+            exp = f.read()
 
         res = hmmpress_hmm(self.hmm_fp, True)
         res['StdOut'].close()
         res['StdErr'].close()
 
-        for i, e in zip(suffices, exp):
-            with open('.'.join([self.hmm_fp, i]), 'rb') as f:
-                self.assertEqual(f.read(), e)
+        with open('.'.join([self.hmm_fp, suffix]), 'rb') as f:
+            self.assertEqual(f.read(), exp)
+
+        with self.assertRaisesRegex(
+                ApplicationError,
+                r'Error: Looks like .* is already pressed'):
+            hmmpress_hmm(self.hmm_fp)
 
 if __name__ == "__main__":
     main()
