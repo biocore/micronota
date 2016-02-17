@@ -8,7 +8,7 @@
 
 from os.path import join
 from os import remove
-from tempfile import mktemp, mkdtemp
+from tempfile import mkstemp, mkdtemp
 from unittest import TestCase, main
 from sqlite3 import connect
 import shutil
@@ -22,13 +22,13 @@ class UnirefTests(TestCase):
     def setUp(self):
         self.tmp_dir = mkdtemp()
 
-        self.obs_db_fp = mktemp()
+        _, self.obs_db_fp = mkstemp()
         self.exp_db_fp = _get_data_dir()('uniprokb.db')
         self.sprot = [2, _get_data_dir()('uniprot_sprot.xml.gz')]
         self.trembl = [2, _get_data_dir()('uniprot_trembl.xml.gz')]
         self.table_name = 'metadata'
 
-        self.id_map_obs = mktemp()
+        _, self.id_map_obs = mkstemp()
         self.id_map_exp = _get_data_dir()('id_map.db')
         self.id_map = [4, _get_data_dir()('id_map.txt.gz')]
         self.id_map_table = 'id_map'
@@ -79,6 +79,8 @@ class UnirefTests(TestCase):
 
     def tearDown(self):
         shutil.rmtree(self.tmp_dir)
+        remove(self.obs_db_fp)
+        remove(self.id_map_obs)
 
 
 if __name__ == '__main__':

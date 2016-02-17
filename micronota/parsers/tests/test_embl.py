@@ -49,7 +49,7 @@ class EmblIOTests(TestCase):
                     'COMPBIAS     14     17       Poly-Arg.'],
              'GN': ['ORFNames=FV3-001R;'],
              'ID': {'id': '001R_FRG3G',
-                    'quality': 'Reviewed',
+                    'quality': 'sprot',
                     'size': '256',
                     'unit': 'AA'},
              'KW': ['Activator',
