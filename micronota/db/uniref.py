@@ -124,7 +124,6 @@ def prepare_db(out_d, downloaded, force=False,
     * ``uniref100__other.dmnd``
 
     * ``uniprotkb.db``
-    * ``uniprotkb_id_map.db``: the map of IDs between databases
     '''
     metadata_db = join(out_d, 'uniprotkb.db')
 
@@ -149,14 +148,16 @@ def sort_uniref(db_fp, uniref_fp, out_d, overwrite=False):
     This will sort UniRef100 seq into following partitions based on both
     quality and taxon:
 
-    * ``uniref100_sprot_Archaea.fasta``
-    * ``uniref100_sprot_Bacteria.fasta``
-    * ``uniref100_sprot_Viruses.fasta``
-    * ``uniref100_sprot_other.fasta``
-    * ``uniref100_trembl_Archaea.fasta``
-    * ``uniref100_trembl_Bacteria.fasta``
-    * ``uniref100_trembl_Viruses.fasta``
-    * ``uniref100_trembl_other.fasta``
+    * ``uniref100_Swiss-Prot_Archaea.fasta``
+    * ``uniref100_Swiss-Prot_Bacteria.fasta``
+    * ``uniref100_Swiss-Prot_Viruses.fasta``
+    * ``uniref100_Swiss-Prot_other.fasta``
+    * ``uniref100_Swiss-Prot_Eukaryota.fasta``
+    * ``uniref100_TrEMBL_Archaea.fasta``
+    * ``uniref100_TrEMBL_Bacteria.fasta``
+    * ``uniref100_TrEMBL_Viruses.fasta``
+    * ``uniref100_TrEMBL_other.fasta``
+    * ``uniref100_TrEMBL_Eukaryota.fasta``
     * ``uniref100__other.fasta``
 
     Parameters
@@ -168,8 +169,8 @@ def sort_uniref(db_fp, uniref_fp, out_d, overwrite=False):
     out_d : str
         The output directory.
     '''
-    fns = ['%s_%s' % (i, j) for i in ['sprot', 'trembl']
-           for j in ['Bacteria', 'Archaea', 'Viruses', 'other']]
+    fns = ['%s_%s' % (i, j) for i in _status
+           for j in _kingdom]
     fns.append('_other')
     fps = [join(out_d, 'uniref100_%s.fasta') % f for f in fns]
 
@@ -196,7 +197,7 @@ def sort_uniref(db_fp, uniref_fp, out_d, overwrite=False):
         files[f].close()
 
 
-def prepare_metadata(in_fps, db_fp, append=True):
+def prepare_metadata(in_fps, db_fp, **kwargs):
     '''
     Parameters
     ----------
@@ -204,8 +205,13 @@ def prepare_metadata(in_fps, db_fp, append=True):
         The gzipped files of either UniProtKB Swiss-Prot or TrEMBLE.
     db_fp : str
         The output database file. See ``Notes``.
-    append : boolean
-        Whether to append to the current ``db_fp`` if it exists.
+    kwargs : dict
+        keyword args passed to ``_overwrite``
+
+    Returns
+    -------
+    int
+        The number of records processed.
 
     Notes
     -----
@@ -221,12 +227,13 @@ def prepare_metadata(in_fps, db_fp, append=True):
     The table in the database file will be dropped and re-created if
     the function is re-run.
     '''
-    _overwrite(db_fp, append=append)
+    _overwrite(db_fp, **kwargs)
     status_map = {k: i for i, k in enumerate(_status)}
     kingdom_map = {k: i for i, k in enumerate(_kingdom)}
     # this is the namespace for uniprot xml files.
     ns_map = {'xmlns': 'http://uniprot.org/uniprot',
               'xsi': 'http://www.w3.org/2001/XMLSchema-instance'}
+    n = 0
     with connect(db_fp) as conn:
         table_name = 'metadata'
         conn.execute('''CREATE TABLE IF NOT EXISTS {t} (
@@ -234,19 +241,21 @@ def prepare_metadata(in_fps, db_fp, append=True):
                             status   INT     NOT NULL,
                             kingdom  INT     NOT NULL);'''.format(
                                 t=table_name))
-        insert = '''INSERT INTO {t} (ac, key, val)
+        insert = '''INSERT INTO {t} (ac, status, kingdom)
                         VALUES (?,?,?);'''.format(t=table_name)
 
         for fp in in_fps:
-            for elem in _parse_xml(fp, ns_map):
+            for i, elem in enumerate(_parse_xml(fp, ns_map), 1):
                 ac, status, kingdom = _process_entry(elem, ns_map)
                 status = status_map[status]
                 kingdom = kingdom_map.get(kingdom, 4)
                 conn.execute(insert, (ac, status, kingdom))
+            n += i
         # don't forget to index the column to speed up query
-        conn.execute('CREATE INDEX IF NOT EXISTS ac ON {t} (ac);'.format(
+        conn.execute('CREATE UNIQUE INDEX IF NOT EXISTS ac ON {t} (ac);'.format(
             t=table_name))
         conn.commit()
+    return n
 
 
 def _parse_xml(in_fp, ns_map):

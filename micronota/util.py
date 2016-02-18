@@ -24,6 +24,8 @@ from configparser import ConfigParser
 from urllib.request import urlopen
 from tempfile import mkstemp
 from contextlib import contextmanager
+from unittest import TestCase
+from sqlite3 import connect
 import shutil
 
 
@@ -104,3 +106,17 @@ def _tmp_file(*args, **kwargs):
     yield fh, fp
     fh.close()
     remove(fp)
+
+
+class _DBTest(TestCase):
+    def _test_eq_db(self, db1, db2):
+        '''Test if two database files have the same contents.'''
+        with connect(db1) as o, connect(self.exp_db_fp) as e:
+            # compare each table
+            for table, in o.execute(
+                    "SELECT name FROM sqlite_master WHERE type='table'"):
+                co = o.cursor()
+                co.execute('SELECT * from %s' % table)
+                ce = e.cursor()
+                ce.execute('SELECT * from %s' % table)
+                self.assertCountEqual(co.fetchall(), ce.fetchall())
