@@ -89,11 +89,14 @@ from skbio import read, Sequence
 from ..util import _overwrite, _download
 
 
+_status = ['Swiss-Prot', 'TrEMBL']
+_kingdom = ['Bacteria', 'Archaea', 'Viruses', 'Eukaryota', 'other']
+
+
 def prepare_db(out_d, downloaded, force=False,
                sprot='ftp://ftp.uniprot.org/pub/databases/uniprot/current_release/knowledgebase/complete/uniprot_sprot.xml.gz',
                trembl='ftp://ftp.uniprot.org/pub/databases/uniprot/current_release/knowledgebase/complete/uniprot_trembl.xml.gz',
-               uniref100='ftp://ftp.uniprot.org/pub/databases/uniprot/uniref/uniref100/uniref100.fasta.gz',
-               id_map='ftp://ftp.uniprot.org/pub/databases/uniprot/current_release/knowledgebase/idmapping/idmapping_selected.tab.gz'):
+               uniref100='ftp://ftp.uniprot.org/pub/databases/uniprot/uniref/uniref100/uniref100.fasta.gz'):
     '''Prepare reference database for UniRef.
 
     Parameters
@@ -123,118 +126,21 @@ def prepare_db(out_d, downloaded, force=False,
     * ``uniprotkb.db``
     * ``uniprotkb_id_map.db``: the map of IDs between databases
     '''
+    metadata_db = join(out_d, 'uniprotkb.db')
 
-    id_map_fp = join(out_d, 'uniprotkb_id_map.db')
-    id_map_raw = join(downloaded, basename(id_map))
-    metadata_fp = join(out_d, 'uniprotkb.db')
     sprot_raw = join(downloaded, basename(sprot))
     trembl_raw = join(downloaded, basename(trembl))
     uniref100_raw = join(downloaded, basename(uniref100))
     try:
-        _download(id_map, id_map_raw, overwrite=force)
         _download(sprot, sprot_raw, overwrite=force)
         _download(trembl, trembl_raw, overwrite=force)
         _download(uniref100, uniref100_raw, overwrite=force)
     except FileExistsError:
         pass
 
-    create_id_map(id_map_raw, id_map_fp, force)
+    prepare_metadata([sprot_raw, trembl_raw], metadata_db)
 
-    prepare_metadata(sprot_raw, metadata_fp, append=False)
-    prepare_metadata(trembl_raw, metadata_fp, append=True)
-
-    sort_uniref(uniref100_raw, out_d, force)
-
-
-def create_id_map(in_fp, db_fp, overwrite=False):
-    '''Map between UniRef100, UniRef90, UniRef50, UniProtKB and other databases.
-
-    Parameters
-    ----------
-    in_fp : str
-        The gzipped input id map file downloaded from UniProt ftp.
-    db_fp : str
-        The output database file.
-    overwrite : boolean
-        Whether to overwrite the ``db_fp`` if it is already exist.
-
-    Returns
-    -------
-    int
-        The number of records processed.
-
-    Notes
-    -----
-    The input ``in_fp`` should have following columns in order:
-
-    1. UniProtKB_AC
-    2. UniProtKB_ID
-    3. GeneID (EntrezGene)
-    4. RefSeq
-    5. GI
-    6. PDB
-    7. GO
-    8. UniRef100
-    9. UniRef90
-    10. UniRef50
-    11. UniParc
-    12. PIR
-    13. NCBI_taxon
-    14. MIM
-    15. UniGene
-    16. PubMed
-    17. EMBL
-    18. EMBL_CDS
-    19. Ensembl
-    20. Ensembl_TRS
-    21. Ensembl_PRO
-    22. Additional_PubMed
-
-    All will be consumed to ``db_fp`` except 2nd column.
-
-    '''
-    _overwrite(db_fp, overwrite)
-    with connect(db_fp) as conn:
-        table_name = 'id_map'
-        conn.execute('''CREATE TABLE IF NOT EXISTS {t} (
-                          UniProtKB_AC TEXT,
-                          EntrezGene TEXT,
-                          RefSeq TEXT,
-                          GI TEXT,
-                          PDB TEXT,
-                          GO TEXT,
-                          UniRef100 TEXT,
-                          UniRef90 TEXT,
-                          UniRef50 TEXT,
-                          UniParc TEXT,
-                          PIR TEXT,
-                          NCBI_taxon TEXT,
-                          MIM TEXT,
-                          UniGene TEXT,
-                          PubMed TEXT,
-                          EMBL TEXT,
-                          EMBL_CDS TEXT,
-                          Ensembl TEXT,
-                          Ensembl_TRS TEXT,
-                          Ensembl_PRO TEXT,
-                          Additional_PubMed TEXT)'''.format(t=table_name))
-
-        # cur.execute('BEGIN TRANSACTION')
-        for n, line in enumerate(gzip.open(in_fp), 1):
-            items = line.decode('utf8').split('\t')
-            del items[1]
-            insert = 'INSERT INTO {t} VALUES ({p});'.format(
-                t=table_name, p=', '.join(['?'] * 21))
-
-            conn.execute(insert, items)
-
-        # don't forget to index the column to speed up query
-        conn.execute('''CREATE INDEX IF NOT EXISTS
-                          UniRef100 ON {t} (UniRef100)'''.format(
-                              t=table_name))
-        conn.commit()
-
-    return n
+    sort_uniref(metadata_db, uniref100_raw, out_d, force)
 
 
 def sort_uniref(db_fp, uniref_fp, out_d, overwrite=False):
@@ -262,8 +168,6 @@ def sort_uniref(db_fp, uniref_fp, out_d, overwrite=False):
     out_d : str
         The output directory.
     '''
-    name_map = {'Swiss-Prot': 'sprot',
-                'TrEMBL': 'trembl'}
     fns = ['%s_%s' % (i, j) for i in ['sprot', 'trembl']
            for j in ['Bacteria', 'Archaea', 'Viruses', 'other']]
     fns.append('_other')
@@ -283,83 +187,77 @@ def sort_uniref(db_fp, uniref_fp, out_d, overwrite=False):
             cursor.execute('''SELECT * FROM metadata
                               WHERE ac = ?''',
                            (ac,))
-            for _, dataset, taxon, _ in cursor.fetchall():
-                group[0] = name_map.get(dataset, '')
-                if taxon in ['Bacterial', 'Archaea', 'Viruses']:
-                    group[1] = taxon
+            for _, s, k in cursor.fetchall():
+                group[0] = _status[s]
+                group[1] = _kingdom[k]
             seq.write(files['_'.join(group)])
 
     for f in files:
         files[f].close()
 
 
-def prepare_metadata(in_fp, out_fp, append=True):
+def prepare_metadata(in_fps, db_fp, append=True):
     '''
     Parameters
     ----------
-    in_fp : str
-        The gzipped xml file of either UniProtKB Swiss-Prot or TrEMBLE.
-    out_fp : str
+    in_fps : list of str
+        The gzipped files of either UniProtKB Swiss-Prot or TrEMBLE.
+    db_fp : str
         The output database file. See ``Notes``.
     append : boolean
-        Whether to append to the current ``out_fp`` if it exists.
-
-    Returns
-    -------
-    int
-        The number of records processed.
+        Whether to append to the current ``db_fp`` if it exists.
 
     Notes
     -----
     The schema of the database file contains one table named `tigrfam` that
     has following columns:
 
-    1. ``ac``. TEXT. UniProtKB accession.
+    1. ``ac``. TEXT. UniProtKB primary accession.
 
-    2. ``dataset``. TEXT.
+    2. ``status``. TEXT.
 
-    3. ``taxon``. TEXT.
-
-    4. ``transfer``. INTEGER. Used as the boolean. ``1`` means the ``val``
-       should be transferred to the query sequences as its annotation;
-       ``0`` means not.
+    3. ``val``. TEXT.
 
     The table in the database file will be dropped and re-created if
     the function is re-run.
     '''
-    _overwrite(out_fp, append=append)
-    with connect(out_fp) as conn:
+    _overwrite(db_fp, append=append)
+    status_map = {k: i for i, k in enumerate(_status)}
+    kingdom_map = {k: i for i, k in enumerate(_kingdom)}
+    # this is the namespace for uniprot xml files.
+    ns_map = {'xmlns': 'http://uniprot.org/uniprot',
+              'xsi': 'http://www.w3.org/2001/XMLSchema-instance'}
+    with connect(db_fp) as conn:
         table_name = 'metadata'
         conn.execute('''CREATE TABLE IF NOT EXISTS {t} (
                             ac       TEXT    NOT NULL,
-                            key      TEXT    NOT NULL,
-                            val      BLOB    NOT NULL,
-                            transfer BOOLEAN NOT NULL,
-                        CHECK (transfer IN (0,1)));'''.format(t=table_name))
+                            status   INT     NOT NULL,
+                            kingdom  INT     NOT NULL);'''.format(
+                                t=table_name))
+        insert = '''INSERT INTO {t} (ac, key, val)
+                        VALUES (?,?,?);'''.format(t=table_name)
 
-        for n, parsed in enumerate(_parse_xml(in_fp), 1):
-            insert = '''INSERT INTO {t} (ac, key, val, transfer)
-                        VALUES (?,?,?,?);'''.format(t=table_name)
-            conn.execute(insert, (parsed[0], parsed[1], parsed[2], 0))
+        for fp in in_fps:
+            for elem in _parse_xml(fp, ns_map):
+                ac, status, kingdom = _process_entry(elem, ns_map)
+                status = status_map[status]
+                kingdom = kingdom_map.get(kingdom, 4)
+                conn.execute(insert, (ac, status, kingdom))
         # don't forget to index the column to speed up query
         conn.execute('CREATE INDEX IF NOT EXISTS ac ON {t} (ac);'.format(
             t=table_name))
         conn.commit()
 
-    return n
 
-
-def _parse_xml(in_fp):
+def _parse_xml(in_fp, ns_map):
     def fixtag(ns, tag, nsmap):
         return '{%s}%s' % (nsmap[ns], tag)
-    # this is the namespace for uniprot xml files.
-    ns_map = {'xmlns': 'http://uniprot.org/uniprot',
-              'xsi': 'http://www.w3.org/2001/XMLSchema-instance'}
+
     # it is very important to set the events to 'end'; otherwise,
     # elem would be an incomplete record.
     for event, elem in ET.iterparse(gzip.open(in_fp), events=['end']):
         if elem.tag == fixtag('xmlns', 'entry', ns_map):
-            yield _process_entry(elem, ns_map)
+            yield elem
             # this is necessary for garbage collection
             elem.clear()
 
