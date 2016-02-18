@@ -8,7 +8,7 @@
 
 from os.path import join, dirname
 from os import remove
-from tempfile import mkstemp, mkdtemp
+from tempfile import mkdtemp
 from unittest import main
 from shutil import rmtree
 

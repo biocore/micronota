@@ -126,6 +126,7 @@ import shutil
 import gzip
 import tarfile
 from os.path import join, basename
+from tempfile import mkdtemp
 from sqlite3 import connect
 
 from ..bfillings.hmmer import hmmpress_hmm
@@ -158,7 +159,7 @@ def prepare_db(out_d, downloaded, prefix='tigrfam_v15.0', force=False,
     hmm_raw = join(downloaded, basename(hmm))
     metadata_fp = join(out_d, '%s.db' % prefix)
     metadata_raw = join(downloaded, basename(metadata))
-    metadata_dir = join(downloaded, '%s_INFO' % prefix)
+    metadata_dir = mkdtemp()
     try:
         # fetch metadata file
         _download(metadata, metadata_raw, overwrite=force)
@@ -169,7 +170,8 @@ def prepare_db(out_d, downloaded, prefix='tigrfam_v15.0', force=False,
 
     with tarfile.open(metadata_raw) as tar:
         tar.extractall(metadata_dir)
-        prepare_metadata(metadata_dir, metadata_fp, force)
+    prepare_metadata(metadata_dir, metadata_fp, force)
+    shutil.rmtree(metadata_dir)
 
     # gunzip and move the file
     with gzip.open(hmm_raw, 'rb') as i_f, open(hmm_fp, 'wb') as o_f:
@@ -226,7 +228,7 @@ def prepare_metadata(in_d, out_fp, overwrite=True):
                         CHECK (transfer IN (0, 1)))'''.format(t=table_name))
 
         for f in os.listdir(in_d):
-            if not f.endswith('.INFO'):
+            if f.startswith('.') or not f.endswith('.INFO'):
                 continue
             n += 1
             tigrfam_id = f.split('.', 1)[0]
