@@ -26,15 +26,16 @@ Or you can install through ``pip``::
 
   pip install micronota
 
+To install the latest developping version::
+
+  pip install git+git://github.com/biocore/micronota.git
 
 Prepare Databases
 -----------------
 
-The micronota supports databases including TIGRFAM.
-
 To prepare (download and format) the files of TIGRFAM to the right form read by micronota::
 
-  micronota database prepare tigrfam
+  micronota database prepare tigrfam --cache_dir ~/database
 
 
 To print the configuration, database and external annotation tools::
@@ -68,6 +69,13 @@ After creating the config file, then you can run::
 
   micronota --config run.cfg annotate -i input.fa
 
+Print Configure Info
+--------------------
+To check the micronota setup, you can run::
+  micronota info
+
+It will print out the system info, databases available, external tools, and other configuration info.
+
 Sequence Features to Identify
 -----------------------------
 
@@ -95,6 +103,19 @@ Sequence Features to Identify
 | transmembrane proteins  | ongoing   | TMHMM                                            |
 +-------------------------+-----------+--------------------------------------------------+
 
+Databases Supported
+-------------------
+
++-----------+-----------+
+| Databases | Supported |
++===========+===========+
+| TIGRFAM   | yes       |
++-----------+-----------+
+| UniRef    | yes       |
++-----------+-----------+
+| Rfam      | ongoing   |
++-----------+-----------+
+
 
 Getting help
 ------------
@@ -115,21 +136,4 @@ Licensing
 
 micronota is available under the new BSD license. See
 `COPYING.txt <https://github.com/biocore/micronota/blob/master/COPYING.txt>`_ for micronota's license, and the
-`licenses directory <https://github.com/biocore/micronota/tree/master/licenses>`_ for the licenses of third-party software that is
-(either partially or entirely) distributed with micronota.
-
-
-Dependencies
-------------
-
-prodigal
-++++++++
-
-infernal
-++++++++
-
-HMMER
-+++++
-
-Diamond
-+++++++
+`licenses directory <https://github.com/biocore/micronota/tree/master/licenses>`_ for the licenses of third-party software and databasese that are (either partially or entirely) distributed with micronota.
