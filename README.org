@@ -1,0 +1,112 @@
+#+TITLE: micronota
+
+[[https://coveralls.io/github/biocore/micronota?branch=master][https://coveralls.io/repos/biocore/micronota/badge.svg?branch=master&service=github]]
+[[https://travis-ci.org/biocore/micronota][https://travis-ci.org/biocore/micronota.svg?branch=master]]
+[[https://gitter.im/biocore/micronota?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge][https://badges.gitter.im/Join%20Chat.svg]]
+
+micronota is an open-source, BSD-licensed package to annotate microbial genomes and metagenomes.
+
+As Python 3 matures and majority python packages support Python 3, the scientific Python community is in favor of dropping Python 2 compatibility. Thus, micronota will only support Python 3. This will allow micronota to have few dependency and avoid maintenance of Python 2 legacy code.
+
+* Install
+
+  To install the latest release of micronota:
+  #+BEGIN_SRC sh
+    conda install micronota
+  #+END_SRC
+
+
+  Or you can install through ~pip~:
+  #+BEGIN_SRC sh
+    pip install micronota
+  #+END_SRC
+
+  To install the latest developping version:
+  #+BEGIN_SRC
+    pip install git+git://github.com/biocore/micronota.git
+  #+END_SRC
+
+* Prepare Databases
+
+  To prepare (download and format) the files of TIGRFAM to the right form read by micronota:
+  #+BEGIN_SRC
+    micronota database prepare tigrfam --cache_dir ~/database
+  #+END_SRC
+
+* Config File
+
+  By default, micronota will read =~/.micronota.config= file to set up the environment or tune the parameters, if this config file exists.
+
+  For example, the default directory to store the database files is =~/micronota_db=, but you can override it to =/home/username/db= by setting this in =~/.micronota.config=:
+  #+BEGIN_EXAMPLE
+    [DEFAULT]
+    db_path = /home/username/db
+  #+END_EXAMPLE
+
+  micronota will look for the key =db_path= in the section =DEFAULT= to update the database path.
+
+  Besides setting up the environment, you can also specify the parameter for each individual tools. For example, if you want to run Prodigal with genetic translation table 1, instead of the default translation table, you can create a new file run.cfg (although you can also just add into =~/.micronota.config=)::
+  #+BEGIN_EXAMPLE
+    [DEFAULT]
+    # overwrite the default setting
+    db_path = /home/username/another_db
+
+    [prodigal]
+    # set translation table to 1
+    -t = 1
+  #+END_EXAMPLE
+
+  Here, Prodigal has an option =-t= to specify translation table, so you set =-t= to =1=. All the options of all the supported tools should be able to be set up this way.
+
+  After creating the config file, then you can run::
+  #+BEGIN_SRC sh
+    micronota --config run.cfg annotate -i input.fa
+  #+END_SRC
+
+* Print Configure Info
+
+  To check the micronota setup, you can run::
+  #+BEGIN_SRC
+    micronota info
+  #+END_SRC
+
+  It will print out the system info, databases available, external tools, and other configuration info.
+
+* Sequence Features to Identify
+
+    | Features                | Supported | Tools                                            |
+    |-------------------------+-----------+--------------------------------------------------|
+    | coding gene             | yes       | Prodigal                                         |
+    | tRNA                    | yes       | Aragorn                                          |
+    | ncRNA                   | yes       | Infernal                                         |
+    | CRISPR                  | yes       | MinCED                                           |
+    | ribosomal binding sites | ongoing   | RBSFinder                                        |
+    | prophage                | ongoing   | PHAST                                            |
+    | replication origin      |           | Ori-Finder 1 (bacteria) & Ori-Finder 2 (archaea) |
+    | microsatellites         |           |                                                  |
+    | signal peptide          | ongoing   | SignalP                                          |
+    | transmembrane proteins  | ongoing   | TMHMM                                            |
+
+* Databases Supported
+
+    | Databases | Supported |
+    |-----------+-----------|
+    | TIGRFAM   | yes       |
+    | UniRef    | yes       |
+    | Rfam      | ongoing   |
+
+* Getting help
+
+To get help with micronota, you should use the [[https://biostars.org/t/micronota][micronota tag]] on Biostars. The developers regularly monitor the =micronota= tag on Biostars.
+
+
+* Developing
+
+If you're interested in getting involved in micronota development, see [[https://github.com/biocore/micronota/blob/master/CONTRIBUTING.md][CONTRIBUTING.md]].
+
+See the list of [[https://github.com/biocore/micronota/graphs/contributors][micronota's contributors]].
+
+
+* Licensing
+
+micronota is available under the new BSD license. See [[https://github.com/biocore/micronota/blob/master/COPYING.txt][COPYING.txt]] for micronota's license, and [[https://github.com/biocore/micronota/tree/master/licenses][the licenses directory]] for the licenses of third-party software and databasese that are (either partially or entirely) distributed with micronota.
