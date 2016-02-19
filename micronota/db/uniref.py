@@ -113,14 +113,16 @@ def prepare_db(out_d, downloaded, force=False,
     -----
     This function creates the following files:
 
-    * ``uniref100_sprot_Archaea.dmnd``
-    * ``uniref100_sprot_Bacteria.dmnd``
-    * ``uniref100_sprot_Viruses.dmnd``
-    * ``uniref100_sprot_other.dmnd``
-    * ``uniref100_trembl_Archaea.dmnd``
-    * ``uniref100_trembl_Bacteria.dmnd``
-    * ``uniref100_trembl_Viruses.dmnd``
-    * ``uniref100_trembl_other.dmnd``
+    * ``uniref100_Swiss-Prot_Archaea.dmnd``
+    * ``uniref100_Swiss-Prot_Bacteria.dmnd``
+    * ``uniref100_Swiss-Prot_Viruses.dmnd``
+    * ``uniref100_Swiss-Prot_other.dmnd``
+    * ``uniref100_Swiss-Prot_Eukaryota.dmnd``
+    * ``uniref100_TrEMBL_Archaea.dmnd``
+    * ``uniref100_TrEMBL_Bacteria.dmnd``
+    * ``uniref100_TrEMBL_Viruses.dmnd``
+    * ``uniref100_TrEMBL_other.dmnd``
+    * ``uniref100_TrEMBL_Eukaryota.dmnd``
     * ``uniref100__other.dmnd``
 
     * ``uniprotkb.db``
@@ -220,9 +222,9 @@ def prepare_metadata(in_fps, db_fp, **kwargs):
 
     1. ``ac``. TEXT. UniProtKB primary accession.
 
-    2. ``status``. TEXT.
+    2. ``status``. INT. The index in ``_status``
 
-    3. ``val``. TEXT.
+    3. ``kingdom``. INT. The index in ``_kingdom``
 
     The table in the database file will be dropped and re-created if
     the function is re-run.
