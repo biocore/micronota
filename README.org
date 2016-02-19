@@ -45,7 +45,7 @@ As Python 3 matures and majority python packages support Python 3, the scientifi
 
   micronota will look for the key =db_path= in the section =DEFAULT= to update the database path.
 
-  Besides setting up the environment, you can also specify the parameter for each individual tools. For example, if you want to run Prodigal with genetic translation table 1, instead of the default translation table, you can create a new file run.cfg (although you can also just add into =~/.micronota.config=)::
+  Besides setting up the environment, you can also specify the parameter for each individual tools. For example, if you want to run Prodigal with genetic translation table 1, instead of the default translation table, you can create a new file run.cfg (although you can also just add into =~/.micronota.config=):
   #+BEGIN_EXAMPLE
     [DEFAULT]
     # overwrite the default setting
@@ -58,14 +58,14 @@ As Python 3 matures and majority python packages support Python 3, the scientifi
 
   Here, Prodigal has an option =-t= to specify translation table, so you set =-t= to =1=. All the options of all the supported tools should be able to be set up this way.
 
-  After creating the config file, then you can run::
+  After creating the config file, then you can run:
   #+BEGIN_SRC sh
     micronota --config run.cfg annotate -i input.fa
   #+END_SRC
 
 * Print Configure Info
 
-  To check the micronota setup, you can run::
+  To check the micronota setup, you can run:
   #+BEGIN_SRC
     micronota info
   #+END_SRC
@@ -82,8 +82,8 @@ As Python 3 matures and majority python packages support Python 3, the scientifi
     | CRISPR                  | yes       | MinCED                                           |
     | ribosomal binding sites | ongoing   | RBSFinder                                        |
     | prophage                | ongoing   | PHAST                                            |
-    | replication origin      |           | Ori-Finder 1 (bacteria) & Ori-Finder 2 (archaea) |
-    | microsatellites         |           |                                                  |
+    | replication origin      | todo      | Ori-Finder 1 (bacteria) & Ori-Finder 2 (archaea) |
+    | microsatellites         | todo      | nhmmer?                                          |
     | signal peptide          | ongoing   | SignalP                                          |
     | transmembrane proteins  | ongoing   | TMHMM                                            |
 

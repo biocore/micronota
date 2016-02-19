@@ -82,6 +82,7 @@ Reference
 from os.path import join, basename
 from sqlite3 import connect
 from xml.etree import ElementTree as ET
+from itertools import product
 import gzip
 
 from skbio import read, Sequence
@@ -171,8 +172,7 @@ def sort_uniref(db_fp, uniref_fp, out_d, overwrite=False):
     out_d : str
         The output directory.
     '''
-    fns = ['%s_%s' % (i, j) for i in _status
-           for j in _kingdom]
+    fns = ['%s_%s' % (i, j) for i, j in product(_status, _kingdom)]
     fns.append('_other')
     fps = [join(out_d, 'uniref100_%s.fasta') % f for f in fns]
 
@@ -222,9 +222,12 @@ def prepare_metadata(in_fps, db_fp, **kwargs):
 
     1. ``ac``. TEXT. UniProtKB primary accession.
 
-    2. ``status``. INT. The index in ``_status``
+    2. ``status``. INT. The index in ``_status``. ``0`` is 'Swiss-Prot'
+       and ``1`` is 'TrEMBL'.
 
-    3. ``kingdom``. INT. The index in ``_kingdom``
+    3. ``kingdom``. INT. The index in ``_kingdom``. ``0``, ``1``, ``2``,
+       ``3``, and ``4`` represent 'Bacteria', 'Archaea', 'Viruses',
+       'Eukaryota', and 'other', respectively.
 
     The table in the database file will be dropped and re-created if
     the function is re-run.
@@ -244,7 +247,7 @@ def prepare_metadata(in_fps, db_fp, **kwargs):
                             kingdom  INT     NOT NULL);'''.format(
                                 t=table_name))
         insert = '''INSERT INTO {t} (ac, status, kingdom)
-                        VALUES (?,?,?);'''.format(t=table_name)
+                    VALUES (?,?,?);'''.format(t=table_name)
 
         for fp in in_fps:
             for i, elem in enumerate(_parse_xml(fp, ns_map), 1):
@@ -277,9 +280,10 @@ def _process_entry(root, ns_map):
     group = root.attrib['dataset']
     try:
         accession = root.find('./xmlns:accession', ns_map).text
-    except AttributeError:
+    except AttributeError as e:
         for child in root:
             print(child.tag, child.text)
+        raise e
     try:
         taxon = root.find('./xmlns:organism/xmlns:lineage/xmlns:taxon',
                           ns_map).text
