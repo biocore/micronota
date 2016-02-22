@@ -39,7 +39,7 @@ classifiers = [
 
 
 description = 'MICRONOTA: annotation pipeline for microbial (meta)genomes'
-with open('README.rst') as f:
+with open('README.org') as f:
     long_description = f.read()
 
 keywords = 'genome metagenome gene annotation RNA',
