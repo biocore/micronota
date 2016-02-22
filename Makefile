@@ -22,8 +22,8 @@ help:
 test:
 	$(TEST_COMMAND)
 pep8:
-	flake8 micronota setup.py
+	flake8 --max-line-length 200 micronota setup.py
 html:
 	make -C doc clean html
 
-all: test pep8 html
+all: pep8 html test
