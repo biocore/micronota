@@ -18,7 +18,7 @@ including config config, unit-testing convenience function.
 # ----------------------------------------------------------------------------
 
 from sys import platform, version
-from os import remove
+from os import remove, close
 from os.path import join, expanduser, exists
 from configparser import ConfigParser
 from urllib.request import urlopen
@@ -35,7 +35,14 @@ _CONFIG_PATH = join(_HOME, '.micronota.config')
 
 
 def _create_config(fp):
-    '''Return ``ConfigParser`` object.
+    '''
+    Parameters
+    ----------
+    fp : str
+        file path of the configuration.
+    Returns
+    -------
+    ``ConfigParser`` object.
     '''
     config = ConfigParser(allow_no_value=True,
                           strict=True)
@@ -44,6 +51,12 @@ def _create_config(fp):
 
     # 1. set the default key-value pairs
     config['DEFAULT']['db_path'] = join(_HOME, 'micronota_db')
+    # set annotation workflow
+    a_sec = 'WORKFLOW'
+    config.add_section(a_sec)
+    # specify what to run and the order to run
+    config[a_sec]['features'] = 'prodigal > aragorn > infernal:rfam'
+    config[a_sec]['CDS'] = 'diamond:uniref > hmmer:tigrfam'
 
     # 2. read the default config file
     if exists(_CONFIG_PATH):
@@ -52,6 +65,9 @@ def _create_config(fp):
     # 3. read the provided config file
     if fp:
         config.read(fp)
+
+    config[a_sec]['features'] = config[a_sec]['features'].split(' > ')
+    config[a_sec]['cds'] = config[a_sec]['CDS'].split(' > ')
 
     return config
 
@@ -102,9 +118,9 @@ def _download(src, dest, **kwargs):
 
 @contextmanager
 def _tmp_file(*args, **kwargs):
-    fh, fp = mkstemp(*args, **kwargs)
-    yield fh, fp
-    fh.close()
+    fd, fp = mkstemp(*args, **kwargs)
+    yield fd, fp
+    close(fd)
     remove(fp)
 
 

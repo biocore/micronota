@@ -8,10 +8,15 @@
 
 from os import makedirs
 from os.path import join, basename, splitext
+import re
 
+from skbio import DNA, Sequence
 from skbio.sequence import IntervalMetadata
+from skbio.io.format.genbank import _parse_features
 from burrito.parameters import FlagParameter, ValuedParameter
 from burrito.util import CommandLineApplication, ResultPath
+
+from ..parsers.embl import _parse_records
 
 
 class Prodigal(CommandLineApplication):
@@ -143,13 +148,13 @@ def predict_genes(in_fp, out_dir, prefix, params=None):
     return app()
 
 
-def identify_features(in_fp, out_dir, params=None):
+def identify_features(seq, out_dir, params=None):
     '''Predict genes for the sequences in the input file with ``Prodigal``.
 
     Parameters
     ----------
     in_fp : str
-        input file path
+        input fasta file path
     out_dir : str
         output directory
 
@@ -159,18 +164,67 @@ def identify_features(in_fp, out_dir, params=None):
         key is the seq id as in ``skbio.Sequence.metadata['id']``; value is
         ``skbio.sequence.IntervalMetadata``.
     '''
-    interval_metadata = {}
-    prefix = splitext(basename(in_fp))[0]
-    res = predict_genes(in_fp, out_dir, prefix, params)
-    if res['Exitstatus'] != 0:
-        raise RuntimeError('The prediction is finished with an error.')
-    for seq_id, imd in parse_output(res['-o']):
-        interval_metadata[seq_id] = imd
-    return interval_metadata
+    if isinstance(seq, str):
+        seq = DNA(seq, metadata={'id': id(seq)})
+    if not isinstance(seq, Sequence):
+        raise
+    with _tmp_file() as f:
+        _, fp = f
+        seq.write(fp)
+        interval_metadata = {}
+        prefix = seq.metadata['id']
+        res = predict_genes(fp, out_dir, prefix, params)
+        if res['Exitstatus'] != 0:
+            raise RuntimeError(
+                'The Prodigal prediction is finished with an error.')
+        interval_metadata = parse_output(res)
+        seq.interval_metadata = interval_metadata
+        return seq
 
 
-def parse_output():
+def parse_output(res):
     '''Parse gene prediction result from ``Prodigal``.
 
     It is parsed into ``skbio.sequence.IntervalMetadata``.
+    This is only for Prodigal GenBank output.
+
+    Parameters
+    ----------
+    fh : file handler
+
+    Returns
+    -------
+    list
+        list of ``IntervalMetadata``
     '''
+    # make sure to move to the beginning of the file.
+    res['-o'].seek(0)
+    res['-a'].seek(0)
+    return _parse_records(res['-o'], _parse_single_record)
+
+
+def _parse_single_record(chunks):
+    '''Parse single record of Prodigal GenBank output.
+
+    Parameters
+    ----------
+    chunks : list of str
+        a list of lines of the record to parse.
+
+    Returns
+    -------
+    ``skbio.sequence.IntervalMetadata``
+    '''
+    # get the head line
+    head = chunks[0]
+    _, description = head.split(None, 1)
+    pattern = re.compile(r'''((?:[^;"']|"[^"]*"|'[^']*')+)''')
+    desc = {}
+    for i in pattern.findall(description):
+        k, v = i.split('=', 1)
+        desc[k] = v
+    return IntervalMetadata(_parse_features(chunks[1:], int(desc['seqlen'])))
+
+
+def _parse_features(faa, gbk):
+    for s, f in zip(faa, gbk):
