@@ -31,7 +31,7 @@ import shutil
 
 _HOME = expanduser('~')
 
-_CONFIG_PATH = join(_HOME, '.micronota.config')
+_CONFIG_PATH = join(_HOME, '.micronota.conf')
 
 
 def _create_config(fp):
@@ -57,7 +57,7 @@ def _create_config(fp):
     # specify what to run and the order to run
     config[a_sec]['features'] = 'prodigal > aragorn > infernal:rfam'
     config[a_sec]['CDS'] = 'diamond:uniref > hmmer:tigrfam'
-
+    config[a_sec]['order'] = 'features > CDS'
     # 2. read the default config file
     if exists(_CONFIG_PATH):
         config.read(_CONFIG_PATH)
@@ -65,9 +65,6 @@ def _create_config(fp):
     # 3. read the provided config file
     if fp:
         config.read(fp)
-
-    config[a_sec]['features'] = config[a_sec]['features'].split(' > ')
-    config[a_sec]['cds'] = config[a_sec]['CDS'].split(' > ')
 
     return config
 

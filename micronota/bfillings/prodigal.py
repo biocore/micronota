@@ -17,6 +17,7 @@ from burrito.parameters import FlagParameter, ValuedParameter
 from burrito.util import CommandLineApplication, ResultPath
 
 from ..parsers.embl import _parse_records
+from ..util import _tmp_file
 
 
 class Prodigal(CommandLineApplication):
@@ -90,7 +91,7 @@ class Prodigal(CommandLineApplication):
         return result
 
 
-def predict_genes(in_fp, out_dir, prefix, params=None):
+def identify_features(in_fp, out_dir, prefix='prodigal', params=None):
     '''Predict genes for the input file.
 
     Notes
@@ -127,6 +128,8 @@ def predict_genes(in_fp, out_dir, prefix, params=None):
     # create dir if not exist
     makedirs(out_dir, exist_ok=True)
 
+    if prefix is None:
+        prefix = splitext(basename(in_fp))[0]
     if params is None:
         params = {}
 
@@ -148,8 +151,8 @@ def predict_genes(in_fp, out_dir, prefix, params=None):
     return app()
 
 
-def identify_features(seq, out_dir, params=None):
-    '''Predict genes for the sequences in the input file with ``Prodigal``.
+def predict_cds(seq, out_dir, prefix=None, params=None):
+    '''Predict genes for the input sequence with ``Prodigal``.
 
     Parameters
     ----------
@@ -172,11 +175,13 @@ def identify_features(seq, out_dir, params=None):
         _, fp = f
         seq.write(fp)
         interval_metadata = {}
-        prefix = seq.metadata['id']
-        res = predict_genes(fp, out_dir, prefix, params)
+        if prefix is None:
+            prefix = seq.metadata['id']
+        res = identify_features(fp, out_dir, prefix, params)
         if res['Exitstatus'] != 0:
             raise RuntimeError(
-                'The Prodigal prediction is finished with an error.')
+                'The Prodigal prediction is finished with an error:\n%s' %
+                res['StdErr'])
         interval_metadata = parse_output(res)
         seq.interval_metadata = interval_metadata
         return seq
@@ -194,12 +199,9 @@ def parse_output(res):
 
     Returns
     -------
-    list
-        list of ``IntervalMetadata``
+    ``IntervalMetadata``
     '''
     # make sure to move to the beginning of the file.
-    res['-o'].seek(0)
-    res['-a'].seek(0)
     return _parse_records(res['-o'], _parse_single_record)
 
 
@@ -224,7 +226,3 @@ def _parse_single_record(chunks):
         k, v = i.split('=', 1)
         desc[k] = v
     return IntervalMetadata(_parse_features(chunks[1:], int(desc['seqlen'])))
-
-
-def _parse_features(faa, gbk):
-    for s, f in zip(faa, gbk):

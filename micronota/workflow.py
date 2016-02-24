@@ -6,49 +6,59 @@
 # The full license is in the file COPYING.txt, distributed with this software.
 # ----------------------------------------------------------------------------
 
-from skbio.workflow import Workflow, method, requires
+from os.path import splitext, basename, join
+from importlib import import_module
+
+from skbio.sequence import IntervalMetadata
+from skbio import read, DNA
+
+from .util import _tmp_file
+from . import bfillings
 
 
-class AnnotateWF(Workflow):
-    '''Annotation workflow.'''
-    def initialize_state(self, seq):
-        self.state = seq
-        self.min_len = 100
-        _, self.seq_fp = mkstemp()
-        seq.write(self.seq_fp)
-
-    @method(priority=100)
-    def check_length(self):
-        if len(self.state) < self.min_len:
-            self.failed = True
-
-    @method(priority=70)
-    @requires(option='cds', values=True)
-    def cds(self):
-        '''Identify CDS.'''
-        print(self.seq_fp)
-
-    @method(priority=60)
-    @requires(option='uniref', values=True)
-    def search_uniref(self):
-        '''Identify homologs and get metadata from them.'''
-
-    @method(priority=50)
-    @requires(option='tigrfam', values=True)
-    def search_tigrfam(self):
-        '''Identify homologs and get metadata from them.'''
-
-    @method(priority=80)
-    def ncrna(self):
-        '''Identify ncRNA.'''
-
-    @method(priority=90)
-    @requires(option='trna', values=True)
-    def trna(self):
-        '''Identify tRNA and tmRNA.'''
+def annotate(in_fp, in_fmt, out_dir, out_fmt, cpus, config):
+    '''Annotate the sequences in the input file.'''
+    fn = splitext(basename(in_fp))[0]
+    # store annotated seq file.
+    out_fp = join(out_dir, '%s.gbk' % fn)
+    # append the file for multiple sequences
+    out = open(out_fp, 'a')
+    sec = 'WORKFLOW'
+    workflows = config[sec]['order'].split(' > ')
+    for seq in read(in_fp, format=in_fmt):
+        # interval_metadata
+        im = {}
+        with _tmp_file() as f:
+            _, fp = f
+            seq.write(fp, format='fasta')
+            seq_id = seq.metadata['id']
+            for k in workflows:
+                tasks = config[sec][k].split(' > ')
+                if k == 'features':
+                    im_ = identify_all_features(fp, seq_id, tasks, config)
+                if k == 'CDS':
+                    annotate_all_cds()
+        seq.interval_metadata = IntervalMetadata(im)
+        seq.write(out, format=out_fmt)
+    out.close()
 
 
-annotate_wf = AnnotateWF(state=None, options={'cds': True})
+def identify_all_features(
+        fp, out_dir, tasks, config, func_name='identify_features'):
+    im = {}
+    for task in tasks:
+        items = task.split(':')
+        tool = items[0]
+        submodule = import_module('.%s' % tool, bfillings.__name__)
+        f = getattr(submodule, func_name)
 
-def annotate_fasta(fp):
-    for result in annotate_wf(read(fp, format='fasta', constructor=DNA)):
+        params = None
+        if tool in config:
+            params = config._sections[tool]
+        print(out_dir)
+        im.update(f(fp, out_dir, params=params))
+    return im
+
+
+def annotate_all_cds():
+    '''Annotate CDS.'''
