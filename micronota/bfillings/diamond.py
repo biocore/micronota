@@ -177,9 +177,9 @@ def make_db(i, o, params=None):
 
 def search_protein_homologs(query, db, out_dir, aligner='blastp', outfmt='tab',
                             evalue=0.01, cores=0, params=None):
-    '''Search a query seq against the database.
+    '''Search query sequences against the database.
 
-    diamond blastp --db db -q query.faa -o D17.faa.dmd -t tmp_dir -a
+    diamond blastp --db <db> -q <query> --threads <cores> --evalue <evalue> -o D17.faa.dmd -t tmp_dir -a
 
     Parameters
     ----------
@@ -200,9 +200,9 @@ def search_protein_homologs(query, db, out_dir, aligner='blastp', outfmt='tab',
     str
         The file path of the blast result.
     '''
-    suffix = basename(query)
+    prefix = basename(query)
     tmpd = mkdtemp(suffix='', prefix='diamond_', dir=out_dir)
-    daa_fp = join(out_dir, '%s.daa' % suffix)
+    daa_fp = join(out_dir, '%s.daa' % prefix)
     if aligner == 'blastp':
         app = DiamondBlastp
     elif aligner == 'blastx':
@@ -220,7 +220,7 @@ def search_protein_homologs(query, db, out_dir, aligner='blastp', outfmt='tab',
     blast_res = blast()
     blast_res.cleanUp()
 
-    out_fp = join(out_dir, '%s.diamond' % suffix)
+    out_fp = join(out_dir, '%s.diamond' % prefix)
     view = DiamondView(InputHandler='_input_as_paths', params=params)
     view.Parameters['--daa'].on(daa_fp)
     view.Parameters['--out'].on(out_fp)
@@ -229,3 +229,23 @@ def search_protein_homologs(query, db, out_dir, aligner='blastp', outfmt='tab',
     view_res.cleanUp()
     # print(app.BaseCommand)
     return out_fp
+
+
+def parse_output(in_fp, column='bitscore'):
+    '''Parse the output of diamond blastp/blastx.
+
+    Parameters
+    ----------
+
+    Returns
+    -------
+    The best matched records for each query sequence.
+    '''
+    columns = ['qseqid', 'sseqid', 'pident', 'length', 'mismatch',
+               'gapopen', 'qstart', 'qend', 'sstart', 'send',
+               'evalue', 'bitscore']
+    df = pd.read_table(in_fp, names=columns)
+    # pick the rows that have highest bitscore for each qseqid
+    df_max = df.groupby('qseqid').apply(
+        lambda r: r[r[column] == r[column].max()])
+    return df_max[['sseqid', 'evalue', 'bitscore']]
