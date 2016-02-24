@@ -31,11 +31,13 @@ def annotate(in_fp, in_fmt, out_dir, out_fmt, cpus, config):
         with _tmp_file() as f:
             _, fp = f
             seq.write(fp, format='fasta')
-            seq_id = seq.metadata['id']
+            # output dir for the current input seq
+            out_dir_seq = join(out_dir, seq.metadata['id'])
             for k in workflows:
                 tasks = config[sec][k].split(' > ')
                 if k == 'features':
-                    im_ = identify_all_features(fp, seq_id, tasks, config)
+                    im_ = identify_all_features(fp, out_dir_seq, tasks, config)
+                    im.update(im_)
                 if k == 'CDS':
                     annotate_all_cds()
         seq.interval_metadata = IntervalMetadata(im)
@@ -43,20 +45,32 @@ def annotate(in_fp, in_fmt, out_dir, out_fmt, cpus, config):
     out.close()
 
 
-def identify_all_features(
-        fp, out_dir, tasks, config, func_name='identify_features'):
+def identify_all_features(fp, out_dir, tasks, config,
+                          id_func='identify_features',
+                          parse_func='parse_output'):
+    '''Identify all the features on the sequence in the input file.
+
+    It runs thru all the tasks specified in sequential order.
+
+    Parameters
+    ----------
+
+    Returns
+    -------
+    '''
     im = {}
     for task in tasks:
         items = task.split(':')
         tool = items[0]
         submodule = import_module('.%s' % tool, bfillings.__name__)
-        f = getattr(submodule, func_name)
-
+        id_f = getattr(submodule, id_func)
+        parse_f = getattr(submodule, parse_func)
         params = None
         if tool in config:
+            # convert config into dict-like type
             params = config._sections[tool]
-        print(out_dir)
-        im.update(f(fp, out_dir, params=params))
+        res = id_f(fp, out_dir, params=params)
+        im.update(next(parse_f(res)))
     return im
 
 

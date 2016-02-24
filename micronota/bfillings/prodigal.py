@@ -10,8 +10,7 @@ from os import makedirs
 from os.path import join, basename, splitext
 import re
 
-from skbio import DNA, Sequence
-from skbio.sequence import IntervalMetadata
+from skbio import Sequence
 from skbio.io.format.genbank import _parse_features
 from burrito.parameters import FlagParameter, ValuedParameter
 from burrito.util import CommandLineApplication, ResultPath
@@ -156,19 +155,17 @@ def predict_cds(seq, out_dir, prefix=None, params=None):
 
     Parameters
     ----------
-    in_fp : str
-        input fasta file path
+    seq : str or ``skbio.Sequence`` or its child classes.
+        input fasta
     out_dir : str
         output directory
 
     Returns
     -------
-    dict
-        key is the seq id as in ``skbio.Sequence.metadata['id']``; value is
-        ``skbio.sequence.IntervalMetadata``.
+    ``skbio.Sequence`` or its child classes.
     '''
     if isinstance(seq, str):
-        seq = DNA(seq, metadata={'id': id(seq)})
+        seq = Sequence(seq, metadata={'id': id(seq)})
     if not isinstance(seq, Sequence):
         raise
     with _tmp_file() as f:
@@ -182,7 +179,7 @@ def predict_cds(seq, out_dir, prefix=None, params=None):
             raise RuntimeError(
                 'The Prodigal prediction is finished with an error:\n%s' %
                 res['StdErr'])
-        interval_metadata = parse_output(res)
+        interval_metadata = next(parse_output(res))
         seq.interval_metadata = interval_metadata
         return seq
 
@@ -225,4 +222,4 @@ def _parse_single_record(chunks):
     for i in pattern.findall(description):
         k, v = i.split('=', 1)
         desc[k] = v
-    return IntervalMetadata(_parse_features(chunks[1:], int(desc['seqlen'])))
+    return _parse_features(chunks[1:], int(desc['seqlen']))
