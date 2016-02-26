@@ -18,12 +18,10 @@ including config config, unit-testing convenience function.
 # ----------------------------------------------------------------------------
 
 from sys import platform, version
-from os import remove, close
+from os import remove
 from os.path import join, expanduser, exists
 from configparser import ConfigParser
 from urllib.request import urlopen
-from tempfile import mkstemp
-from contextlib import contextmanager
 from unittest import TestCase
 from sqlite3 import connect
 import shutil
@@ -42,7 +40,7 @@ def _create_config(fp):
         file path of the configuration.
     Returns
     -------
-    ``ConfigParser`` object.
+    ``ConfigParser``.
     '''
     config = ConfigParser(allow_no_value=True,
                           strict=True)
@@ -52,12 +50,16 @@ def _create_config(fp):
     # 1. set the default key-value pairs
     config['DEFAULT']['db_path'] = join(_HOME, 'micronota_db')
     # set annotation workflow
-    a_sec = 'WORKFLOW'
+    a_sec = 'FEATURE'
     config.add_section(a_sec)
-    # specify what to run and the order to run
-    config[a_sec]['features'] = 'prodigal > aragorn > infernal:rfam'
-    config[a_sec]['CDS'] = 'diamond:uniref > hmmer:tigrfam'
-    config[a_sec]['order'] = 'features > CDS'
+    # specify what default to run and the order to run
+    config[a_sec]['prodigal'] = True
+    config[a_sec]['aragorn'] = True
+    config[a_sec]['infernal'] = 'rfam'
+    b_sec = 'CDS'
+    config[b_sec]['diamond'] = 'uniref'
+    config[b_sec]['hmmer'] = 'tigrfam'
+
     # 2. read the default config file
     if exists(_CONFIG_PATH):
         config.read(_CONFIG_PATH)
@@ -67,6 +69,12 @@ def _create_config(fp):
         config.read(fp)
 
     return config
+
+
+def _validate_config(config):
+    '''Validate the config.
+
+    This makes sure no typos go unnoticed.'''
 
 
 def get_config_info(config):
@@ -111,14 +119,6 @@ def _download(src, dest, **kwargs):
     _overwrite(dest, **kwargs)
     with urlopen(src) as i_f, open(dest, 'wb') as o_f:
         shutil.copyfileobj(i_f, o_f)
-
-
-@contextmanager
-def _tmp_file(*args, **kwargs):
-    fd, fp = mkstemp(*args, **kwargs)
-    yield fd, fp
-    close(fd)
-    remove(fp)
 
 
 class _DBTest(TestCase):
