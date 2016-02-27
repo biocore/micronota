@@ -30,6 +30,7 @@ import shutil
 _HOME = expanduser('~')
 
 _CONFIG_PATH = join(_HOME, '.micronota.conf')
+_DB_PATH = join(_HOME, 'micronota_db')
 
 
 def _create_config(fp):
@@ -42,25 +43,29 @@ def _create_config(fp):
     -------
     ``ConfigParser``.
     '''
-    config = ConfigParser(allow_no_value=True,
+    config = ConfigParser(allow_no_value=False,
                           strict=True)
     # Make the parser case sensitive; the default is not.
     config.optionxform = str
 
     # 1. set the default key-value pairs
-    config['DEFAULT']['db_path'] = join(_HOME, 'micronota_db')
-    # set annotation workflow
-    a_sec = 'FEATURE'
-    config.add_section(a_sec)
-    # specify what default to run and the order to run
-    config[a_sec]['prodigal'] = True
-    config[a_sec]['aragorn'] = True
-    config[a_sec]['infernal'] = 'rfam'
-    b_sec = 'CDS'
-    config[b_sec]['diamond'] = 'uniref'
-    config[b_sec]['hmmer'] = 'tigrfam'
+    config_s = '''
+[GENERAL]
+db_path = {d}
 
-    # 2. read the default config file
+[FEATURE]
+prodigal = 1
+aragorn = 1
+minced = 1
+infernal = rfam
+
+[CDS]
+diamond = uniref
+hmmer = tigrfam
+    '''.format(d=_DB_PATH)
+    config.read_string(config_s)
+
+    # 2. read the global config file
     if exists(_CONFIG_PATH):
         config.read(_CONFIG_PATH)
 
