@@ -6,7 +6,7 @@
 # The full license is in the file COPYING.txt, distributed with this software.
 # ----------------------------------------------------------------------------
 
-from os.path import join, dirname
+from os.path import join, dirname, exists
 from os import remove
 from tempfile import mkdtemp
 from unittest import main
@@ -32,17 +32,17 @@ class UnirefTests(_DBTest):
 
         self.uniref_fp = _get_data_dir()('uniref100.fasta.gz')
         self.uniref_res = [
-            'uniref100_Swiss-Prot_Archaea.fasta',
-            'uniref100_Swiss-Prot_Bacteria.fasta',
-            'uniref100_Swiss-Prot_Viruses.fasta',
-            'uniref100_Swiss-Prot_Eukaryota.fasta',
-            'uniref100_Swiss-Prot_other.fasta',
-            'uniref100_TrEMBL_Archaea.fasta',
-            'uniref100_TrEMBL_Bacteria.fasta',
-            'uniref100_TrEMBL_Viruses.fasta',
-            'uniref100_TrEMBL_Eukaryota.fasta',
-            'uniref100_TrEMBL_other.fasta',
-            'uniref100__other.fasta']
+            'uniref100_Swiss-Prot_Archaea',
+            'uniref100_Swiss-Prot_Bacteria',
+            'uniref100_Swiss-Prot_Viruses',
+            'uniref100_Swiss-Prot_Eukaryota',
+            'uniref100_Swiss-Prot_other',
+            'uniref100_TrEMBL_Archaea',
+            'uniref100_TrEMBL_Bacteria',
+            'uniref100_TrEMBL_Viruses',
+            'uniref100_TrEMBL_Eukaryota',
+            'uniref100_TrEMBL_other',
+            'uniref100__other']
 
     def test_prepare_metadata(self):
         n = prepare_metadata(self.uniprotkb[:2], self.obs_db_fp)
@@ -51,11 +51,14 @@ class UnirefTests(_DBTest):
 
     def _test_eq(self):
         for fp in self.uniref_res:
-            obs = join(self.tmp_dir, fp)
-            exp = _get_data_dir()(fp)
-            with open(obs) as o, open(exp) as e:
-                self.assertEqual(o.read(), e.read())
-            remove(obs)
+            for suffix in ['fasta', 'dmnd']:
+                fp = '.'.join([fp, suffix])
+                obs = join(self.tmp_dir, fp)
+                exp = _get_data_dir()(fp)
+                if exists(exp):
+                    with open(obs) as o, open(exp) as e:
+                        self.assertEqual(o.read(), e.read())
+                    remove(obs)
 
     def test_sort_uniref(self):
         sort_uniref(self.exp_db_fp, self.uniref_fp, self.tmp_dir)

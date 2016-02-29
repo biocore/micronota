@@ -80,6 +80,7 @@ Reference
 # ----------------------------------------------------------------------------
 
 from os.path import join, basename
+from os import stat
 from sqlite3 import connect
 from xml.etree import ElementTree as ET
 from itertools import product
@@ -88,6 +89,7 @@ import gzip
 from skbio import read, Sequence
 
 from ..util import _overwrite, _download
+from ..bfillings.diamond import make_db
 
 
 _status = ['Swiss-Prot', 'TrEMBL']
@@ -170,7 +172,7 @@ def sort_uniref(db_fp, uniref_fp, out_d, overwrite=False):
     uniref_fp : str
         The UniRef100 fasta file. gzipped or not.
     out_d : str
-        The output directory.
+        The output directory to place the resulting fasta files.
     '''
     fns = ['%s_%s' % (i, j) for i, j in product(_status, _kingdom)]
     fns.append('_other')
@@ -197,6 +199,10 @@ def sort_uniref(db_fp, uniref_fp, out_d, overwrite=False):
 
     for f in files:
         files[f].close()
+    for fp in fps:
+        # if the fasta file is not empty
+        if stat(fp).st_size > 0:
+            make_db(fp)
 
 
 def prepare_metadata(in_fps, db_fp, **kwargs):
