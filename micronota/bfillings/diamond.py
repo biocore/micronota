@@ -6,9 +6,10 @@
 # The full license is in the file COPYING.txt, distributed with this software.
 # ----------------------------------------------------------------------------
 
-from os.path import join, basename
+from os.path import join, basename, splitext
 from tempfile import mkdtemp
 
+import pandas as pd
 from burrito.parameters import FlagParameter, ValuedParameter
 from burrito.util import (
     ApplicationError, CommandLineApplication)
@@ -147,17 +148,18 @@ class DiamondView(Diamond):
         ['--daa', '--out', '--outfmt', '--forwardonly']}
 
 
-def make_db(i, o, params=None):
+def make_db(in_fp, out_fp=None, params=None):
     '''Format database from a fasta file.
 
     This is similar to running ``diamond makedb --in db.faa --db db``.
 
     Parameters
     ----------
-    i : str
+    in_fp : str
         Input path for the fasta file.
-    o : str
-        Output path for the formatted database file.
+    out_fp : str or None (default)
+        Output path for the formatted database file. It will be named
+        after input file in the same directory by default.
     params : dict
         Other command line parameters for diamond blastp. key is the option
         (e.g. "-T") and value is the value for the option (e.g. "50").
@@ -167,9 +169,11 @@ def make_db(i, o, params=None):
     int
         The exit code of the command.
     '''
+    if out_fp is None:
+        out_fp = splitext(in_fp)[0]
     app = DiamondMakeDB(InputHandler='_input_as_paths', params=params)
-    app.Parameters['--in'].on(i)
-    app.Parameters['--db'].on(o)
+    app.Parameters['--in'].on(in_fp)
+    app.Parameters['--db'].on(out_fp)
     res = app()
     res.cleanUp()
     return res['ExitStatus']
@@ -178,8 +182,6 @@ def make_db(i, o, params=None):
 def search_protein_homologs(query, db, out_dir, aligner='blastp', outfmt='tab',
                             evalue=0.01, cores=0, params=None):
     '''Search query sequences against the database.
-
-    diamond blastp --db <db> -q <query> --threads <cores> --evalue <evalue> -o D17.faa.dmd -t tmp_dir -a
 
     Parameters
     ----------
@@ -231,7 +233,7 @@ def search_protein_homologs(query, db, out_dir, aligner='blastp', outfmt='tab',
     return out_fp
 
 
-def parse_output(in_fp, column='bitscore'):
+def parse_output(diamond_res, column='bitscore'):
     '''Parse the output of diamond blastp/blastx.
 
     Parameters
@@ -244,8 +246,11 @@ def parse_output(in_fp, column='bitscore'):
     columns = ['qseqid', 'sseqid', 'pident', 'length', 'mismatch',
                'gapopen', 'qstart', 'qend', 'sstart', 'send',
                'evalue', 'bitscore']
-    df = pd.read_table(in_fp, names=columns)
+    df = pd.read_table(diamond_res, names=columns)
     # pick the rows that have highest bitscore for each qseqid
-    df_max = df.groupby('qseqid').apply(
-        lambda r: r[r[column] == r[column].max()])
+    # df_max = df.groupby('qseqid').apply(
+    #     lambda r: r[r[column] == r[column].max()])
+    idx = df.groupby('qseqid')[column].idxmax()
+    df_max = df.loc[idx]
+    df_max.index = idx.index
     return df_max[['sseqid', 'evalue', 'bitscore']]

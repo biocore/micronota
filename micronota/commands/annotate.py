@@ -13,13 +13,13 @@ from ..workflow import annotate
 
 
 @click.command()
-@click.option('-i', '--input_fp', type=str,
+@click.option('-i', '--input_fp', type=click.Path(exists=True, dir_okay=False),
               required=True,
               help='Input file path.')
 @click.option('--in_fmt', type=click.Choice(['fasta', 'genbank']),
               default='fasta',
               help='The format of input file.')
-@click.option('-o', '--output_dir', type=str,
+@click.option('-o', '--output_dir', type=click.Path(file_okay=False),
               required=True,
               help='Output directory path.')
 @click.option('--out_fmt', type=click.Choice(['gff3', 'genbank']),
@@ -34,4 +34,6 @@ from ..workflow import annotate
 @click.pass_context
 def cli(ctx, input_fp, in_fmt, output_dir, out_fmt, cpus, kingdom):
     '''Annotate prokaryotic genomes.'''
-    annotate(input_fp, in_fmt, output_dir, out_fmt, cpus, ctx.parent.config)
+    annotate(input_fp, in_fmt, output_dir, out_fmt,
+             kingdom,
+             cpus, ctx.parent.config)
