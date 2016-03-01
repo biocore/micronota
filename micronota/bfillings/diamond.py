@@ -180,7 +180,7 @@ def make_db(in_fp, out_fp=None, params=None):
 
 
 def search_protein_homologs(query, db, out_dir, aligner='blastp', outfmt='tab',
-                            evalue=0.01, cores=0, params=None):
+                            evalue=0.01, cores=1, params=None):
     '''Search query sequences against the database.
 
     Parameters
@@ -190,7 +190,8 @@ def search_protein_homologs(query, db, out_dir, aligner='blastp', outfmt='tab',
     db : str
         The file path to diamond formatted database.
     cores : int
-        Number of CPU cores. Default to 0, i.e. use all available cores.
+        Number of CPU cores. Default to 1. If it is set to 0, it will use
+        all available cores.
     evalue : float
         Default to 0.01. Threshold E-value.
     params : dict
