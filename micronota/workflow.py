@@ -7,12 +7,12 @@
 # ----------------------------------------------------------------------------
 
 from os.path import splitext, basename, join, exists
-from os import remove
+from os import remove, makedirs
 from importlib import import_module
 from tempfile import NamedTemporaryFile
 
 from skbio.metadata import IntervalMetadata
-from skbio import read, write, Sequence
+from skbio import read, Sequence
 
 from . import bfillings
 from .util import _DB_PATH
@@ -22,19 +22,20 @@ def annotate(in_fp, in_fmt, out_dir, out_fmt, kingdom, cpus, config):
     '''Annotate the sequences in the input file.'''
     fn = splitext(basename(in_fp))[0]
     # store annotated seq file.
+    makedirs(out_dir, exist_ok=True)
     out_fp = join(out_dir, '%s.gbk' % fn)
     out = open(out_fp, 'w')
     for seq in read(in_fp, format=in_fmt):
         # dir for useful intermediate files for the current input seq
         seq_tmp_dir = join(out_dir, seq.metadata['id'])
-        im = {}
         for sec in config:
             if sec == 'GENERAL':
                 continue
             if sec == 'FEATURE':
-                im.update(identify_all_features(seq, seq_tmp_dir, config[sec]))
+                im = identify_all_features(seq, seq_tmp_dir, config[sec])
+                seq.interval_metadata = IntervalMetadata(im)
             if sec == 'CDS':
-                annotate_all_cds(seq, out_dir, kingdom, config[sec])
+                im = annotate_all_cds(seq, out_dir, kingdom, config[sec])
 
         seq.interval_metadata.concat(im, inplace=True)
         seq.write(out, format=out_fmt)
@@ -101,16 +102,20 @@ def annotate_all_cds(seq, out_dir, kingdom, tasks,
     order = {'bacteria': range(11),
              'archaea': [1, 0, 2, 3, 4, 6, 5, 7, 8, 9, 10],
              'viruses': [2, 0, 1, 3, 4, 7, 5, 6, 8, 9, 10]}
-
     im = seq.interval_metadata
     id_old_cds = dict()
     id_new_cds = dict()
-    for feature in im:
-        if feature['type_'] == 'CDS':
-            id_old_cds[feature['id']] = feature
+    for feature in im.query(type_='CDS'):
+        id_old_cds[feature['id']] = feature
 
     for tool in tasks:
-        value = tasks[tool]
+        try:
+            value = tasks.getboolean(tool)
+        except ValueError:
+            value = tasks[tool]
+        if not value:
+            continue
+
         submodule = import_module('.%s' % tool, bfillings.__name__)
 
         search_f = getattr(submodule, search_func)
@@ -119,17 +124,20 @@ def annotate_all_cds(seq, out_dir, kingdom, tasks,
         if value == 'uniref':
             dbs = [uniref_dbs[i] for i in order[kingdom.lower()]]
             for db in dbs:
+                if not id_old_cds:
+                    break
                 db = join(_DB_PATH, db)
-                if not exists('%.dmnd' % db):
+                if not exists('%s.dmnd' % db):
                     continue
-
                 tmp = NamedTemporaryFile('w+', delete=False)
+                tmp.close()
+                print(tmp.name)
                 out = open(tmp.name, 'w')
                 for i in id_old_cds:
                     pro = Sequence(id_old_cds[i]['translation'], {'id': i})
                     pro.write(out, format='fasta')
 
-                res = search_f(tmp, db, out_dir)
+                res = search_f(tmp.name, db, out_dir)
                 hits = parse_f(res)
                 for idx, row in hits.iterrows():
                     old_cds = id_old_cds.pop(idx)
@@ -141,5 +149,4 @@ def annotate_all_cds(seq, out_dir, kingdom, tasks,
 
             for id in id_new_cds:
                 im[id_new_cds[id]] = im.pop(id_old_cds[id])
-
-        return im
+    return im
