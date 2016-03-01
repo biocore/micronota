@@ -101,7 +101,7 @@ def get_config_info(config):
         'python': version}
     info['micronota config'] = {
         'config file': _CONFIG_PATH,
-        'database folder': config['DEFAULT']['db_path']}
+        'database folder': config['GENERAL']['db_path']}
     info['micronota database'] = list_db()
     return info
 

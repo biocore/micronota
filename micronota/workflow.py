@@ -15,7 +15,6 @@ from skbio.metadata import IntervalMetadata
 from skbio import read, Sequence
 
 from . import bfillings
-from .util import _DB_PATH
 
 
 def annotate(in_fp, in_fmt, out_dir, out_fmt, kingdom, cpus, config):
@@ -41,6 +40,7 @@ def annotate(in_fp, in_fmt, out_dir, out_fmt, kingdom, cpus, config):
     fn = splitext(basename(in_fp))[0]
     # store annotated seq file.
     makedirs(out_dir, exist_ok=True)
+    db_dir = config['GENERAL']['db_path']
     out_fp = join(out_dir, '%s.gbk' % fn)
     out = open(out_fp, 'w')
     for seq in read(in_fp, format=in_fmt):
@@ -53,7 +53,7 @@ def annotate(in_fp, in_fmt, out_dir, out_fmt, kingdom, cpus, config):
                 im = identify_all_features(seq, seq_tmp_dir, config[sec])
                 seq.interval_metadata = IntervalMetadata(im)
             if sec == 'CDS':
-                im = annotate_all_cds(seq, out_dir, kingdom, config[sec])
+                im = annotate_all_cds(seq, out_dir, db_dir, kingdom, config[sec])
 
         seq.interval_metadata.concat(im, inplace=True)
         seq.write(out, format=out_fmt)
@@ -107,7 +107,7 @@ def identify_all_features(seq, out_dir, tasks,
     return im
 
 
-def annotate_all_cds(seq, out_dir, kingdom, tasks,
+def annotate_all_cds(seq, out_dir, db_dir, kingdom, tasks,
                      search_func='search_protein_homologs',
                      parse_func='parse_output'):
     '''Annotate coding domain sequences (CDS).
@@ -126,8 +126,6 @@ def annotate_all_cds(seq, out_dir, kingdom, tasks,
         Kingdom index corresponding to database (i.e. virus, bacteria ...)
     cpus : int
         Number of cpus to use.
-    config : ConfigParser
-        Container for configuration options.
 
     Returns
     -------
@@ -146,7 +144,7 @@ def annotate_all_cds(seq, out_dir, kingdom, tasks,
                   'uniref100_TrEMBL_other',
                   'uniref100__other']
 
-    uniref_dbs = [join(_DB_PATH, i) for i in uniref_dbs]
+    uniref_dbs = [join(db_dir, i) for i in uniref_dbs]
     order = {'bacteria': range(11),
              'archaea': [1, 0, 2, 3, 4, 6, 5, 7, 8, 9, 10],
              'viruses': [2, 0, 1, 3, 4, 7, 5, 6, 8, 9, 10]}
@@ -171,7 +169,6 @@ def annotate_all_cds(seq, out_dir, kingdom, tasks,
             for db in dbs:
                 if not id_old_cds:
                     break
-                db = join(_DB_PATH, db)
                 if not exists('%s.dmnd' % db):
                     continue
                 tmp = NamedTemporaryFile('w+', delete=False)
@@ -186,7 +183,11 @@ def annotate_all_cds(seq, out_dir, kingdom, tasks,
                 hits = parse_f(res)
                 for idx, row in hits.iterrows():
                     old_cds = id_old_cds.pop(idx)
-                    new_cds = feature.update(db_xref=row['sseqid'])
+                    if 'db_xref' in old_cds:
+                        db_xref = ','.join(old_cds['db_xref'], row['sseqid'])
+                    else:
+                        db_xref = row['sseqid']
+                    new_cds = old_cds.update(db_xref=db_xref)
                     im.update(old_cds, new_cds)
 
                 out.close()
@@ -195,6 +196,7 @@ def annotate_all_cds(seq, out_dir, kingdom, tasks,
             for _id in id_new_cds:
                 im[id_new_cds[_id]] = im.pop(id_old_cds[_id])
     return im
+
 
 def _get_task_value(tasks, tool):
     try:
