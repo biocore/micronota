@@ -144,7 +144,7 @@ def identify_features(in_fp, out_dir, prefix='prodigal', params=None):
         params[i] = out_fp
 
     params['-i'] = in_fp
-    params['-p'] = 'meta'
+    # params['-p'] = 'meta'
     app = Prodigal(params=params)
     return app()
 
@@ -235,11 +235,6 @@ def _parse_faa(faa):
     im = dict()
     i = 1
     for seq in read(faa, format='fasta'):
-        interval = []
-        feature = dict()
-        feature['translation'] = str(seq)
-        feature['type_'] = 'CDS'
-
         desc = seq.metadata['description']
         pattern = (r'# +([0-9]+)'    # start
                    ' +# +([0-9]+)'   # end
@@ -249,6 +244,18 @@ def _parse_faa(faa):
                    '(.*)')
         matches = re.match(pattern, desc)
         start, end, strand, id, partial, misc = matches.groups()
+        # ordinal number of the parent seq
+        ordinal = int(id.split('_', 1)[0])
+        if ordinal > i:
+            yield im
+            # reset
+            i += 1
+            im = dict()
+        interval = []
+        feature = dict()
+        feature['translation'] = str(seq)
+        feature['type_'] = 'CDS'
+
         # don't forget to convert 0-based
         interval = [(int(start)-1, int(end))]
         feature['note'] = '"%s"' % misc
@@ -273,13 +280,7 @@ def _parse_faa(faa):
             raise ValueError('Inappropriate value for strand: %s' % strand)
         feature['location'] = location
         im[Feature(**feature)] = interval
-        # ordinal number of the parent seq
-        ordinal = int(id.split('_', 1)[0])
-        if ordinal > i:
-            yield im
-            # reset
-            i += 1
-            im = dict()
+
     if im:
         # don't forget to return the last one if it is not empty.
         yield im

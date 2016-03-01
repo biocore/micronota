@@ -12,10 +12,13 @@ from os import getcwd
 from os.path import join
 from unittest import TestCase, main
 from functools import partial
+
 from skbio.util import get_data_path
+from skbio.metadata import Feature
 from burrito.util import ApplicationError
 
-from micronota.bfillings.prodigal import Prodigal, predict_genes
+from micronota.bfillings.prodigal import (
+    Prodigal, identify_features, _parse_faa)
 
 
 class ProdigalTests(TestCase):
@@ -47,6 +50,34 @@ class ProdigalTests(TestCase):
             'empty',
             'whitespace_only']))
 
+        self.parse_fp = self.get_prodigal_path('output.faa')
+        self.parse_exp = [
+            {Feature(type_='CDS',
+                     id='1_1',
+                     right_partial_=False,
+                     left_partial_=False,
+                     location='686..1828',
+                     translation='MKILINKSELNKILKKMNNVIISNNKIKPHHSYFLIEAKEKEINFYANNEYFSVKCNLNKYFLITSKSEPELKQILVPSR*',
+                     note='"start_type=ATG;rbs_motif=None;rbs_spacer=None;gc_cont=0.236"',
+                     rc_=False): [(685, 1828)],
+             Feature(type_='CDS',
+                     id='1_2',
+                     location='1828..>2757',
+                     translation='MNLYDLLELPTTASIKEIKIAYKRLAKRYHPDVNKLGSQTFVEINNAYSILSDPNQKEKYFNYKTQHFID',
+                     right_partial_=True,
+                     left_partial_=False,
+                     note='"start_type=ATG;rbs_motif=None;rbs_spacer=None;gc_cont=0.271"',
+                     rc_=False): [(1827, 2757)]},
+
+            {Feature(type_='CDS',
+                     id='2_1',
+                     location='21577..22128',
+                     right_partial_=False,
+                     left_partial_=False,
+                     translation='MKKTSPFILRRTKNKVLKELPKKIITDIYVELSEEHQKLYDKQKTDGLKEIKESDAKNALFDV*',
+                     note='"start_type=ATG;rbs_motif=None;rbs_spacer=None;gc_cont=0.272"',
+                     rc_=False): [(21576, 22128)]}]
+
     def test_base_command(self):
         c = Prodigal()
         self.assertEqual(
@@ -64,20 +95,20 @@ class ProdigalTests(TestCase):
             c.BaseCommand,
             'cd "%s/"; %s -p single' % (getcwd(), c._command))
 
-    def test_predict_genes_wrong_input(self):
+    def test_identify_features_wrong_input(self):
         for fp in self.negative_fps:
             with self.assertRaisesRegex(
                     ApplicationError,
                     r'Sequence read failed \(file must be Fasta, '
                     'Genbank, or EMBL format\).'):
-                predict_genes(fp, self.temp_dir, 'foo')
+                identify_features(fp, self.temp_dir, 'foo')
 
-    def test_predict_genes(self):
+    def test_identify_features(self):
         for fp, params, prefix, suffix in zip(self.positive_fps,
                                               self.positive_params,
                                               self.positive_prefices,
                                               self.positive_suffices):
-            res = predict_genes(fp, self.temp_dir, prefix, params)
+            res = identify_features(fp, self.temp_dir, prefix, params)
             self.assertEqual(res['ExitStatus'], 0)
             for i in ['-o', '-d', '-a']:
                 fp = self.get_prodigal_path('.'.join([prefix, suffix[i]]))
@@ -86,6 +117,11 @@ class ProdigalTests(TestCase):
                 res[i].close()
             res['StdOut'].close()
             res['StdErr'].close()
+
+    def test_parse_faa(self):
+        obs = _parse_faa(self.parse_fp)
+        for e, o in zip(self.parse_exp, obs):
+            self.assertEqual(e, o)
 
     def tearDown(self):
         # remove the tempdir and contents
