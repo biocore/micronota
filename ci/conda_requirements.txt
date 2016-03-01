@@ -2,8 +2,8 @@ pip
 nose
 pep8
 flake8
-scikit-bio
 infernal
 hmmer
 prodigal
 diamond
+scikit-bio=0.4.2dev

@@ -19,7 +19,25 @@ from .util import _DB_PATH
 
 
 def annotate(in_fp, in_fmt, out_dir, out_fmt, kingdom, cpus, config):
-    '''Annotate the sequences in the input file.'''
+    '''Annotate the sequences in the input file.
+
+    Parameters
+    ----------
+    in_fp : file_handle
+        Input file handler object.
+    in_fmt : str
+        Input file format.
+    out_dir : str
+        Output file directory.
+    out_fmt : str
+        Output file format.
+    kingdom : int
+        Kingdom index corresponding to database (i.e. virus, bacteria ...)
+    cpus : int
+        Number of cpus to use.
+    config : ConfigParser
+        Container for configuration options.
+    '''
     fn = splitext(basename(in_fp))[0]
     # store annotated seq file.
     makedirs(out_dir, exist_ok=True)
@@ -47,23 +65,30 @@ def identify_all_features(seq, out_dir, tasks,
                           parse_func='parse_output'):
     '''Identify all the features for the sequence in the input file.
 
-    It runs thru all the tasks specified in sequential order.
+    It runs through all the tasks specified in sequential order.
 
     Parameters
     ----------
+    seq : skbio.Sequence
+        Input sequence object.
+    out_dir : str
+        Output directory.
     tasks : OrderDict-like
+        Ordered dictionary of tools to run and their parameters.
+    parse_func : str
+        Parser function found in bfillings.
+
     Returns
     -------
+    dict :
+        Dictionary of skbio.metadata.Feature objects.
     '''
     im = dict()
     with NamedTemporaryFile('w+') as f:
         seq.write(f.name, format='fasta')
 
         for tool in tasks:
-            try:
-                value = tasks.getboolean(tool)
-            except ValueError:
-                value = tasks[tool]
+            value = _get_task_value(tasks, tool)
             if not value:
                 continue
             try:
@@ -72,7 +97,7 @@ def identify_all_features(seq, out_dir, tasks,
                 raise ImportError('Annotation with %s seems not implemented.' % tool)
             id_f = getattr(submodule, id_func)
             parse_f = getattr(submodule, parse_func)
-            if value is True:
+            if value:
                 # value is just an boolean indicator
                 res = id_f(f.name, out_dir)
             else:
@@ -85,7 +110,30 @@ def identify_all_features(seq, out_dir, tasks,
 def annotate_all_cds(seq, out_dir, kingdom, tasks,
                      search_func='search_protein_homologs',
                      parse_func='parse_output'):
-    '''Annotate CDS.'''
+    '''Annotate coding domain sequences (CDS).
+
+    Parameters
+    ----------
+    seq : skbio.Sequence
+        Input sequence object.
+    out_dir : str
+        Output directory.
+    tasks : OrderDict-like
+        Ordered dictionary of tools to run and their parameters.
+    parse_func : str
+        Parser function found in bfillings.
+    kingdom : int
+        Kingdom index corresponding to database (i.e. virus, bacteria ...)
+    cpus : int
+        Number of cpus to use.
+    config : ConfigParser
+        Container for configuration options.
+
+    Returns
+    -------
+    im : skbio.metadata.IntervalMetadata
+        Interval metadata object
+    '''
     uniref_dbs = ['uniref100_Swiss-Prot_Bacteria',
                   'uniref100_Swiss-Prot_Archaea',
                   'uniref100_Swiss-Prot_Viruses',
@@ -109,10 +157,7 @@ def annotate_all_cds(seq, out_dir, kingdom, tasks,
         id_old_cds[feature['id']] = feature
 
     for tool in tasks:
-        try:
-            value = tasks.getboolean(tool)
-        except ValueError:
-            value = tasks[tool]
+        value = _get_task_value(tasks, tool)
         if not value:
             continue
 
@@ -131,7 +176,7 @@ def annotate_all_cds(seq, out_dir, kingdom, tasks,
                     continue
                 tmp = NamedTemporaryFile('w+', delete=False)
                 tmp.close()
-                print(tmp.name)
+
                 out = open(tmp.name, 'w')
                 for i in id_old_cds:
                     pro = Sequence(id_old_cds[i]['translation'], {'id': i})
@@ -147,6 +192,13 @@ def annotate_all_cds(seq, out_dir, kingdom, tasks,
                 out.close()
                 remove(tmp.name)
 
-            for id in id_new_cds:
-                im[id_new_cds[id]] = im.pop(id_old_cds[id])
+            for _id in id_new_cds:
+                im[id_new_cds[_id]] = im.pop(id_old_cds[_id])
     return im
+
+def _get_task_value(tasks, tool):
+    try:
+        value = tasks.getboolean(tool)
+    except ValueError:
+        value = tasks[tool]
+    return value

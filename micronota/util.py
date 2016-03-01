@@ -39,6 +39,7 @@ def _create_config(fp):
     ----------
     fp : str
         file path of the configuration.
+
     Returns
     -------
     ``ConfigParser``.

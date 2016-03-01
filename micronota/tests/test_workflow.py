@@ -21,7 +21,7 @@ class TestAnnotate(TestCase):
     def setUp(self):
         test_dir = join('micronota', 'db', 'tests', 'data', 'uniref')
         cwd = dirname(__file__)
-        test_dir = '/Users/zech/Dropbox/git/micronota/micronota/db/tests/data/uniref'
+        test_dir = '../db/tests/data/uniref'
         files = [
             'uniref100_Swiss-Prot_Archaea.fna',
             'uniref100_Swiss-Prot_Bacteria.fna',
