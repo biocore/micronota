@@ -6,7 +6,8 @@
 # The full license is in the file COPYING.txt, distributed with this software.
 # ----------------------------------------------------------------------------
 
-from os.path import join, splitext, basename
+from configparser import ConfigParser
+
 import click
 
 from ..workflow import annotate
@@ -31,9 +32,17 @@ from ..workflow import annotate
               type=click.Choice(['Bacteria', 'Archaea', 'Viruses']),
               default='Bacteria',
               help='Kingdom of the input sequence organism.')
+@click.option('--param', type=click.File('r'),
+              help=('Parameter file to change the default behavior '
+                    'of wrapped tools.'))
 @click.pass_context
-def cli(ctx, input_fp, in_fmt, output_dir, out_fmt, cpus, kingdom):
+def cli(ctx, input_fp, in_fmt, output_dir, out_fmt, cpus, kingdom, param):
     '''Annotate prokaryotic genomes.'''
+    param_config = ConfigParser(allow_no_value=True)
+    param_config.optionxform = str
+    if param is not None:
+        param_config.read(param)
+
     annotate(input_fp, in_fmt, output_dir, out_fmt,
              kingdom,
              cpus, ctx.parent.config)
