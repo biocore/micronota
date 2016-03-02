@@ -56,13 +56,13 @@ db_path = {d}
 
 [FEATURE]
 prodigal = 1
-aragorn = 1
-minced = 1
-infernal = rfam
+#aragorn = 1
+#minced = 1
+#infernal = rfam
 
 [CDS]
 diamond = uniref
-hmmer = tigrfam
+#hmmer = tigrfam
     '''.format(d=_DB_PATH)
     config.read_string(config_s)
 
