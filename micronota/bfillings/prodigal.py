@@ -167,7 +167,7 @@ def predict_cds(seq, out_dir, prefix=None, params=None):
     if isinstance(seq, str):
         seq = Sequence(seq, metadata={'id': id(seq)})
     if not isinstance(seq, Sequence):
-        raise
+        raise ValueError('Input seq is not a right object')
     with NamedTemporaryFile(mode='w+') as f:
         seq.write(f)
         interval_metadata = {}
@@ -190,11 +190,11 @@ def parse_output(res):
 
     Parameters
     ----------
-    fh : file handler
+    res : burrito.util.CommandLineAppResult
 
     Returns
     -------
-    ``IntervalMetadata``
+    ``skbio.metadata.IntervalMetadata``
     '''
     # make sure to move to the beginning of the file.
     # return _parse_records(res['-o'], _parse_single_record)
@@ -233,16 +233,16 @@ def _parse_faa(faa):
     -------
     The dict passable to ``skbio.metadata.IntervalMetadata``.
     '''
+    pattern = (r'# +([0-9]+)'    # start
+               ' +# +([0-9]+)'   # end
+               ' +# +(-?1)'      # strand
+               ' +# +ID=([0-9]+_[0-9]+);'
+               'partial=([01]{2});'
+               '(.*)')
     im = dict()
     i = 1
     for seq in read(faa, format='fasta'):
         desc = seq.metadata['description']
-        pattern = (r'# +([0-9]+)'    # start
-                   ' +# +([0-9]+)'   # end
-                   ' +# +(-?1)'      # strand
-                   ' +# +ID=([0-9]+_[0-9]+);'
-                   'partial=([01]{2});'
-                   '(.*)')
         matches = re.match(pattern, desc)
         start, end, strand, id, partial, misc = matches.groups()
         # ordinal number of the parent seq

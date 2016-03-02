@@ -239,10 +239,13 @@ def parse_output(diamond_res, column='bitscore'):
 
     Parameters
     ----------
+    diamond_res : str
+        file path
 
     Returns
     -------
-    The best matched records for each query sequence.
+    pandas.DataFrame
+        The best matched records for each query sequence.
     '''
     columns = ['qseqid', 'sseqid', 'pident', 'length', 'mismatch',
                'gapopen', 'qstart', 'qend', 'sstart', 'send',
