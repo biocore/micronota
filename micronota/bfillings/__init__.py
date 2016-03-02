@@ -26,8 +26,6 @@ Functions
 .. autosummary::
    :toctree: _autosummary
 
-   predict_genes
-
 '''
 
 # ----------------------------------------------------------------------------
@@ -37,10 +35,3 @@ Functions
 #
 # The full license is in the file COPYING.txt, distributed with this software.
 # ----------------------------------------------------------------------------
-
-
-from .prodigal import Prodigal, predict_genes
-from .infernal import CMPress
-
-
-__all__ = ['Prodigal', 'CMPress', 'predict_genes']

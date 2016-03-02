@@ -8,6 +8,10 @@ micronota is an open-source, BSD-licensed package to annotate microbial genomes 
 
 As Python 3 matures and majority python packages support Python 3, the scientific Python community is in favor of dropping Python 2 compatibility. Thus, micronota will only support Python 3. This will allow micronota to have few dependency and avoid maintenance of Python 2 legacy code.
 
+* Introduction
+
+  micronota can annotate multiple features including coding genes, prophage, CRISPR, tRNA, rRNA and other ncRNAs. It has a customizable framework to integrate additional tools and databases. Generally, the annotation can be classified into 2 categories: structural annotation and functional annotation. Structural annotation is the identification of the genetic elements on the sequence and functional annotation is to assign functions to those elements.
+
 * Install
 
   To install the latest release of micronota:
@@ -35,22 +39,41 @@ As Python 3 matures and majority python packages support Python 3, the scientifi
 
 * Config File
 
-  By default, micronota will read =~/.micronota.config= file to set up the environment or tune the parameters, if this config file exists.
+  By default, micronota will read =~/.micronota.conf= file to set up the environment or tune the parameters, if this config file exists.
 
-  For example, the default directory to store the database files is =~/micronota_db=, but you can override it to =/home/username/db= by setting this in =~/.micronota.config=:
+  For example, the default directory to store the database files is =~/micronota_db=, but you can override it to =/home/username/db= by setting this in =~/.micronota.conf=:
   #+BEGIN_EXAMPLE
-    [DEFAULT]
+    [GENERAL]
     db_path = /home/username/db
   #+END_EXAMPLE
 
-  micronota will look for the key =db_path= in the section =DEFAULT= to update the database path.
+  micronota will look for the key =db_path= in the section =GENERAL= to update the database path.
 
-  Besides setting up the environment, you can also specify the parameter for each individual tools. For example, if you want to run Prodigal with genetic translation table 1, instead of the default translation table, you can create a new file run.cfg (although you can also just add into =~/.micronota.config=):
+  Besides setting up the environment, you can also specify the tools to run and the order to run. Here is an example:
   #+BEGIN_EXAMPLE
-    [DEFAULT]
+    [GENERAL]
     # overwrite the default setting
-    db_path = /home/username/another_db
+    db_path = db
 
+    [FEATURE]
+    # run prodigal first
+    prodigal = 1
+    # don't run infernal
+    infernal = 0
+
+    # next to annotate CDS
+    [CDS]
+    # run diamond tegother with uniref database
+    diamond = uniref
+    # skip running hmmer
+    hmmer = 0
+  #+END_EXAMPLE
+
+  The format of the config file is widely used in different OS platforms and described [[https://docs.python.org/3/library/configparser.html#supported-ini-file-structure][here]]. =0= / =1=, =no= / =yes= , =false= / =true=, =on= / =off= can all be used to turn off or on each tool. If the tool need a database file to run with, specify the database instead of the indicator.
+
+* Parameter File
+  You can specify the parameter for each individual tools. For example, if you want to run Prodigal with genetic translation table 1, instead of the default translation table, you can create a file param.cfg:
+  #+BEGIN_EXAMPLE
     [prodigal]
     # set translation table to 1
     -t = 1
@@ -60,7 +83,7 @@ As Python 3 matures and majority python packages support Python 3, the scientifi
 
   After creating the config file, then you can run:
   #+BEGIN_SRC sh
-    micronota --config run.cfg annotate -i input.fa
+    micronota annotate -i input.fa -o output_dir --param param.cfg
   #+END_SRC
 
 * Print Configure Info
@@ -77,9 +100,9 @@ As Python 3 matures and majority python packages support Python 3, the scientifi
     | Features                | Supported | Tools                                            |
     |-------------------------+-----------+--------------------------------------------------|
     | coding gene             | yes       | Prodigal                                         |
-    | tRNA                    | yes       | Aragorn                                          |
+    | tRNA                    | ongoing   | Aragorn                                          |
     | ncRNA                   | yes       | Infernal                                         |
-    | CRISPR                  | yes       | MinCED                                           |
+    | CRISPR                  | ongoing   | MinCED                                           |
     | ribosomal binding sites | ongoing   | RBSFinder                                        |
     | prophage                | ongoing   | PHAST                                            |
     | replication origin      | todo      | Ori-Finder 1 (bacteria) & Ori-Finder 2 (archaea) |

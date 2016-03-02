@@ -7,8 +7,13 @@
 # ----------------------------------------------------------------------------
 
 from os import makedirs
-from os.path import join
+from os.path import join, basename, splitext
+from tempfile import NamedTemporaryFile
+import re
 
+from skbio import Sequence, read
+from skbio.metadata import Feature
+from skbio.io.format.genbank import _parse_features
 from burrito.parameters import FlagParameter, ValuedParameter
 from burrito.util import CommandLineApplication, ResultPath
 
@@ -84,7 +89,7 @@ class Prodigal(CommandLineApplication):
         return result
 
 
-def predict_genes(in_fp, out_dir, prefix, params=None):
+def identify_features(in_fp, out_dir, prefix='prodigal', params=None):
     '''Predict genes for the input file.
 
     Notes
@@ -121,6 +126,8 @@ def predict_genes(in_fp, out_dir, prefix, params=None):
     # create dir if not exist
     makedirs(out_dir, exist_ok=True)
 
+    if prefix is None:
+        prefix = splitext(basename(in_fp))[0]
     if params is None:
         params = {}
 
@@ -137,6 +144,144 @@ def predict_genes(in_fp, out_dir, prefix, params=None):
         params[i] = out_fp
 
     params['-i'] = in_fp
-
+    if '-p' not in params:
+        params['-p'] = 'meta'
     app = Prodigal(params=params)
     return app()
+
+
+def predict_cds(seq, out_dir, prefix=None, params=None):
+    '''Predict genes for the input sequence with ``Prodigal``.
+
+    Parameters
+    ----------
+    seq : str or ``skbio.Sequence`` or its child classes.
+        input fasta
+    out_dir : str
+        output directory
+
+    Returns
+    -------
+    ``skbio.Sequence`` or its child classes.
+    '''
+    if isinstance(seq, str):
+        seq = Sequence(seq, metadata={'id': id(seq)})
+    if not isinstance(seq, Sequence):
+        raise ValueError('Input seq is not a right object')
+    with NamedTemporaryFile(mode='w+') as f:
+        seq.write(f)
+        interval_metadata = {}
+        if prefix is None:
+            prefix = seq.metadata['id']
+        res = identify_features(f.name, out_dir, prefix, params)
+        if res['Exitstatus'] != 0:
+            raise RuntimeError(
+                'The Prodigal prediction is finished with an error:\n%s' %
+                res['StdErr'])
+        interval_metadata = next(parse_output(res))
+        seq.interval_metadata = interval_metadata
+        return seq
+
+
+def parse_output(res):
+    '''Parse gene prediction result from ``Prodigal``.
+
+    It is parsed into a dict consumable by``skbio.meta.IntervalMetadata``.
+
+    Parameters
+    ----------
+    res : burrito.util.CommandLineAppResult
+
+    Returns
+    -------
+    ``skbio.metadata.IntervalMetadata``
+    '''
+    # make sure to move to the beginning of the file.
+    # return _parse_records(res['-o'], _parse_single_record)
+    return _parse_faa(res['-a'])
+
+
+def _parse_single_record(chunks):
+    '''Parse single record of Prodigal GenBank output.
+
+    Parameters
+    ----------
+    chunks : list of str
+        a list of lines of the record to parse.
+
+    Returns
+    -------
+    ``skbio.metadata.IntervalMetadata``
+    '''
+    # get the head line
+    head = chunks[0]
+    _, description = head.split(None, 1)
+    pattern = re.compile(r'''((?:[^;"']|"[^"]*"|'[^']*')+)''')
+    desc = {}
+    for i in pattern.findall(description):
+        k, v = i.split('=', 1)
+        desc[k] = v
+    return _parse_features(chunks[1:], int(desc['seqlen']))
+
+
+def _parse_faa(faa):
+    '''Parse the faa output of Prodigal.
+
+    Notice that Prodigal do not predict genes with introns.
+
+    Returns
+    -------
+    The dict passable to ``skbio.metadata.IntervalMetadata``.
+    '''
+    pattern = (r'# +([0-9]+)'    # start
+               ' +# +([0-9]+)'   # end
+               ' +# +(-?1)'      # strand
+               ' +# +ID=([0-9]+_[0-9]+);'
+               'partial=([01]{2});'
+               '(.*)')
+    im = dict()
+    i = 1
+    for seq in read(faa, format='fasta'):
+        desc = seq.metadata['description']
+        matches = re.match(pattern, desc)
+        start, end, strand, id, partial, misc = matches.groups()
+        # ordinal number of the parent seq
+        ordinal = int(id.split('_', 1)[0])
+        if ordinal > i:
+            yield im
+            # reset
+            i += 1
+            im = dict()
+        interval = []
+        feature = dict()
+        feature['translation'] = str(seq)
+        feature['type_'] = 'CDS'
+
+        # don't forget to convert 0-based
+        interval = [(int(start)-1, int(end))]
+        feature['note'] = '"%s"' % misc
+        feature['id'] = id
+        if partial[0] == '0':
+            feature['left_partial_'] = False
+        else:
+            feature['left_partial_'] = True
+            start = '<%s' % start
+        if partial[1] == '0':
+            feature['right_partial_'] = False
+        else:
+            feature['right_partial_'] = True
+            end = '>%s' % end
+        location = '{s}..{e}'.format(s=start, e=end)
+        if strand == '-1':
+            feature['rc_'] = True
+            location = 'complement(%s)' % location
+        elif strand == '1':
+            feature['rc_'] = False
+        else:
+            raise ValueError('Inappropriate value for strand: %s' % strand)
+        feature['location'] = location
+        im[Feature(**feature)] = interval
+
+    if im:
+        # don't forget to return the last one if it is not empty.
+        yield im

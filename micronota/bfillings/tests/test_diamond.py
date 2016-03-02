@@ -84,5 +84,6 @@ class DiamondBlastTests(DiamondTests):
                     search_protein_homologs(
                         i, self.db, self.temp_dir, aligner)
 
+
 if __name__ == '__main__':
     main()
