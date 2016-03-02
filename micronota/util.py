@@ -22,8 +22,6 @@ from os import remove
 from os.path import join, expanduser, exists
 from configparser import ConfigParser
 from urllib.request import urlopen
-from tempfile import mkstemp
-from contextlib import contextmanager
 from unittest import TestCase
 from sqlite3 import connect
 import shutil
@@ -31,21 +29,44 @@ import shutil
 
 _HOME = expanduser('~')
 
-_CONFIG_PATH = join(_HOME, '.micronota.config')
+_CONFIG_PATH = join(_HOME, '.micronota.conf')
+_DB_PATH = join(_HOME, 'micronota_db')
 
 
 def _create_config(fp):
-    '''Return ``ConfigParser`` object.
     '''
-    config = ConfigParser(allow_no_value=True,
+    Parameters
+    ----------
+    fp : str
+        file path of the configuration.
+
+    Returns
+    -------
+    ``ConfigParser``.
+    '''
+    config = ConfigParser(allow_no_value=False,
                           strict=True)
     # Make the parser case sensitive; the default is not.
     config.optionxform = str
 
     # 1. set the default key-value pairs
-    config['DEFAULT']['db_path'] = join(_HOME, 'micronota_db')
+    config_s = '''
+[GENERAL]
+db_path = {d}
 
-    # 2. read the default config file
+[FEATURE]
+prodigal = 1
+#aragorn = 1
+#minced = 1
+#infernal = rfam
+
+[CDS]
+diamond = uniref
+#hmmer = tigrfam
+    '''.format(d=_DB_PATH)
+    config.read_string(config_s)
+
+    # 2. read the global config file
     if exists(_CONFIG_PATH):
         config.read(_CONFIG_PATH)
 
@@ -54,6 +75,12 @@ def _create_config(fp):
         config.read(fp)
 
     return config
+
+
+def _validate_config(config):
+    '''Validate the config.
+
+    This makes sure no typos go unnoticed.'''
 
 
 def get_config_info(config):
@@ -74,7 +101,7 @@ def get_config_info(config):
         'python': version}
     info['micronota config'] = {
         'config file': _CONFIG_PATH,
-        'database folder': config['DEFAULT']['db_path']}
+        'database folder': config['GENERAL']['db_path']}
     info['micronota database'] = list_db()
     return info
 
@@ -98,14 +125,6 @@ def _download(src, dest, **kwargs):
     _overwrite(dest, **kwargs)
     with urlopen(src) as i_f, open(dest, 'wb') as o_f:
         shutil.copyfileobj(i_f, o_f)
-
-
-@contextmanager
-def _tmp_file(*args, **kwargs):
-    fh, fp = mkstemp(*args, **kwargs)
-    yield fh, fp
-    fh.close()
-    remove(fp)
 
 
 class _DBTest(TestCase):
