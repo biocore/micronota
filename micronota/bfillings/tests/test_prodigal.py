@@ -36,7 +36,7 @@ class ProdigalTests(TestCase):
         self.positive_params = [
             {'-p': 'meta'},
             {'-p': 'meta', '-f': 'gff'},
-            {}]
+            {'-p': 'single'}]
         self.positive_prefices = [
             'prodigal_meta',
             'prodigal_meta',
@@ -99,8 +99,7 @@ class ProdigalTests(TestCase):
         for fp in self.negative_fps:
             with self.assertRaisesRegex(
                     ApplicationError,
-                    r'Sequence read failed \(file must be Fasta, '
-                    'Genbank, or EMBL format\).'):
+                    r'(Sequence read failed)|(no input sequences to analyze)'):
                 identify_features(fp, self.temp_dir, 'foo')
 
     def test_identify_features(self):

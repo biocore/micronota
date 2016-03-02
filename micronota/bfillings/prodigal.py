@@ -144,7 +144,8 @@ def identify_features(in_fp, out_dir, prefix='prodigal', params=None):
         params[i] = out_fp
 
     params['-i'] = in_fp
-    # params['-p'] = 'meta'
+    if '-p' not in params:
+        params['-p'] = 'meta'
     app = Prodigal(params=params)
     return app()
 
