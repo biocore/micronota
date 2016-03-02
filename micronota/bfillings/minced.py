@@ -8,6 +8,7 @@
 
 from os import makedirs
 from os.path import join
+import re
 
 from burrito.parameters import FlagParameter, ValuedParameter
 from burrito.util import CommandLineApplication, ResultPath
@@ -60,19 +61,20 @@ class MinCED(CommandLineApplication):
     def _accept_exit_status(self, exit_status):
         return exit_status == 0
 
-    # this needs re-writing to get results from out_dir
     def _get_result_paths(self, data):
         result = {}
-        for i in self._flag_options:
-            if i != '-h' and i != '--version':
-                o = self.Parameters[i]
-                if o.isOn():
-                    out_fp = self._absolute(o.Value)
-                    result[i] = ResultPath(Path=out_fp, IsWritten=True)
+        result['output'] = ResultPath(data[1], IsWritten=True)
+        spacer = self.Parameters['-spacers'].isOn()
+        if spacer:
+            # replace the final extension with '_spacers.fa'
+            out_fp = re.sub(r"\.[^.]*$", '_spacers.fa', data[1])
+            result['spacers'] = ResultPath(Path=out_fp, IsWritten=True)
+
         return result
 
 
-def predict_crispr(in_fp, out_dir, prefix, params=None):
+def predict_crispr(in_fp, out_dir, prefix, params=None,
+                   spac=False, gff=False, gffFull=False):
     '''Predict CRISPRs for the input file.
 
     Notes
@@ -80,8 +82,9 @@ def predict_crispr(in_fp, out_dir, prefix, params=None):
     It will create 1 or 2 output files, depending on the parameters:
       1. file containing CRIPSR information, including locations of CRISPRs
          and their sequence composition OR
-      2. GFF file with short information on CRISPR locations
-      3. (OPTIONAL; -spacers flag) Fasta file of predicted CRISPR spacers
+        1a. GFF file with short information on CRISPR locations OR
+        1b. GFFFull file with detailed information on CRISPR locations
+      2. (OPTIONAL; -spacers flag) Fasta file of predicted CRISPR spacers
 
     Parameters
     ----------
@@ -90,10 +93,16 @@ def predict_crispr(in_fp, out_dir, prefix, params=None):
     out_dir : str
         output directory
     prefix : str
-        prefix of output file name (with suffix)
+        prefix of output file name
+    gff : bool
+        Default False. Summary results in gff format.
+    gffFull : bool
+        Default False. Full results in gff format.
+    spac : bool
+        Default False. Fasta formatted file containing the spacers
     params : dict
         Other command line parameters for MinCED. key is the option
-        (e.g. "-searchWL") and value is the value for the option (e.g. 6).
+        (e.g. "-searchWL") and value is the value for the option (e.g. "6").
         If the option is a flag, set the value to None.
 
     Returns
@@ -101,7 +110,7 @@ def predict_crispr(in_fp, out_dir, prefix, params=None):
     burrito.util.CommandLineAppResult
         It contains opened file handlers of stdout, stderr, and the
         output files, which can be accessed in a dict style with the
-        keys of "StdOut", "StdErr". The exit status
+        keys of "StdOut", "StdErr", "output" and "spacers". The exit status
         of the run can be similarly fetched with the key of "ExitStatus".
     '''
     # create dir if not exist
@@ -110,9 +119,9 @@ def predict_crispr(in_fp, out_dir, prefix, params=None):
     if params is None:
         params = {}
 
-    if '-gff' in params:
+    if gff:
         out_suffix = 'gff'
-    elif '-gffFull' in params:
+    elif gffFull:
         out_suffix = 'gffFull'
     else:
         out_suffix = 'crisprs'
@@ -120,4 +129,10 @@ def predict_crispr(in_fp, out_dir, prefix, params=None):
     out_fp = join(out_dir, '.'.join([prefix, out_suffix]))
 
     app = MinCED(InputHandler='_input_as_paths', params=params)
+    if spac:
+        app.Parameters['-spacers'].on()
+    if gff:
+        app.Parameters['-gff'].on()
+    if gffFull:
+        app.Parameters['-gffFull'].on()
     return app([in_fp, out_fp])
