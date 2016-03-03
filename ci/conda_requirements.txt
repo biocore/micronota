@@ -7,3 +7,4 @@ hmmer
 prodigal
 diamond
 scikit-bio=0.4.2dev
+minced
