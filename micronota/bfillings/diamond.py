@@ -8,6 +8,7 @@
 
 from os.path import join, basename, splitext
 from tempfile import mkdtemp
+from logging import getLogger
 
 import pandas as pd
 from burrito.parameters import FlagParameter, ValuedParameter
@@ -203,6 +204,7 @@ def search_protein_homologs(query, db, out_dir, aligner='blastp', outfmt='tab',
     str
         The file path of the blast result.
     '''
+    logger = getLogger(__name__)
     prefix = basename(query)
     tmpd = mkdtemp(suffix='', prefix='diamond_', dir=out_dir)
     daa_fp = join(out_dir, '%s.daa' % prefix)
@@ -220,6 +222,7 @@ def search_protein_homologs(query, db, out_dir, aligner='blastp', outfmt='tab',
     blast.Parameters['--threads'].on(cores)
     blast.Parameters['--tmpdir'].on(tmpd)
     blast.Parameters['--daa'].on(daa_fp)
+    logger.info('Running: %s' % blast.BaseCommand)
     blast_res = blast()
     blast_res.cleanUp()
 
@@ -229,6 +232,7 @@ def search_protein_homologs(query, db, out_dir, aligner='blastp', outfmt='tab',
     view.Parameters['--out'].on(out_fp)
     view.Parameters['--outfmt'].on(outfmt)
     view_res = view()
+    logger.info('Running: %s' % view.BaseCommand)
     view_res.cleanUp()
     # print(app.BaseCommand)
     return out_fp

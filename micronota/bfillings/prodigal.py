@@ -9,6 +9,7 @@
 from os import makedirs
 from os.path import join, basename, splitext
 from tempfile import NamedTemporaryFile
+import logging
 import re
 
 from skbio import Sequence, read
@@ -123,6 +124,7 @@ def identify_features(in_fp, out_dir, prefix='prodigal', params=None):
         keys of "StdOut", "StdErr", "-o", "-d", "-a". The exit status
         of the run can be similarly fetched with the key of "ExitStatus".
     '''
+    logger = logging.getLogger(__name__)
     # create dir if not exist
     makedirs(out_dir, exist_ok=True)
 
@@ -144,9 +146,8 @@ def identify_features(in_fp, out_dir, prefix='prodigal', params=None):
         params[i] = out_fp
 
     params['-i'] = in_fp
-    if '-p' not in params:
-        params['-p'] = 'meta'
     app = Prodigal(params=params)
+    logger.info('Running: %s' % app.BaseCommand)
     return app()
 
 
