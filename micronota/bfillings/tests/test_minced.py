@@ -61,10 +61,10 @@ class MinCEDTests(TestCase):
                                      self.positive_flags):
             prefix = self.positive_prefix
             res = predict_crispr(fp, self.temp_dir,
-                                 prefix, params,
+                                 prefix,
                                  gff=flags['gff'],
                                  gffFull=flags['gffFull'],
-                                 spac=flags['spacers'])
+                                 spac=flags['spacers'], params=params)
             self.assertEqual(res['ExitStatus'], 0)
             if flags['gff']:
                 suffix = 'gff'

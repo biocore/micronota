@@ -73,8 +73,8 @@ class MinCED(CommandLineApplication):
         return result
 
 
-def predict_crispr(in_fp, out_dir, prefix, params=None,
-                   spac=False, gff=False, gffFull=False):
+def predict_crispr(in_fp, out_dir, prefix,
+                   spac=False, gff=False, gffFull=False, params=None):
     '''Predict CRISPRs for the input file.
 
     Notes
