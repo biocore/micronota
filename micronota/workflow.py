@@ -60,7 +60,7 @@ def annotate(in_fp, in_fmt, out_dir, out_fmt,
             # identify all features specified
             im = identify_all_features(seq, seq_dir, config)
             seq.interval_metadata = IntervalMetadata(im)
-            im = annotate_all_cds(seq, out_dir, kingdom, config)
+            im = annotate_all_cds(seq, seq_dir, kingdom, config)
             seq.interval_metadata.concat(im, inplace=True)
             seq.write(out, format=out_fmt)
 
@@ -100,11 +100,12 @@ def identify_all_features(seq, out_dir, config,
             submodule = import_module('.%s' % tool, bfillings.__name__)
             id_f = getattr(submodule, id_func)
             parse_f = getattr(submodule, parse_func)
+            d = join(out_dir, tool)
             if db is None:
-                res = id_f(f.name, out_dir)
+                res = id_f(f.name, d)
             else:
                 db = join(config.db_dir, db)
-                res = id_f(f.name, out_dir, db)
+                res = id_f(f.name, d, db)
             im.update(next(parse_f(res)))
     return im
 
@@ -165,7 +166,7 @@ def annotate_all_cds(seq, out_dir, kingdom, config,
         submodule = import_module('.%s' % tool, bfillings.__name__)
         search_f = getattr(submodule, search_func)
         parse_f = getattr(submodule, parse_func)
-
+        d = join(out_dir, tool)
         if db == 'uniref':
             dbs = [uniref_dbs[i] for i in order[kingdom.lower()]]
             for db_fp in dbs:
@@ -181,7 +182,7 @@ def annotate_all_cds(seq, out_dir, kingdom, config,
                     pro = Sequence(id_old_cds[i]['translation'], {'id': i})
                     pro.write(out, format='fasta')
 
-                res = search_f(tmp.name, db_fp, out_dir)
+                res = search_f(tmp.name, db_fp, d)
                 hits = parse_f(res)
                 for idx, row in hits.iterrows():
                     old_cds = id_old_cds.pop(idx)

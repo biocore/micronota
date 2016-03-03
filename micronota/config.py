@@ -16,17 +16,33 @@ import click
 
 
 class Configuration(object):
+    '''micronota configuration container.
+
+    Parameters
+    ----------
+    param_fp : str
+        config file path for param.
+    log_fp : str
+        config file path for log.
+    misc_fp : str
+        config file path for other settings.
+
+    Attributes
+    ----------
+    features : dict
+        {tool: database}. Both key and value are string.
+    cds : dict
+        {tool: database}.
+    param : dict of dict
+        {tool: {param: value}}.
+    db_dir : str
+        database directory.
+    app_dir : str
+        directory for micronota data files. It is different in
+        different OS.
+    '''
     def __init__(self, misc_fp=None, param_fp=None, log_fp=None):
-        '''
-        Parameters
-        ----------
-        param_fp : str
-            config file path for param
-        log_fp : str
-            config file path for log
-        misc_fp : str
-            config file path for other
-        '''
+        '''        '''
         self._pkg = 'micronota'
         self.features = iter({})
         self.cds = iter({})
@@ -93,7 +109,7 @@ class Configuration(object):
 
     def _check_avail(self):
         mod = 'bfillings'
-        tools = chain(self.param, self.features)
+        tools = chain(self.param, self.features, self.cds)
         for i in tools:
             if i == 'DEFAULT':
                 continue

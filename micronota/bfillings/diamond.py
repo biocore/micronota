@@ -6,6 +6,7 @@
 # The full license is in the file COPYING.txt, distributed with this software.
 # ----------------------------------------------------------------------------
 
+from os import makedirs
 from os.path import join, basename, splitext
 from tempfile import mkdtemp
 from logging import getLogger
@@ -205,8 +206,10 @@ def search_protein_homologs(query, db, out_dir, aligner='blastp', outfmt='tab',
         The file path of the blast result.
     '''
     logger = getLogger(__name__)
+    # create dir if not exist
+    makedirs(out_dir, exist_ok=True)
     prefix = basename(query)
-    tmpd = mkdtemp(suffix='', prefix='diamond_', dir=out_dir)
+    tmpd = mkdtemp(prefix='diamond_', dir=out_dir)
     daa_fp = join(out_dir, '%s.daa' % prefix)
     if aligner == 'blastp':
         app = DiamondBlastp
