@@ -8,20 +8,31 @@
 
 from os.path import join, exists, expanduser, abspath, dirname
 from configparser import ConfigParser
-from importlib.util import find_spec
 from logging.config import fileConfig
+from importlib.util import find_spec
+from itertools import chain
 
 import click
 
 
 class Configuration(object):
-    def __init__(self, param_fp=None, log_fp=None, misc_fp=None):
-        ''''''
+    def __init__(self, misc_fp=None, param_fp=None, log_fp=None):
+        '''
+        Parameters
+        ----------
+        param_fp : str
+            config file path for param
+        log_fp : str
+            config file path for log
+        misc_fp : str
+            config file path for other
+        '''
+        self._pkg = 'micronota'
         self.features = iter({})
         self.cds = iter({})
-        root_dir = abspath(dirname(__name__))
+        root_dir = abspath(dirname(__file__))
         # where global conf files are
-        app_dir = click.get_app_dir(root_dir)
+        self.app_dir = click.get_app_dir(self._pkg)
         # where default conf files are
         dat_dir = 'support_files'
 
@@ -30,16 +41,16 @@ class Configuration(object):
         param_fn = 'param.cfg'
 
         default_fp = join(root_dir, dat_dir, misc_fn)
-        global_fp = join(app_dir, misc_fn)
+        global_fp = join(self.app_dir, misc_fn)
         if misc_fp is not None:
-            self._set_config(misc_fp)
+            self._set_misc_config(misc_fp)
         elif exists(global_fp):
             self._set_misc_config(global_fp)
         else:
             self._set_misc_config(default_fp)
 
         default_fp = join(root_dir, dat_dir, log_fn)
-        global_fp = join(app_dir, log_fn)
+        global_fp = join(self.app_dir, log_fn)
         if log_fp is not None:
             self._set_log_config(log_fp)
         elif exists(global_fp):
@@ -48,8 +59,10 @@ class Configuration(object):
             self._set_log_config(default_fp)
 
         default_fp = join(root_dir, dat_dir, param_fn)
-        global_fp = join(app_dir, param_fn)
-        fps = [default_fp, global_fp, param_fp]
+        global_fp = join(self.app_dir, param_fn)
+        fps = [default_fp, global_fp]
+        if param_fp is not None:
+            fps.append(param_fp)
         self._set_param_config(fps)
 
         # check all specified tools are wrapped
@@ -79,9 +92,53 @@ class Configuration(object):
         fileConfig(fp)
 
     def _check_avail(self):
-        mod = 'micronota'
-        submod = 'bfillings'
-        for i in self._tools:
-            found = find_spec('.'.join([mod, submod, i]))
+        mod = 'bfillings'
+        tools = chain(self.param, self.features)
+        for i in tools:
+            if i == 'DEFAULT':
+                continue
+            found = find_spec('.'.join([self._pkg, mod, i]))
             if found is None:
                 raise NotImplementedError('%s not implemented.' % i)
+
+    def __repr__(self):
+        from sys import platform, version
+        lines = []
+
+        info = dict()
+        info['system'] = {
+            'OS': platform,
+            'Python': version}
+        info['micronota'] = {
+            'db directory': self.db_dir,
+            'config directory': self.app_dir}
+
+        info['parameters'] = dict()
+        for tool in self.param:
+            if tool == 'DEFAULT':
+                continue
+            l = []
+            for opt in self.param[tool]:
+                v = self.param[tool][opt]
+                l.append('%s:%s' % (opt, v))
+            info['parameters'][tool] = ' '.join(l)
+
+        info['features'] = dict()
+        for tool in self.features:
+            info['features'][tool] = self.features[tool]
+
+        info['cds'] = dict()
+        for tool in self.cds:
+            info['cds'][tool] = self.cds[tool]
+
+        for k1 in sorted(info):
+            lines.append(k1)
+            lines.append('=' * len(k1))
+            info_ = info[k1]
+            max_len = max([len(i) for i in info_])
+            for k2 in sorted(info_):
+                line = "{key:<{width}}: {value}".format(
+                    width=max_len, key=k2, value=info_[k2])
+                lines.append(line)
+            lines.append('\n')
+        return '\n'.join(lines)
