@@ -32,15 +32,12 @@ from ..workflow import annotate
               type=click.Choice(['Bacteria', 'Archaea', 'Viruses']),
               default='Bacteria',
               help='Kingdom of the input sequence organism.')
-@click.option('--dry', is_flag=True,
-              help=('Print out the specification of the run '
-                    'instead of running it'))
 @click.option('--force', is_flag=True,
               help='Force overwrite if the output directory exists')
 @click.pass_context
 def cli(ctx, input_fp, in_fmt, output_dir, out_fmt,
-        cpus, kingdom, dry, force):
+        cpus, kingdom, force):
     '''Annotate prokaryotic genomes.'''
     annotate(input_fp, in_fmt, output_dir, out_fmt,
-             cpus, kingdom, dry, force,
+             cpus, kingdom, force,
              ctx.parent.config)

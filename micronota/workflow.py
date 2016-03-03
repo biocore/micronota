@@ -20,7 +20,7 @@ from .util import _overwrite
 
 
 def annotate(in_fp, in_fmt, out_dir, out_fmt,
-             cpus, kingdom, dry, force, config):
+             cpus, kingdom, force, config):
     '''Annotate the sequences in the input file.
 
     Parameters
@@ -37,16 +37,13 @@ def annotate(in_fp, in_fmt, out_dir, out_fmt,
         Kingdom index corresponding to database (i.e. virus, bacteria ...)
     cpus : int
         Number of cpus to use.
-    dry : boolean
-        Run the real computation if False
     force : boolean
         Force to overwrite.
     config : ``micronota.config.Configuration``
         Container for configuration options.
     '''
-    if not dry:
-        _overwrite(out_dir, overwrite=force)
-        makedirs(out_dir, exist_ok=force)
+    _overwrite(out_dir, overwrite=force)
+    makedirs(out_dir, exist_ok=force)
     prefix = splitext(basename(in_fp))[0]
     fn = '{p}.{f}'.format(p=prefix, f=out_fmt)
     out_fp = join(out_dir, fn)
