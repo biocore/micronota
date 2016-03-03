@@ -66,9 +66,6 @@ class MinCEDTests(TestCase):
                                  gffFull=flags['gffFull'],
                                  spac=flags['spacers'])
             self.assertEqual(res['ExitStatus'], 0)
-            # get output from flags
-            # for suffix in [k for k, v in flags.items()
-            #                if v is True and k is not 'spacers']:
             if flags['gff']:
                 suffix = 'gff'
             elif flags['gffFull']:
