@@ -6,94 +6,80 @@
 # The full license is in the file COPYING.txt, distributed with this software.
 # ----------------------------------------------------------------------------
 
-from os.path import abspath, dirname, join, expanduser
+from os.path import join, exists, expanduser, abspath, dirname
 from configparser import ConfigParser
 from importlib.util import find_spec
-import logging
-import re
+from logging.config import fileConfig
 
-from . import app_dir
-
-
-class ConfigParsingError(Exception):
-    ''''''
-    pass
+import click
 
 
 class Configuration(object):
-    def __init__(self, local_fp):
+    def __init__(self, param_fp=None, log_fp=None, misc_fp=None):
         ''''''
-        data_dir = 'support_files'
-        config_fp = 'micronota.cfg'
-        default_fp = join(dirname(abspath(__name__)), data_dir, config_fp)
-        global_fp = join(app_dir, config_fp)
-        workflow, param, log = self._read([default_fp, global_fp, local_fp])
-        self._tools = []
-        self.workflow = self._set_workflow(workflow)
-        self.param = self._set_param(param)
-        self._set_log(log)
+        self.features = iter({})
+        self.cds = iter({})
+        root_dir = abspath(dirname(__name__))
+        # where global conf files are
+        app_dir = click.get_app_dir(root_dir)
+        # where default conf files are
+        dat_dir = 'support_files'
+
+        misc_fn = 'misc.cfg'
+        log_fn = 'log.cfg'
+        param_fn = 'param.cfg'
+
+        default_fp = join(root_dir, dat_dir, misc_fn)
+        global_fp = join(app_dir, misc_fn)
+        if misc_fp is not None:
+            self._set_config(misc_fp)
+        elif exists(global_fp):
+            self._set_misc_config(global_fp)
+        else:
+            self._set_misc_config(default_fp)
+
+        default_fp = join(root_dir, dat_dir, log_fn)
+        global_fp = join(app_dir, log_fn)
+        if log_fp is not None:
+            self._set_log_config(log_fp)
+        elif exists(global_fp):
+            self._set_log_config(global_fp)
+        else:
+            self._set_log_config(default_fp)
+
+        default_fp = join(root_dir, dat_dir, param_fn)
+        global_fp = join(app_dir, param_fn)
+        fps = [default_fp, global_fp, param_fp]
+        self._set_param_config(fps)
+
+        # check all specified tools are wrapped
         self._check_avail()
 
     @staticmethod
-    def _read(fps):
-        '''Return a list of 3 lists of strings.
-
-        The order in fps matters. The later cfg can override the previous.'''
-        s = [[], [], []]
-        pattern = re.compile(r'^#{9,} +\w+ +#{9,}\n', re.MULTILINE)
-        for fp in fps:
-            with open(fp) as f:
-                s = f.read()
-                items = re.split(pattern, s)
-                try:
-                    _, wf, param, log = items
-                except ValueError:
-                    raise ConfigParsingError(
-                        'There should be 3 parts in the config file')
-                s[0].append(wf)
-                s[1].append(param)
-                s[2].append(log)
-
-    @staticmethod
-    def _read_config(ss):
-        '''Read in list of config strings.'''
-        config = ConfigParser()
-        for s in ss:
-            config.read_string(s)
+    def _read_config(f, **kwargs):
+        config = ConfigParser(**kwargs)
+        config.read(f)
         return config
 
-    def _set_workflow(self, s):
-        '''read in the config for workflow.
-
-        also check if the implementation is available.
+    def _set_misc_config(self, fp):
+        '''read in the config
         '''
-        config = self._read_config(s)
-        config['general']['db_path'] = expanduser(config['general']['db_path'])
-        secs = ['feature', 'cds']
-        for s in secs:
-            sec = config[s]
-            for k in sec:
-                self._tools.append(k)
-                try:
-                    v = sec.getboolean(k)
-                    sec[k] = v
-                except ValueError:
-                    v = sec[k]
-        return config
+        config = self._read_config(fp, allow_no_value=True)
+        self.db_dir = expanduser(config['general']['db_dir'])
+        if 'feature' in config:
+            self.features = config['feature']
+        if 'cds' in config:
+            self.cds = config['cds']
 
-    def _set_param(self, s):
-        config = self._read_config(s)
-        for sec in config:
-            if sec not in self._tools:
-                self._tools.append(sec)
-        return config
+    def _set_param_config(self, fps):
+        config = self._read_config(fps, allow_no_value=True)
+        self.param = config
 
-    def _set_log(self, s):
-        config = self._read_config(s)
-        logging.config.fileConfig(config)
+    def _set_log_config(self, fp):
+        fileConfig(fp)
 
     def _check_avail(self):
-        mod = dirname(__name__)
+        mod = 'micronota'
         submod = 'bfillings'
         for i in self._tools:
             found = find_spec('.'.join([mod, submod, i]))
