@@ -6,9 +6,9 @@
 # The full license is in the file COPYING.txt, distributed with this software.
 # ----------------------------------------------------------------------------
 
-import os
-import pkgutil
-import importlib
+from os import makedirs
+from os.path import join
+from importlib import import_module
 
 import click
 
@@ -25,7 +25,8 @@ def cli(ctx):
 
 @cli.command('prepare')
 @click.argument('databases', nargs=-1)
-@click.option('-d', '--cache_dir', type=str, required=True,
+@click.option('-d', '--cache_dir', required=True,
+              type=click.Path(file_okay=False),
               help=('The directory to cache the downloaded files so that file '
                     'do not need to be downloaded again if it exists there.'))
 @click.option('-f', '--force', is_flag=True,
@@ -39,20 +40,11 @@ def create_db(ctx, databases, cache_dir, force):
     # this cmd is 2-level nested, so double "parent"
     grandparent_ctx = ctx.parent.parent
     config = grandparent_ctx.config
-    verbose = grandparent_ctx.params['verbose']
     func_name = 'prepare_db'
-    out_d = config['DEFAULT']['db_path']
-    if not os.path.exists(out_d):
-        os.mkdir(out_d)
-    if not databases:
-        databases = []
-        for importer, modname, ispkg in pkgutil.iter_modules(db.__path__):
-            databases.append(modname)
+
     for d in databases:
-        if verbose > 0:
-            click.echo('Start creating %s database...' % d)
-        submodule = importlib.import_module('.%s' % d, db.__name__)
+        submodule = import_module('.%s' % d, db.__name__)
         f = getattr(submodule, func_name)
+        out_d = join(config.db_dir, d)
+        makedirs(out_d, exist_ok=True)
         f(out_d, cache_dir, force=force)
-    if verbose > 0:
-        click.echo('Finished creating databases')
