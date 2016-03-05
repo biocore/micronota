@@ -12,4 +12,5 @@ This module parse the outputs.
    :toctree: _autosummary
 
    embl
+   sam
 '''

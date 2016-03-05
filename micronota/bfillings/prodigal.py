@@ -185,15 +185,16 @@ def predict_cds(seq, out_dir, prefix=None, params=None):
 def parse_output(res):
     '''Parse gene prediction result from ``Prodigal``.
 
-    It is parsed into a dict consumable by``skbio.meta.IntervalMetadata``.
+    It is parsed into a dict consumable by``skbio.metadata.IntervalMetadata``.
 
     Parameters
     ----------
     fh : file handler
+        Input file handler
 
     Returns
     -------
-    ``IntervalMetadata``
+    ``skbio.metadata.IntervalMetadata``
     '''
     # make sure to move to the beginning of the file.
     # return _parse_records(res['-o'], _parse_single_record)
