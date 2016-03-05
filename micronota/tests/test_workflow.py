@@ -7,7 +7,7 @@
 # ----------------------------------------------------------------------------
 
 from unittest import TestCase, main, mock
-from os.path import join, dirname, relpath
+from os.path import join
 from tempfile import mkdtemp
 from shutil import rmtree
 
@@ -20,7 +20,7 @@ from micronota.workflow import annotate
 class TestAnnotate(TestCase):
     def setUp(self):
         test_dir = join('micronota', 'db', 'tests', 'data', 'uniref')
-        cwd = dirname(__file__)
+
         test_dir = '../db/tests/data/uniref'
         files = [
             'uniref100_Swiss-Prot_Archaea.fna',
@@ -50,7 +50,8 @@ class TestAnnotate(TestCase):
 
     def test_annotate(self):
         config = _create_config(None)
-        annotate(self.test1, 'fasta', self.obs_tmp, 'genbank', 'archaea', 1, config)
+        annotate(self.test1, 'fasta', self.obs_tmp, 'genbank',
+                 'archaea', 1, config)
 
 
 if __name__ == '__main__':

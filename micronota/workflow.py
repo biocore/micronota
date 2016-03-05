@@ -94,7 +94,8 @@ def identify_all_features(seq, out_dir, tasks,
             try:
                 submodule = import_module('.%s' % tool, bfillings.__name__)
             except ImportError:
-                raise ImportError('Annotation with %s seems not implemented.' % tool)
+                raise ImportError('Annotation with %s seems not implemented.'
+                                  % tool)
             id_f = getattr(submodule, id_func)
             parse_f = getattr(submodule, parse_func)
             if value:
@@ -195,6 +196,7 @@ def annotate_all_cds(seq, out_dir, kingdom, tasks,
             for _id in id_new_cds:
                 im[id_new_cds[_id]] = im.pop(id_old_cds[_id])
     return im
+
 
 def _get_task_value(tasks, tool):
     try:
