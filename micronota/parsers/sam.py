@@ -60,44 +60,41 @@ Reference
 ---------
 .. [#] https://samtools.github.io/hts-specs/SAMv1.pdf
 '''
-
-import string
-import pandas as pd
 from skbio.util._misc import merge_dicts
 from skbio.io import create_format, FileFormatError
 from skbio.sequence import Sequence, DNA, RNA, Protein
 from skbio.io.format._base import (
     _line_generator, _get_nth_sequence, _too_many_blanks)
 
+
 class SAMFormatError(FileFormatError):
     pass
 
-
 sam = create_format('sam')
+
 # File headers
-_HEADERS=[
-          'HD',      # The header line
-          'SQ',      # Reference sequence dictionary.
-          'RG',      # Read group
-          'PG',      # Program
-          'CO'       # one-line text comment
-          ]
+_HEADERS = ['HD',      # The header line
+            'SQ',      # Reference sequence dictionary
+            'RG',      # Read group
+            'PG',      # Program
+            'CO'       # one-line text comment
+            ]
 
 # Alignment headers
-_ALIGNMENT_HEADERS=[
-
+_ALIGNMENT_HEADERS = [
           'QNAME',   # Query template NAME.
           'FLAG',    # Combination of bitwise FLAGs
           'RNAME',   # Reference sequence NAME of the alignment
-          'POS',     # 1-based leftmost mapping position of the first matching base
+          'POS',     # 1-based leftmost mapping position of the first base
           'MAPQ',    # Mapping quality. -10log10(P_err).
           'CIGAR',   # CIGAR string
-          'RNEXT',   # Reference sequence name of the primary alignment of the NEXT
+          'RNEXT',   # Reference sequence name of the primary alignment of NEXT
           'PNEXT',   # Position of the primary alignment of the NEXT read
           'TLEN',    # signed observed template length
           # 'SEQ',     # segment sequence
           'QUAL',    # ASCII of base quality
 ]
+
 
 @sam.sniffer()
 def _sam_sniffer(fh):
@@ -118,14 +115,14 @@ def _sam_sniffer(fh):
 
 
 def _is_float(input):
-  try:
-    num = float(input)
-  except ValueError:
-    return False
-  return True
+    try:
+        float(input)
+    except ValueError:
+        return False
+    return True
+
 
 def parse_optional(s):
-    seps = s.split(':')
     _field, _type, _val = s.split(':')
     if _type == 'i':
         return {_field: int(_val)}
@@ -133,6 +130,7 @@ def parse_optional(s):
         return {_field: float(_val)}
     else:
         return {_field: _val}
+
 
 def parse_required(s):
     if s.isdigit():
@@ -149,7 +147,7 @@ def _construct(record, constructor=None, **kwargs):
         constructor = Sequence
     if constructor == RNA:
         return DNA(
-            seq, metadata=md, positional_metadata=pmd, **kwargs).transcribe()
+            seq, metadata=md, **kwargs).transcribe()
     else:
         return constructor(
             seq, metadata=md, **kwargs)
@@ -186,7 +184,6 @@ def _sam_to_RNA(fh, seq_num=1, **kwargs):
 
 
 def _parse_records(fh, constructor=None, **kwargs):
-    data_chunks = []
     metadata = {}
     optional_headers = []
     headers = _ALIGNMENT_HEADERS
@@ -195,6 +192,8 @@ def _parse_records(fh, constructor=None, **kwargs):
         if line.startswith('@'):
             tabs = line.split('\t')
             key = tabs[0][1:]
+            # FIXME:  The vals variable needs to be explicitly tested
+            vals = tabs[1:]
             if key == 'CO':
                 val = vals[0]
                 optional_headers = val.split(',')
@@ -220,6 +219,3 @@ def _parse_records(fh, constructor=None, **kwargs):
 
             md = merge_dicts(metadata, req, *opt)
             yield seq, md
-
-
-

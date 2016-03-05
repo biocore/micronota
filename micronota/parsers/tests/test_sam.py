@@ -80,5 +80,5 @@ class ReaderTests(SamIOTests):
             self.assertEqual(sorted(obs.metadata.items()),
                              sorted(exp.metadata.items()))
 
-if __name__=="__main__":
+if __name__ == "__main__":
     main()
