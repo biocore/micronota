@@ -1,3 +1,66 @@
+r'''
+SAM parser Parser
+=====================
+
+SAM stores input query sequences that have mapped to a reference [#]_.
+The SAM format has a header section, where each line is denoted by @.
+This header contains information about the program used to generate the
+genbank file.
+
+Each line following the header lines encodes information for a single read.
+Each line is structured as follows.
+
+    +--------------------------------+----------------------------------+
+    | QNAME - Query template NAME    | (begins each entry; 1 per entry) |
+    +--------------------------------+----------------------------------+
+    | FLAG  - Bitwise FLAGs          | 1 per entry                      |
+    +--------------------------------+----------------------------------+
+    | RNAME - Reference sequence     | 1 per entry                      |
+    +--------------------------------+----------------------------------+
+    | POS - 1-based position         | 1 per entry                      |
+    +--------------------------------+----------------------------------+
+    | MAPQ - mapping quality         | 1 per entry                      |
+    +--------------------------------+----------------------------------+
+    | CIGAR - CIGAR string           | 1 per entry                      |
+    +--------------------------------+----------------------------------+
+    | RNEXT - next alignment name    | 1 per entry                      |
+    +--------------------------------+----------------------------------+
+    | PNEXT - next alignment position| 1 per entry                      |
+    +--------------------------------+----------------------------------+
+    | TLEN - signed observed length  | 1 per entry                      |
+    +--------------------------------+----------------------------------+
+    | SEQ - segment sequence         | 1 per entry                      |
+    +--------------------------------+----------------------------------+
+    | QUAL - base quality            | 1 per entry                      |
+    +--------------------------------+----------------------------------+
+
+The line can be followed by optional fields.
+
+
+Format Support
+--------------
+**Has Sniffer: Yes**
+
++------+------+---------------------------------------------------------------+
+|Reader|Writer|                          Object Class                         |
++======+======+===============================================================+
+|Yes   |No    |:mod:`skbio.sequence.Sequence`                                 |
++------+------+---------------------------------------------------------------+
+|Yes   |No    |:mod:`skbio.sequence.DNA`                                      |
++------+------+---------------------------------------------------------------+
+|Yes   |No    |:mod:`skbio.sequence.RNA`                                      |
++------+------+---------------------------------------------------------------+
+|Yes   |No    |:mod:`skbio.sequence.Protein`                                  |
++------+------+---------------------------------------------------------------+
+|Yes   |No    |generator of :mod:`skbio.sequence.Sequence` objects            |
++------+------+---------------------------------------------------------------+
+
+
+Reference
+---------
+.. [#] https://samtools.github.io/hts-specs/SAMv1.pdf
+'''
+
 import string
 import pandas as pd
 from skbio.util._misc import merge_dicts
@@ -17,7 +80,7 @@ _HEADERS=[
           'SQ',      # Reference sequence dictionary.
           'RG',      # Read group
           'PG',      # Program
-          'CO'      # one-line text comment
+          'CO'       # one-line text comment
           ]
 
 # Alignment headers
