@@ -1,5 +1,5 @@
 r'''
-SAM parser Parser
+SAM Parser
 =====================
 
 SAM stores input query sequences that have mapped to a reference [#]_.
