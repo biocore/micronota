@@ -6,17 +6,18 @@
 # The full license is in the file COPYING.txt, distributed with this software.
 # ----------------------------------------------------------------------------
 
-from os import makedirs
+from os import stat
 from os.path import join, basename, splitext
-from tempfile import mkdtemp
 from logging import getLogger
 
 import pandas as pd
 from burrito.parameters import FlagParameter, ValuedParameter
 from burrito.util import (
     ApplicationError, CommandLineApplication)
+from skbio import read
 
 from .util import _get_parameter
+from ._base import MetadataPred
 
 
 _OPTIONS_FLAG = {
@@ -178,90 +179,121 @@ def make_db(in_fp, out_fp=None, params=None):
     app.Parameters['--db'].on(out_fp)
     res = app()
     res.cleanUp()
-    return res['ExitStatus']
+    return res
 
 
-def search_protein_homologs(query, db, out_dir, aligner='blastp', outfmt='tab',
-                            evalue=0.01, cores=1, params=None):
-    '''Search query sequences against the database.
-
-    Parameters
-    ----------
-    query : str
-        The file path to the query sequence.
-    db : str
-        The file path to diamond formatted database.
-    cores : int
-        Number of CPU cores. Default to 1. If it is set to 0, it will use
-        all available cores.
-    evalue : float
-        Default to 0.01. Threshold E-value.
-    params : dict
-        Other command line parameters for diamond blastp. key is the option
-        (e.g. "-T") and value is the value for the option (e.g. "50").
-        If the option is a flag, set the value to None.
-    Returns
-    -------
-    str
-        The file path of the blast result.
+class FeatureAnnt(MetadataPred):
     '''
-    logger = getLogger(__name__)
-    # create dir if not exist
-    makedirs(out_dir, exist_ok=True)
-    prefix = basename(query)
-    tmpd = mkdtemp(prefix='diamond_', dir=out_dir)
-    daa_fp = join(out_dir, '%s.daa' % prefix)
-    if aligner == 'blastp':
-        app = DiamondBlastp
-    elif aligner == 'blastx':
-        app = DiamondBlastx
-    else:
-        raise ValueError('unknown aliger')
-
-    blast = app(InputHandler='_input_as_paths', params=params)
-    blast.Parameters['--query'].on(query)
-    blast.Parameters['--db'].on(db)
-    blast.Parameters['--evalue'].on(evalue)
-    blast.Parameters['--threads'].on(cores)
-    blast.Parameters['--tmpdir'].on(tmpd)
-    blast.Parameters['--daa'].on(daa_fp)
-    logger.info('Running: %s' % blast.BaseCommand)
-    blast_res = blast()
-    blast_res.cleanUp()
-
-    out_fp = join(out_dir, '%s.diamond' % prefix)
-    view = DiamondView(InputHandler='_input_as_paths', params=params)
-    view.Parameters['--daa'].on(daa_fp)
-    view.Parameters['--out'].on(out_fp)
-    view.Parameters['--outfmt'].on(outfmt)
-    view_res = view()
-    logger.info('Running: %s' % view.BaseCommand)
-    view_res.cleanUp()
-    # print(app.BaseCommand)
-    return out_fp
-
-
-def parse_output(diamond_res, column='bitscore'):
-    '''Parse the output of diamond blastp/blastx.
-
-    Parameters
+    Attributes
     ----------
-    diamond_res : str
-        file path
-
-    Returns
-    -------
-    pandas.DataFrame
-        The best matched records for each query sequence.
+    dat : list of str
+        list of file path to database files.
     '''
-    columns = ['qseqid', 'sseqid', 'pident', 'length', 'mismatch',
-               'gapopen', 'qstart', 'qend', 'sstart', 'send',
-               'evalue', 'bitscore']
-    df = pd.read_table(diamond_res, names=columns)
-    # pick the rows that have highest bitscore for each qseqid
-    # df_max = df.groupby('qseqid').apply(
-    #     lambda r: r[r[column] == r[column].max()])
-    idx = df.groupby('qseqid')[column].idxmax()
-    df_max = df.loc[idx]
-    df_max.index = idx.index
-    return df_max[['sseqid', 'evalue', 'bitscore']]
+    def __init__(self, dat, out_dir, tmp_dir=None, cache=None):
+        super().__init__(dat, out_dir, tmp_dir)
+        if cache is not None:
+            self.dat = cache + self.dat
+
+    def _annotate_fp(self, fp, aligner='blastp', evalue=0.001, cpus=1,
+                     outfmt='tab', params=None):
+        found = []
+        for db in self.dat:
+            out_prefix = splitext(basename(db))[0]
+            daa_fp = join(self.out_dir, '%s.daa' % out_prefix)
+            out_fp = join(self.out_dir, '%s.diamond' % out_prefix)
+            self.run_blast(fp, daa_fp, db)
+            self.run_view(daa_fp, out_fp, params={'--outfmt': outfmt})
+            res = self.parse_tabular(out_fp)
+            for id, md in res.iterrows():
+                found.append(id)
+                yield md.to_dict()
+            fp = join(self.tmp_dir, '%s.fa' % out_prefix)
+            with open(fp, 'w') as f:
+                for seq in read(fp, format='fasta'):
+                    if seq.metadata['id'] not in found:
+                        seq.write(f, format='fasta')
+                # no seq left
+                if stat(fp)['st_size'] == 0:
+                    break
+
+    def run_blast(self, fp, daa_fp, db, aligner='blastp', evalue=0.001, cpus=1,
+                  params=None):
+        '''Search query sequences against the database.
+
+        Parameters
+        ----------
+        fp : str
+            The file path for the query sequence.
+        daa_fp : str
+            Output file path.
+        cpus : int
+            Number of CPUs. Default to 1. If it is set to 0, it will use
+            all available CPUs.
+        evalue : float
+            Default to 0.01. Threshold E-value.
+        params : dict
+            Other command line parameters for diamond blastp. key is the option
+            (e.g. "-T") and value is the value for the option (e.g. "50").
+            If the option is a flag, set the value to None.
+
+        Returns
+        -------
+        str
+            The file path of the blast result.
+        '''
+        logger = getLogger(__name__)
+
+        if aligner == 'blastp':
+            app = DiamondBlastp
+        elif aligner == 'blastx':
+            app = DiamondBlastx
+        else:
+            raise ValueError('Unknown aligner: %s.' % aligner)
+
+        blast = app(InputHandler='_input_as_paths', params=params)
+        blast.Parameters['--query'].on(fp)
+        blast.Parameters['--daa'].on(daa_fp)
+        blast.Parameters['--db'].on(db)
+        blast.Parameters['--evalue'].on(evalue)
+        blast.Parameters['--threads'].on(cpus)
+        blast.Parameters['--tmpdir'].on(self.tmp_dir)
+        logger.info('Running: %s' % blast.BaseCommand)
+        blast_res = blast()
+        blast_res.cleanUp()
+        return blast_res
+
+    def run_view(self, daa_fp, out_fp, params=None):
+        logger = getLogger(__name__)
+        view = DiamondView(InputHandler='_input_as_paths')
+        view.Parameters['--daa'].on(daa_fp)
+        view.Parameters['--out'].on(out_fp)
+        logger.info('Running: %s' % view.BaseCommand)
+        view_res = view()
+        view_res.cleanUp()
+        return view_res
+
+    @staticmethod
+    def parse_tabular(diamond_res, column='bitscore'):
+        '''Parse the output of diamond blastp/blastx.
+
+        Parameters
+        ----------
+        diamond_res : str
+            file path
+
+        Returns
+        -------
+        pandas.DataFrame
+            The best matched records for each query sequence.
+        '''
+        columns = ['qseqid', 'sseqid', 'pident', 'length', 'mismatch',
+                   'gapopen', 'qstart', 'qend', 'sstart', 'send',
+                   'evalue', 'bitscore']
+        df = pd.read_table(diamond_res, names=columns)
+        # pick the rows that have highest bitscore for each qseqid
+        # df_max = df.groupby('qseqid').apply(
+        #     lambda r: r[r[column] == r[column].max()])
+        idx = df.groupby('qseqid')[column].idxmax()
+        df_max = df.loc[idx]
+        df_max.index = idx.index
+        return df_max[['sseqid', 'evalue', 'bitscore']]

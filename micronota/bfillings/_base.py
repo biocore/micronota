@@ -6,14 +6,55 @@
 # The full license is in the file COPYING.txt, distributed with this software.
 # ----------------------------------------------------------------------------
 
+from os import makedirs
 from abc import ABCMeta, abstractmethod
+from tempfile import mkdtemp
 
 from skbio import Sequence
+from skbio.metadata import IntervalMetadata
 
 
 class IntervalMetadataPred(metaclass=ABCMeta):
-    @abstractmethod
-    def identify_features_on_seq(self, seq, dat, **kwargs):
+    '''
+    Attributes
+    ----------
+    fp : str
+        input file path of fasta seq.
+    dat : str
+        data file (eg database) needed to run the app.
+    out_dir : str
+        output directory
+    tmp_dir : str
+        temp directory
+    '''
+    def __init__(self, dat, out_dir, tmp_dir=None):
+        self.dat = dat
+        self.out_dir = out_dir
+        # create dir if not exist
+        makedirs(self.out_dir, exist_ok=True)
+        if tmp_dir is None:
+            self.tmp_dir = mkdtemp(prefix='tmp', dir=out_dir)
+        else:
+            self.tmp_dir = tmp_dir
+        makedirs(self.tmp_dir, exist_ok=True)
+
+    def identify_features(self, input, **kwargs):
+        '''Identify features for the input.
+
+        Parameters
+        ----------
+        input : ``skbio.Sequence`` or sequence file.
+
+        Yield
+        -----
+        dict passable to ``skbio.metadata.IntervalMetadata``
+        '''
+        if isinstance(input, Sequence):
+            return self._identify_features_seq(input, **kwargs)
+        elif isinstance(input, str):
+            return self._identify_features_fp(input, **kwargs)
+
+    def _identify_features_seq(self, seq, **kwargs):
         '''Identify features on the input sequence.
 
         Parameters
@@ -22,32 +63,57 @@ class IntervalMetadataPred(metaclass=ABCMeta):
 
         Returns
         -------
-        ``skbio.metadata.IntervalMetadata``
+        dict passable to ``skbio.metadata.IntervalMetadata``
         '''
-        if isinstance(seq, Sequence):
-            pass
+        with NamedTemporaryFile('w+', self.tmp_dir) as f:
+            seq.write(f)
+            self._identify_features_fp(f.name, **kwargs)
 
     @abstractmethod
-    def identify_features(self, fp, dat, **kwargs):
-        '''
-        Parameters
-        ----------
-        fp : sequence file.
-
-        Yield
-        -----
-        ``skbio.metadata.IntervalMetadata``
-            The interval metadata for each sequence.
-        '''
-
-    @abstractmethod
-    def _parse_result(self):
-        '''Parse the result from running an application.'''
+    def _identify_features_fp(self, fp, **kwargs):
+        '''Identify features on the sequence in the input file.'''
 
 
 class MetadataPred(metaclass=ABCMeta):
-    @abstractmethod
-    def annotate_features_on_seq(self, seq, dat, **kwargs):
+    '''
+    Attributes
+    ----------
+    fp : str
+        input file path of fasta seq.
+    dat : list
+        list of data files (eg database) needed to run the app.
+    out_dir : str
+        output directory
+    tmp_dir : str
+        temp directory
+    '''
+    def __init__(self, dat, out_dir, tmp_dir=None):
+        self.dat = dat
+        self.out_dir = out_dir
+        # create dir if not exist
+        makedirs(self.out_dir, exist_ok=True)
+        if tmp_dir is None:
+            self.tmp_dir = mkdtemp(prefix='tmp', dir=out_dir)
+        else:
+            self.tmp_dir = tmp_dir
+        makedirs(self.tmp_dir, exist_ok=True)
+
+    def annotate_features(self, input, **kwargs):
+        '''
+        Parameters
+        ----------
+        input : ``skbio.Sequence`` or sequence file.
+
+        Yield
+        -----
+        dict-like passable to ``skbio.metadata``
+        '''
+        if isinstance(input, Sequence):
+            self._annotate_seq(input, **kwargs)
+        elif isinstance(input, str):
+            self._annotate_fp(input, **kwargs)
+
+    def _annotate_seq(self, seq, **kwargs):
         '''Add metadata to the input seq.
 
         Assign the function, product, cross-reference, etc. info to the
@@ -56,28 +122,16 @@ class MetadataPred(metaclass=ABCMeta):
         Parameters
         ----------
         seq : ``skbio.Sequence`` object
-
-        Returns
-        -------
-        ``skbio.metadata``
         '''
 
     @abstractmethod
-    def annotate_features(self, fp, dat, **kwargs):
-        '''Add metadata to the input seq.
-
-        Assign the function, product, cross-reference, etc. info to the
-        input sequence.
+    def _annotate_fp(self, fp, **kwargs):
+        '''Add metadata to the sequences in the input file.
 
         Parameters
         ----------
         fp : input file of sequences
-
-        Yields
-        ------
-        ``skbio.metadata``
         '''
-
-    @abstractmethod
-    def _parse_result(self):
-        '''Parse the result from running an application.'''
+        with NamedTemporaryFile('w+', self.tmp_dir) as f:
+            seq.write(f)
+            self._identify_features_fp(f.name, **kwargs)
