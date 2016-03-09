@@ -110,9 +110,9 @@ class MetadataPred(metaclass=ABCMeta):
             named 'sseqid' is mandatory to record the seq id of the hit.
         '''
         if isinstance(input, Sequence):
-            self._annotate_seq(input, **kwargs)
+            return self._annotate_seq(input, **kwargs)
         elif isinstance(input, str):
-            self._annotate_fp(input, **kwargs)
+            return self._annotate_fp(input, **kwargs)
 
     def _annotate_seq(self, seq, **kwargs):
         '''Add metadata to the input seq.
