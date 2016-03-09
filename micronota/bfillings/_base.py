@@ -78,9 +78,7 @@ class MetadataPred(metaclass=ABCMeta):
     '''
     Attributes
     ----------
-    fp : str
-        input file path of fasta seq.
-    dat : list
+    dat : list of str
         list of data files (eg database) needed to run the app.
     out_dir : str
         output directory
@@ -104,9 +102,12 @@ class MetadataPred(metaclass=ABCMeta):
         ----------
         input : ``skbio.Sequence`` or sequence file.
 
-        Yield
-        -----
-        dict-like passable to ``skbio.metadata``
+        Returns
+        -------
+        pd.DataFrame
+            row name should be the query seq id. each column is data
+            of e-value, bitscore, etc. For protein sequences, a column
+            named 'sseqid' is mandatory to record the seq id of the hit.
         '''
         if isinstance(input, Sequence):
             self._annotate_seq(input, **kwargs)
@@ -123,6 +124,9 @@ class MetadataPred(metaclass=ABCMeta):
         ----------
         seq : ``skbio.Sequence`` object
         '''
+        with NamedTemporaryFile('w+', self.tmp_dir) as f:
+            seq.write(f)
+            self._identify_features_fp(f.name, **kwargs)
 
     @abstractmethod
     def _annotate_fp(self, fp, **kwargs):
@@ -132,6 +136,3 @@ class MetadataPred(metaclass=ABCMeta):
         ----------
         fp : input file of sequences
         '''
-        with NamedTemporaryFile('w+', self.tmp_dir) as f:
-            seq.write(f)
-            self._identify_features_fp(f.name, **kwargs)

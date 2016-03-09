@@ -187,7 +187,7 @@ class FeatureAnnt(MetadataPred):
     Attributes
     ----------
     dat : list of str
-        list of file path to database files.
+        list of file path to databases.
     '''
     def __init__(self, dat, out_dir, tmp_dir=None, cache=None):
         super().__init__(dat, out_dir, tmp_dir)
@@ -197,24 +197,27 @@ class FeatureAnnt(MetadataPred):
     def _annotate_fp(self, fp, aligner='blastp', evalue=0.001, cpus=1,
                      outfmt='tab', params=None):
         found = []
+        res = pd.DataFrame()
         for db in self.dat:
             out_prefix = splitext(basename(db))[0]
             daa_fp = join(self.out_dir, '%s.daa' % out_prefix)
             out_fp = join(self.out_dir, '%s.diamond' % out_prefix)
             self.run_blast(fp, daa_fp, db)
             self.run_view(daa_fp, out_fp, params={'--outfmt': outfmt})
-            res = self.parse_tabular(out_fp)
-            for id, md in res.iterrows():
-                found.append(id)
-                yield md.to_dict()
-            fp = join(self.tmp_dir, '%s.fa' % out_prefix)
-            with open(fp, 'w') as f:
+            res = res.append(self.parse_tabular(out_fp))
+            found.extend(res.index)
+            # save to a tmp file the seqs that do not hit current database
+            new_fp = join(self.tmp_dir, '%s.fa' % out_prefix)
+            with open(new_fp, 'w') as f:
                 for seq in read(fp, format='fasta'):
                     if seq.metadata['id'] not in found:
                         seq.write(f, format='fasta')
-                # no seq left
-                if stat(fp)['st_size'] == 0:
-                    break
+            # no seq left
+            if stat(new_fp).st_size == 0:
+                break
+            else:
+                fp = new_fp
+        return res
 
     def run_blast(self, fp, daa_fp, db, aligner='blastp', evalue=0.001, cpus=1,
                   params=None):
@@ -223,7 +226,7 @@ class FeatureAnnt(MetadataPred):
         Parameters
         ----------
         fp : str
-            The file path for the query sequence.
+            File path for the query sequence.
         daa_fp : str
             Output file path.
         cpus : int
@@ -263,6 +266,14 @@ class FeatureAnnt(MetadataPred):
         return blast_res
 
     def run_view(self, daa_fp, out_fp, params=None):
+        '''
+        Parameters
+        ----------
+        daa_fp : str
+            Input file resulting from diamond blast.
+        out_fp : str
+            Output file.
+        '''
         logger = getLogger(__name__)
         view = DiamondView(InputHandler='_input_as_paths')
         view.Parameters['--daa'].on(daa_fp)

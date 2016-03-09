@@ -6,7 +6,8 @@
 # The full license is in the file COPYING.txt, distributed with this software.
 # ----------------------------------------------------------------------------
 
-from os.path import join, exists, expanduser, abspath, dirname
+from os import walk
+from os.path import join, exists, expanduser, abspath, dirname, basename
 from configparser import ConfigParser
 from logging.config import fileConfig
 from importlib.util import find_spec
@@ -37,6 +38,8 @@ class Configuration(object):
         {tool: {param: value}}.
     db_dir : str
         database directory.
+    db : dict
+        database name and their abs path
     app_dir : str
         directory for micronota data files. It is different in
         different OS.
@@ -81,6 +84,8 @@ class Configuration(object):
             fps.append(param_fp)
         self._set_param_config(fps)
 
+        self._get_db()
+
         # check all specified tools are wrapped
         self._check_avail()
 
@@ -117,6 +122,13 @@ class Configuration(object):
             if found is None:
                 raise NotImplementedError('%s not implemented.' % i)
 
+    def _get_db(self):
+        '''Return the dict of databases.'''
+        self.db = {}
+        for dirpath, dirnames, filenames in walk(self.db_dir):
+            if not dirnames:
+                self.db[basename(dirpath)] = dirpath
+
     def __repr__(self):
         from sys import platform, version
         lines = []
@@ -146,7 +158,7 @@ class Configuration(object):
         info['cds'] = dict()
         for tool in self.cds:
             info['cds'][tool] = self.cds[tool]
-
+        info['databases'] = self.db
         for k1 in sorted(info):
             lines.append(k1)
             lines.append('=' * len(k1))

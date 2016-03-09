@@ -6,8 +6,6 @@
 # The full license is in the file COPYING.txt, distributed with this software.
 # ----------------------------------------------------------------------------
 
-from configparser import ConfigParser
-
 import click
 
 from ..workflow import annotate
