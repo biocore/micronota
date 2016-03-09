@@ -215,6 +215,7 @@ class FeatureAnnt(MetadataPred):
 
         found = []
         res = pd.DataFrame()
+        seqs = []
         for db in dbs:
             out_prefix = splitext(basename(db))[0]
             daa_fp = join(self.out_dir, '%s.daa' % out_prefix)
@@ -230,6 +231,7 @@ class FeatureAnnt(MetadataPred):
                 for seq in read(fp, format='fasta'):
                     if seq.metadata['id'] not in found:
                         seq.write(f, format='fasta')
+                        seqs.append(seq)
             # no seq left
             if stat(new_fp).st_size == 0:
                 break
@@ -238,7 +240,7 @@ class FeatureAnnt(MetadataPred):
 
         # Update cache (inplace)
         if not self.cache.is_empty():
-            self.cache.update(res)
+            self.cache.update(seqs)
         return res
 
     def run_blast(self, fp, daa_fp, db, aligner='blastp', evalue=0.001, cpus=1,
