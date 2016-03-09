@@ -205,30 +205,22 @@ class FeatureAnnt(MetadataPred):
     def get_cache(self):
         return self.cache
 
-    def _search(self, fp, daa_fp, db, out_prefix, outfmt, **kwargs):
-        daa_fp = join(self.out_dir, '%s.daa' % out_prefix)
-        out_fp = join(self.out_dir, '%s.diamond' % out_prefix)
-        self.run_blast(fp, daa_fp, db, **kwargs)
-        self.run_view(daa_fp, out_fp, params={'--outfmt': outfmt})
-        return out_fp
-
     def _annotate_fp(self, fp, aligner='blastp', evalue=0.001, cpus=1,
                      outfmt='tab', params=None):
 
-        if not cache.is_empty():
+        if not self.cache.is_empty():
             # Build cache
             self.cache.build()
-            # Search cache (high threshold)
-            # Question: How to set e-value for cache?
-            cache_out_fp = self._search(fp, daa_fp, db, self.cache.fname,
-                                        'sam', evalue=1e-5)
-            # Read in sequences and append them to the results
+            dbs = [self.cache.db.name] + self.dat:
 
         found = []
         res = pd.DataFrame()
-        for db in self.dat:
+        for db in dbs:
             out_prefix = splitext(basename(db))[0]
-            out_fp = self._search(fp, daa_fp, db, out_prefix, outfmt)
+            daa_fp = join(self.out_dir, '%s.daa' % out_prefix)
+            out_fp = join(self.out_dir, '%s.diamond' % out_prefix)
+            self.run_blast(fp, daa_fp, db, **kwargs)
+            self.run_view(daa_fp, out_fp, params={'--outfmt': outfmt})
             res = res.append(self.parse_tabular(out_fp))
 
             found.extend(res.index)
@@ -245,7 +237,8 @@ class FeatureAnnt(MetadataPred):
                 fp = new_fp
 
         # Update cache (inplace)
-
+        if not self.cache.is_empty():
+            self.cache.update(res)
         return res
 
     def run_blast(self, fp, daa_fp, db, aligner='blastp', evalue=0.001, cpus=1,
@@ -370,7 +363,14 @@ def DiamondCache():
         make_db(self.fasta, self.db, params)
 
     def update(self, seqs):
-        pass
+        """
+        Parameters
+        ----------
+        seqs : list of skbio.Sequence
+           List of sequences to update the cache.
+        """
+        self.seqs = seqs + self.seqs
+        self.seqs = self.seqs[:maxSize]
 
     def close(self):
         os.remove(self.fasta)
