@@ -110,9 +110,9 @@ class MetadataPred(metaclass=ABCMeta):
             named 'sseqid' is mandatory to record the seq id of the hit.
         '''
         if isinstance(input, Sequence):
-            self._annotate_seq(input, **kwargs)
+            return self._annotate_seq(input, **kwargs)
         elif isinstance(input, str):
-            self._annotate_fp(input, **kwargs)
+            return self._annotate_fp(input, **kwargs)
 
     def _annotate_seq(self, seq, **kwargs):
         '''Add metadata to the input seq.
@@ -126,7 +126,7 @@ class MetadataPred(metaclass=ABCMeta):
         '''
         with NamedTemporaryFile('w+', self.tmp_dir) as f:
             seq.write(f)
-            self._identify_features_fp(f.name, **kwargs)
+            self._annotate_fp(f.name, **kwargs)
 
     @abstractmethod
     def _annotate_fp(self, fp, **kwargs):
