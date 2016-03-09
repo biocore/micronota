@@ -12,6 +12,7 @@ from configparser import ConfigParser
 from logging.config import fileConfig
 from importlib.util import find_spec
 from itertools import chain
+from collections import OrderedDict
 
 import click
 
@@ -133,13 +134,24 @@ class Configuration(object):
         from sys import platform, version
         lines = []
 
-        info = dict()
+        info = OrderedDict()
         info['system'] = {
             'OS': platform,
             'Python': version}
+
         info['micronota'] = {
             'db directory': self.db_dir,
             'config directory': self.app_dir}
+
+        info['features'] = dict()
+        for tool in self.features:
+            info['features'][tool] = self.features[tool]
+
+        info['cds'] = dict()
+        for tool in self.cds:
+            info['cds'][tool] = self.cds[tool]
+
+        info['databases'] = self.db
 
         info['parameters'] = dict()
         for tool in self.param:
@@ -151,22 +163,17 @@ class Configuration(object):
                 l.append('%s:%s' % (opt, v))
             info['parameters'][tool] = ' '.join(l)
 
-        info['features'] = dict()
-        for tool in self.features:
-            info['features'][tool] = self.features[tool]
-
-        info['cds'] = dict()
-        for tool in self.cds:
-            info['cds'][tool] = self.cds[tool]
-        info['databases'] = self.db
-        for k1 in sorted(info):
-            lines.append(k1)
+        for k1 in info:
+            lines.append(k1.upper())
             lines.append('=' * len(k1))
             info_ = info[k1]
             max_len = max([len(i) for i in info_])
             for k2 in sorted(info_):
-                line = "{key:<{width}}: {value}".format(
-                    width=max_len, key=k2, value=info_[k2])
+                if info_[k2] is None:
+                    line = k2
+                else:
+                    line = "{key:<{width}}: {value}".format(
+                        width=max_len, key=k2, value=info_[k2])
                 lines.append(line)
             lines.append('\n')
         return '\n'.join(lines)
