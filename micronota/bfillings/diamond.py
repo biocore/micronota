@@ -196,13 +196,21 @@ class FeatureAnnt(MetadataPred):
 
     def _annotate_fp(self, fp, aligner='blastp', evalue=0.001, cpus=1,
                      outfmt='tab', params=None):
+        '''Annotate the sequences in the file.
+
+        Parameters
+        ----------
+        params : dict-like
+            Parameters for diamond blastp/blastx that pass to ``run_blast``.
+        '''
         found = []
         res = pd.DataFrame()
         for db in self.dat:
             out_prefix = splitext(basename(db))[0]
             daa_fp = join(self.out_dir, '%s.daa' % out_prefix)
             out_fp = join(self.out_dir, '%s.diamond' % out_prefix)
-            self.run_blast(fp, daa_fp, db)
+            self.run_blast(fp, daa_fp, db,
+                           evalue=evalue, cpus=cpus, params=params)
             self.run_view(daa_fp, out_fp, params={'--outfmt': outfmt})
             res = res.append(self.parse_tabular(out_fp))
             found.extend(res.index)
