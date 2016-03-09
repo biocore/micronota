@@ -16,9 +16,11 @@ from burrito.util import (
     ApplicationError, CommandLineApplication)
 from skbio import read
 
+from tempfile import NamedTemporaryFile, mkdtemp
+
 from .util import _get_parameter
 from ._base import MetadataPred
-
+import string, random
 
 _OPTIONS_FLAG = {
     i: _get_parameter(FlagParameter, i)
@@ -188,23 +190,47 @@ class FeatureAnnt(MetadataPred):
     ----------
     dat : list of str
         list of file path to databases.
+    cache : list of skbio.Sequence
+        list of skbio.Sequences to search against.
     '''
     def __init__(self, dat, out_dir, tmp_dir=None, cache=None):
         super().__init__(dat, out_dir, tmp_dir)
         if cache is not None:
-            self.dat = cache + self.dat
+            self.cache = cache
+        else:
+            self.cache = DiamondCache()
+        # if cache is not None:
+        self.dat = dat
+
+    def get_cache(self):
+        return self.cache
+
+    def _search(self, fp, daa_fp, db, out_prefix, outfmt, **kwargs):
+        daa_fp = join(self.out_dir, '%s.daa' % out_prefix)
+        out_fp = join(self.out_dir, '%s.diamond' % out_prefix)
+        self.run_blast(fp, daa_fp, db, **kwargs)
+        self.run_view(daa_fp, out_fp, params={'--outfmt': outfmt})
+        return out_fp
 
     def _annotate_fp(self, fp, aligner='blastp', evalue=0.001, cpus=1,
                      outfmt='tab', params=None):
+
+        if not cache.is_empty():
+            # Build cache
+            self.cache.build()
+            # Search cache (high threshold)
+            # Question: How to set e-value for cache?
+            cache_out_fp = self._search(fp, daa_fp, db, self.cache.fname,
+                                        'sam', evalue=1e-5)
+            # Read in sequences and append them to the results
+
         found = []
         res = pd.DataFrame()
         for db in self.dat:
             out_prefix = splitext(basename(db))[0]
-            daa_fp = join(self.out_dir, '%s.daa' % out_prefix)
-            out_fp = join(self.out_dir, '%s.diamond' % out_prefix)
-            self.run_blast(fp, daa_fp, db)
-            self.run_view(daa_fp, out_fp, params={'--outfmt': outfmt})
+            out_fp = self._search(fp, daa_fp, db, out_prefix, outfmt)
             res = res.append(self.parse_tabular(out_fp))
+
             found.extend(res.index)
             # save to a tmp file the seqs that do not hit current database
             new_fp = join(self.tmp_dir, '%s.fa' % out_prefix)
@@ -217,6 +243,9 @@ class FeatureAnnt(MetadataPred):
                 break
             else:
                 fp = new_fp
+
+        # Update cache (inplace)
+
         return res
 
     def run_blast(self, fp, daa_fp, db, aligner='blastp', evalue=0.001, cpus=1,
@@ -308,3 +337,45 @@ class FeatureAnnt(MetadataPred):
         df_max = df.loc[idx]
         df_max.index = idx.index
         return df_max[['sseqid', 'evalue', 'bitscore']]
+
+
+def DiamondCache():
+    '''
+    Attributes
+    ----------
+    cache : list of skbio.Sequence
+        List of sequences to build cache from
+
+    '''
+    def __init__(self, seqs=None, maxSize=200000, out_dir=""):
+        fname = _generate_random_file() # substitute for tempfile
+        self.fasta = join(out_dir, '%s.fasta' % fname)
+        self.db = join(out_dir, '%s.diamond' % fname)
+        self.maxSize = maxSize
+        self.seqs = seqs
+
+    def _generate_random_file(self, N=10):
+        return ''.join(random.SystemRandom().choice(string.ascii_uppercase +\
+                                                    string.digits) for _ in range(N))
+
+    def dbname(self):
+        return self.db.name
+
+    def is_empty(self):
+        return len(self.seqs) == 0:
+
+    def build(self, params=None):
+        for seq in self.seqs:
+            seq.write(self.fasta, format='fasta')
+        make_db(self.fasta, self.db, params)
+
+    def update(self, seqs):
+        pass
+
+    def close(self):
+        os.remove(self.fasta)
+        os.remove(self.db)
+
+
+
+

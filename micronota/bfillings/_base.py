@@ -100,7 +100,7 @@ class MetadataPred(metaclass=ABCMeta):
         '''
         Parameters
         ----------
-        input : ``skbio.Sequence`` or sequence file.
+        input : list of ``skbio.Sequence`` or sequence file.
 
         Returns
         -------
@@ -126,7 +126,7 @@ class MetadataPred(metaclass=ABCMeta):
         '''
         with NamedTemporaryFile('w+', self.tmp_dir) as f:
             seq.write(f)
-            self._identify_features_fp(f.name, **kwargs)
+            self._annotate_fp_fp(f.name, **kwargs)
 
     @abstractmethod
     def _annotate_fp(self, fp, **kwargs):
@@ -136,3 +136,4 @@ class MetadataPred(metaclass=ABCMeta):
         ----------
         fp : input file of sequences
         '''
+
