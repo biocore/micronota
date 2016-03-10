@@ -92,7 +92,7 @@ class Prodigal(CommandLineApplication):
 
 
 class FeaturePred(IntervalMetadataPred):
-    def _identify_features_fp(self, fp, params=None):
+    def _identify_fp(self, fp, params=None) -> dict:
         '''Predict genes for the input sequence with Prodigal.'''
         res = self.run(fp, params)
         return self.parse_result(res)

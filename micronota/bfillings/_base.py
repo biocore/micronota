@@ -9,9 +9,18 @@
 from os import makedirs
 from abc import ABCMeta, abstractmethod
 from tempfile import mkdtemp
+from inspect import signature
 
+from pandas import DataFrame
 from skbio import Sequence
 from skbio.metadata import IntervalMetadata
+
+
+class SubclassImplementError(Exception):
+    '''Raised when a subclass do not follow the enforcement.'''
+    def __init__(self, cls, message=('This class definition violates '
+                                     'the enforced rule of its parent class')):
+        super().__init__('%s: %s' % (message, cls))
 
 
 class IntervalMetadataPred(metaclass=ABCMeta):
@@ -27,6 +36,17 @@ class IntervalMetadataPred(metaclass=ABCMeta):
     tmp_dir : str
         temp directory
     '''
+    @classmethod
+    def __subclasshook__(cls, C):
+        '''Enforce the API of functions in child classes.'''
+        if cls is IntervalMetadataPred:
+            f = C.__dict__['_identify_fp']
+            sig = signature(f)
+            # enforce it to return dict
+            if not issubclass(sig.return_annotation, dict):
+                raise SubclassImplementError(__class__)
+        return True
+
     def __init__(self, dat, out_dir, tmp_dir=None):
         self.dat = dat
         self.out_dir = out_dir
@@ -38,7 +58,7 @@ class IntervalMetadataPred(metaclass=ABCMeta):
             self.tmp_dir = tmp_dir
         makedirs(self.tmp_dir, exist_ok=True)
 
-    def identify_features(self, input, **kwargs):
+    def identify_features(self, input, **kwargs) -> dict:
         '''Identify features for the input.
 
         Parameters
@@ -50,11 +70,11 @@ class IntervalMetadataPred(metaclass=ABCMeta):
         dict passable to ``skbio.metadata.IntervalMetadata``
         '''
         if isinstance(input, Sequence):
-            return self._identify_features_seq(input, **kwargs)
+            return self._identify_seq(input, **kwargs)
         elif isinstance(input, str):
-            return self._identify_features_fp(input, **kwargs)
+            return self._identify_fp(input, **kwargs)
 
-    def _identify_features_seq(self, seq, **kwargs):
+    def _identify_seq(self, seq, **kwargs):
         '''Identify features on the input sequence.
 
         Parameters
@@ -70,7 +90,7 @@ class IntervalMetadataPred(metaclass=ABCMeta):
             self._identify_features_fp(f.name, **kwargs)
 
     @abstractmethod
-    def _identify_features_fp(self, fp, **kwargs):
+    def _identify_fp(self, fp, **kwargs):
         '''Identify features on the sequence in the input file.'''
 
 
@@ -85,6 +105,17 @@ class MetadataPred(metaclass=ABCMeta):
     tmp_dir : str
         temp directory
     '''
+    @classmethod
+    def __subclasshook__(cls, C):
+        '''Enforce the API of functions in child classes.'''
+        if cls is MetadataPred:
+            f = C.__dict__['_annotate_fp']
+            sig = signature(f)
+            # enforce it to return dict
+            if not issubclass(sig.return_annotation, DataFrame):
+                raise SubclassImplementError(C)
+        return True
+
     def __init__(self, dat, out_dir, tmp_dir=None):
         self.dat = dat
         self.out_dir = out_dir

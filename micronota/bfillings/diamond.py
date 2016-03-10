@@ -195,7 +195,7 @@ class FeatureAnnt(MetadataPred):
             self.dat = cache + self.dat
 
     def _annotate_fp(self, fp, aligner='blastp', evalue=0.001, cpus=1,
-                     outfmt='tab', params=None):
+                     outfmt='tab', params=None) -> pd.DataFrame:
         '''Annotate the sequences in the file.
 
         Parameters
