@@ -12,13 +12,13 @@ class SamIOTests(TestCase):
         self.multi_fp = get_data_path('ecoli_multi.sam')
         self.single_fp = get_data_path('ecoli_single.sam')
         self.single_exp = \
-            ('DEQTKRMIRRAILKAVAIPGYQVPFGGREMPMPYGWGTGGIQL'
-             'TASVIGESDVLKVIDQGADDTTNAVSIRNFFKRVTGVNTTERT'
-             'DDATLIQTRHRIPETPLTEDQIIIFQVPIPEPLRFIEPRETET'
-             'RTMHALEEYGVMQVKLYEDIARFGHIATTYAYPVKVNGRYVMD'
-             'PSPIPKFDNPKMDMMPALQLFGAGREKRIYAVPPFTHVESLDF'
-             'DDHPFTVQQWDEPCAICGSTHSYLDEVVLDDAGNRMFVCSDTD'
-             'YCRQQNEAKSQ', {
+            ('MANLSGYNFAYLDEQTKRMIRRAILKAVAIPGYQVPFGGREMP'
+             'MPYGWGTGGIQLTASVIGESDVLKVIDQGADDTTNAVSIRNFF'
+             'KRVTGVNTTERTDDATLIQTRHRIPETPLTEDQIIIFQVPIPE'
+             'PLRFIEPRETETRTMHALEEYGVMQVKLYEDIARFGHIATTYA'
+             'YPVKVNGRYVMDPSPIPKFDNPKMDMMPALQLFGAGREKRIYA'
+             'VPPFTHVESLDFDDHPFTVQQWDEPCAICGSTHSYLDEVVLDD'
+             'AGNRMFVCSDTDYCRQQNEAKSQ', {
                  'HD': ['VN:1.5', 'SO:query'],
                  'PG': 'PN:DIAMOND',
                  'mm': 'BlastX',
@@ -69,7 +69,7 @@ class ReaderTests(SamIOTests):
                       self.single_exp[1])
         self.assertEqual(sorted(obs.metadata.items()),
                          sorted(exp.metadata.items()))
-
+        self.assertEqual(str(obs), str(exp))
         # FIXME: The equality method in the Sequence object
         # is broken :(
         # self.assertEqual(obs, exp)
@@ -79,6 +79,7 @@ class ReaderTests(SamIOTests):
         for obs in _sam_to_generator(self.multi_fp):
             self.assertEqual(sorted(obs.metadata.items()),
                              sorted(exp.metadata.items()))
+            self.assertEqual(str(obs), str(exp))
 
 if __name__ == "__main__":
     main()
