@@ -333,6 +333,10 @@ class FeatureAnnt(MetadataPred):
         df_max.index = idx.index
         return df_max[['sseqid', 'evalue', 'bitscore']]
 
+    @staticmethod
+    def parse_sam(diamond_res, column='bitscore', collapse=False):
+        pass
+
 
 def DiamondCache():
     '''
