@@ -212,9 +212,7 @@ def _parse_records(fh, constructor=None, **kwargs):
 
             # extract sequence
             seq = tabs[9]
-
             tabs = tabs[:9] + tabs[10:]
-
 
             req = list(map(parse_required, tabs[:10]))
             opt = list(map(parse_optional, tabs[10:]))
