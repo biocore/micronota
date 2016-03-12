@@ -60,30 +60,30 @@ class Configuration(object):
         log_fn = 'log.cfg'
         param_fn = 'param.cfg'
 
-        default_fp = join(root_dir, dat_dir, misc_fn)
-        global_fp = join(self.app_dir, misc_fn)
+        fp = join(self.app_dir, misc_fn)
         if misc_fp is not None:
-            self._set_misc_config(misc_fp)
-        elif exists(global_fp):
-            self._set_misc_config(global_fp)
+            self._misc_fp = abspath(misc_fp)
+        elif exists(fp):
+            self._misc_fp = fp
         else:
-            self._set_misc_config(default_fp)
+            self._misc_fp = join(root_dir, dat_dir, misc_fn)
+        self._set_misc_config(self._misc_fp)
 
-        default_fp = join(root_dir, dat_dir, log_fn)
-        global_fp = join(self.app_dir, log_fn)
+        fp = join(self.app_dir, log_fn)
         if log_fp is not None:
-            self._set_log_config(log_fp)
-        elif exists(global_fp):
-            self._set_log_config(global_fp)
+            self._log_fp = abspath(log_fp)
+        elif exists(fp):
+            self._log_fp = fp
         else:
-            self._set_log_config(default_fp)
+            self._log_fp = join(root_dir, dat_dir, log_fn)
+        self._set_log_config(self._log_fp)
 
         default_fp = join(root_dir, dat_dir, param_fn)
         global_fp = join(self.app_dir, param_fn)
-        fps = [default_fp, global_fp]
+        self._param_fps = [default_fp, global_fp]
         if param_fp is not None:
-            fps.append(param_fp)
-        self._set_param_config(fps)
+            self._param_fps.append(param_fp)
+        self._set_param_config(self._param_fps)
 
         self._get_db()
 
@@ -139,9 +139,14 @@ class Configuration(object):
             'OS': platform,
             'Python': version}
 
-        info['micronota'] = {
-            'db directory': self.db_dir,
-            'config directory': self.app_dir}
+        info['micronota'] = OrderedDict([
+            ('database directory', self.db_dir),
+            ('global config directory', self.app_dir),
+            ('general config file', self._misc_fp),
+            ('log config file', self._log_fp),
+            ('param config file', ','.join(self._param_fps))])
+
+        info['databases'] = self.db
 
         info['features'] = dict()
         for tool in self.features:
@@ -150,8 +155,6 @@ class Configuration(object):
         info['cds'] = dict()
         for tool in self.cds:
             info['cds'][tool] = self.cds[tool]
-
-        info['databases'] = self.db
 
         info['parameters'] = dict()
         for tool in self.param:
@@ -168,7 +171,7 @@ class Configuration(object):
             lines.append('=' * len(k1))
             info_ = info[k1]
             max_len = max([len(i) for i in info_])
-            for k2 in sorted(info_):
+            for k2 in info_:
                 if info_[k2] is None:
                     line = k2
                 else:
