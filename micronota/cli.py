@@ -10,7 +10,7 @@ import click
 from os import listdir
 from os.path import abspath, join, dirname, splitext
 
-from .util import _create_config
+from .config import Configuration
 
 _CONTEXT_SETTINGS = dict(
     # allow case insensitivity for the (sub)commands and their options
@@ -71,16 +71,19 @@ class ComplexCLI(AliasedGroup):
 
 
 @click.group(cls=ComplexCLI, context_settings=_CONTEXT_SETTINGS)
-@click.option('-v', '--verbose', count=True,
-              help=("Verbosity. You can use multiple v's, "
-                    "e.g. -vv, to gradually increase verbosity."))
-@click.option('-d', '--debug', is_flag=True,
-              help='Debug mode. Save intermediate files. ')
-@click.option('--config', default=None,
-              help='The config file.')
+@click.option('--cfg', default=None,
+              type=click.Path(exists=True, dir_okay=False),
+              help='Config file.')
+@click.option('--param', default=None,
+              type=click.Path(exists=True, dir_okay=False),
+              help=('Parameter file to change the default behavior '
+                    'of wrapped tools.'))
+@click.option('--log', default=None,
+              type=click.Path(exists=True, dir_okay=False),
+              help='Logging config file.')
 @click.version_option()   # add --version option
 @click.pass_context
-def cmd(ctx, debug, verbose, config):
+def cmd(ctx, cfg, param, log):
     '''Annotation pipeline for Bacterial and Archaeal (meta)genomes.
 
     It predicts features (ncRNA, coding genes, etc.) on the input sequences
@@ -91,5 +94,5 @@ def cmd(ctx, debug, verbose, config):
 
     For more info, please check out https://github.com/biocore/micronota.
     '''
-    # read the config file.
-    ctx.config = _create_config(config)
+    # load the config.
+    ctx.config = Configuration(misc_fp=cfg, param_fp=param, log_fp=log)

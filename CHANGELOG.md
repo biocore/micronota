@@ -1,9 +1,11 @@
 # micronota changelog
 
-## Version 0.1.1-dev (2015-03-02)
+## Version 0.1.1-dev (2015-03-03)
 
-# features
-`micronota.bfillings.minced` function has been added
+# Features
+* added `micronota.bfillings.minced` module for CRISPR prediction.
+* added logging functionality.
+* refactored configuration settings.
 
 ## Version 0.1.0 (2015-03-01)
 

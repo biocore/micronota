@@ -84,6 +84,7 @@ from os import stat
 from sqlite3 import connect
 from xml.etree import ElementTree as ET
 from itertools import product
+from logging import getLogger
 import gzip
 
 from skbio import read, Sequence
@@ -130,6 +131,9 @@ def prepare_db(out_d, downloaded, force=False,
 
     * ``uniprotkb.db``
     '''
+    logger = getLogger(__name__)
+    logger.info('Preparing UniRef100 database')
+
     metadata_db = join(out_d, 'uniprotkb.db')
 
     sprot_raw = join(downloaded, basename(sprot))
@@ -147,7 +151,7 @@ def prepare_db(out_d, downloaded, force=False,
     sort_uniref(metadata_db, uniref100_raw, out_d, force)
 
 
-def sort_uniref(db_fp, uniref_fp, out_d, overwrite=False):
+def sort_uniref(db_fp, uniref_fp, out_d, resolution=100, overwrite=False):
     '''Sort UniRef sequences into different partitions.
 
     This will sort UniRef100 seq into following partitions based on both
@@ -174,9 +178,11 @@ def sort_uniref(db_fp, uniref_fp, out_d, overwrite=False):
     out_d : str
         The output directory to place the resulting fasta files.
     '''
+    logger = getLogger(__name__)
+    logger.info('Sorting UniRef sequences')
     fns = ['%s_%s' % (i, j) for i, j in product(_status, _kingdom)]
     fns.append('_other')
-    fps = [join(out_d, 'uniref100_%s.fasta') % f for f in fns]
+    fps = [join(out_d, 'uniref%d_%s.fasta') % (resolution, f) for f in fns]
 
     for f in fns:
         _overwrite(f, overwrite)
@@ -187,7 +193,7 @@ def sort_uniref(db_fp, uniref_fp, out_d, overwrite=False):
         cursor = conn.cursor()
         for seq in read(uniref_fp, format='fasta', constructor=Sequence):
             id = seq.metadata['id']
-            ac = id.replace('UniRef100_', '')
+            ac = id.replace('UniRef%d_' % resolution, '')
             group = ['', 'other']
             cursor.execute('''SELECT * FROM metadata
                               WHERE ac = ?''',
@@ -238,6 +244,8 @@ def prepare_metadata(in_fps, db_fp, **kwargs):
     The table in the database file will be dropped and re-created if
     the function is re-run.
     '''
+    logger = getLogger(__name__)
+    logger.info('Preparing metadata db for UniRef')
     _overwrite(db_fp, **kwargs)
     status_map = {k: i for i, k in enumerate(_status)}
     kingdom_map = {k: i for i, k in enumerate(_kingdom)}

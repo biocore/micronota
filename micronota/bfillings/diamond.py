@@ -6,16 +6,22 @@
 # The full license is in the file COPYING.txt, distributed with this software.
 # ----------------------------------------------------------------------------
 
+from os import stat
 from os.path import join, basename, splitext
-from tempfile import mkdtemp
+from logging import getLogger
 
 import pandas as pd
 from burrito.parameters import FlagParameter, ValuedParameter
 from burrito.util import (
     ApplicationError, CommandLineApplication)
+from micronota.parsers import sam
+from skbio import read
+
+from tempfile import NamedTemporaryFile, mkdtemp
 
 from .util import _get_parameter
-
+from ._base import MetadataPred
+import string, random
 
 _OPTIONS_FLAG = {
     i: _get_parameter(FlagParameter, i)
@@ -176,85 +182,241 @@ def make_db(in_fp, out_fp=None, params=None):
     app.Parameters['--db'].on(out_fp)
     res = app()
     res.cleanUp()
-    return res['ExitStatus']
+    return res
 
 
-def search_protein_homologs(query, db, out_dir, aligner='blastp', outfmt='tab',
-                            evalue=0.01, cores=1, params=None):
-    '''Search query sequences against the database.
-
-    Parameters
-    ----------
-    query : str
-        The file path to the query sequence.
-    db : str
-        The file path to diamond formatted database.
-    cores : int
-        Number of CPU cores. Default to 1. If it is set to 0, it will use
-        all available cores.
-    evalue : float
-        Default to 0.01. Threshold E-value.
-    params : dict
-        Other command line parameters for diamond blastp. key is the option
-        (e.g. "-T") and value is the value for the option (e.g. "50").
-        If the option is a flag, set the value to None.
-    Returns
-    -------
-    str
-        The file path of the blast result.
+class FeatureAnnt(MetadataPred):
     '''
-    prefix = basename(query)
-    tmpd = mkdtemp(suffix='', prefix='diamond_', dir=out_dir)
-    daa_fp = join(out_dir, '%s.daa' % prefix)
-    if aligner == 'blastp':
-        app = DiamondBlastp
-    elif aligner == 'blastx':
-        app = DiamondBlastx
-    else:
-        raise ValueError('unknown aliger')
-
-    blast = app(InputHandler='_input_as_paths', params=params)
-    blast.Parameters['--query'].on(query)
-    blast.Parameters['--db'].on(db)
-    blast.Parameters['--evalue'].on(evalue)
-    blast.Parameters['--threads'].on(cores)
-    blast.Parameters['--tmpdir'].on(tmpd)
-    blast.Parameters['--daa'].on(daa_fp)
-    blast_res = blast()
-    blast_res.cleanUp()
-
-    out_fp = join(out_dir, '%s.diamond' % prefix)
-    view = DiamondView(InputHandler='_input_as_paths', params=params)
-    view.Parameters['--daa'].on(daa_fp)
-    view.Parameters['--out'].on(out_fp)
-    view.Parameters['--outfmt'].on(outfmt)
-    view_res = view()
-    view_res.cleanUp()
-    # print(app.BaseCommand)
-    return out_fp
-
-
-def parse_output(diamond_res, column='bitscore'):
-    '''Parse the output of diamond blastp/blastx.
-
-    Parameters
+    Attributes
     ----------
-    diamond_res : str
-        file path
-
-    Returns
-    -------
-    pandas.DataFrame
-        The best matched records for each query sequence.
+    dat : list of str
+        list of file path to databases.
+    cache : list of skbio.Sequence
+        list of skbio.Sequences to search against.
     '''
-    columns = ['qseqid', 'sseqid', 'pident', 'length', 'mismatch',
-               'gapopen', 'qstart', 'qend', 'sstart', 'send',
-               'evalue', 'bitscore']
-    df = pd.read_table(diamond_res, names=columns)
-    # pick the rows that have highest bitscore for each qseqid
-    # df_max = df.groupby('qseqid').apply(
-    #     lambda r: r[r[column] == r[column].max()])
-    idx = df.groupby('qseqid')[column].idxmax()
-    df_max = df.loc[idx]
-    df_max.index = idx.index
-    return df_max[['sseqid', 'evalue', 'bitscore']]
+    def __init__(self, dat, out_dir, tmp_dir=None, cache=None):
+        super().__init__(dat, out_dir, tmp_dir)
+        if cache is not None:
+            self.cache = cache
+        else:
+            self.cache = DiamondCache()
+        # if cache is not None:
+        self.dat = dat
+
+    def get_cache(self):
+        return self.cache
+
+    def _annotate_fp(self, fp, aligner='blastp', evalue=0.001, cpus=1,
+                     outfmt='tab', params=None):
+
+        if not self.cache.is_empty():
+            # Build cache
+            self.cache.build()
+            dbs = [self.cache.db.name] + self.dat
+
+        found = []
+        res = pd.DataFrame()
+        seqs = []
+        for db in dbs:
+            out_prefix = splitext(basename(db))[0]
+            daa_fp = join(self.out_dir, '%s.daa' % out_prefix)
+            out_fp = join(self.out_dir, '%s.diamond' % out_prefix)
+            self.run_blast(fp, daa_fp, db, **kwargs)
+            self.run_view(daa_fp, out_fp, params={'--outfmt': outfmt})
+            res = res.append(self.parse_tabular(out_fp))
+
+            found.extend(res.index)
+            # save to a tmp file the seqs that do not hit current database
+            new_fp = join(self.tmp_dir, '%s.fa' % out_prefix)
+            with open(new_fp, 'w') as f:
+                for seq in read(fp, format='fasta'):
+                    if seq.metadata['id'] not in found:
+                        seq.write(f, format='fasta')
+                        seqs.append(seq)
+            # no seq left
+            if stat(new_fp).st_size == 0:
+                break
+            else:
+                fp = new_fp
+
+        # Update cache (inplace)
+        if not self.cache.is_empty():
+            self.cache.update(seqs)
+        return res
+
+    def run_blast(self, fp, daa_fp, db, aligner='blastp', evalue=0.001, cpus=1,
+                  params=None):
+        '''Search query sequences against the database.
+
+        Parameters
+        ----------
+        fp : str
+            File path for the query sequence.
+        daa_fp : str
+            Output file path.
+        cpus : int
+            Number of CPUs. Default to 1. If it is set to 0, it will use
+            all available CPUs.
+        evalue : float
+            Default to 0.01. Threshold E-value.
+        params : dict
+            Other command line parameters for diamond blastp. key is the option
+            (e.g. "-T") and value is the value for the option (e.g. "50").
+            If the option is a flag, set the value to None.
+
+        Returns
+        -------
+        str
+            The file path of the blast result.
+        '''
+        logger = getLogger(__name__)
+
+        if aligner == 'blastp':
+            app = DiamondBlastp
+        elif aligner == 'blastx':
+            app = DiamondBlastx
+        else:
+            raise ValueError('Unknown aligner: %s.' % aligner)
+
+        blast = app(InputHandler='_input_as_paths', params=params)
+        blast.Parameters['--query'].on(fp)
+        blast.Parameters['--daa'].on(daa_fp)
+        blast.Parameters['--db'].on(db)
+        blast.Parameters['--evalue'].on(evalue)
+        blast.Parameters['--threads'].on(cpus)
+        blast.Parameters['--tmpdir'].on(self.tmp_dir)
+        logger.info('Running: %s' % blast.BaseCommand)
+        blast_res = blast()
+        blast_res.cleanUp()
+        return blast_res
+
+    def run_view(self, daa_fp, out_fp, params=None):
+        '''
+        Parameters
+        ----------
+        daa_fp : str
+            Input file resulting from diamond blast.
+        out_fp : str
+            Output file.
+        '''
+        logger = getLogger(__name__)
+        view = DiamondView(InputHandler='_input_as_paths')
+        view.Parameters['--daa'].on(daa_fp)
+        view.Parameters['--out'].on(out_fp)
+        logger.info('Running: %s' % view.BaseCommand)
+        view_res = view()
+        view_res.cleanUp()
+        return view_res
+
+    @staticmethod
+    def parse_tabular(diamond_res, column='bitscore'):
+        '''Parse the output of diamond blastp/blastx.
+
+        Parameters
+        ----------
+        diamond_res : str
+            file path
+
+        Returns
+        -------
+        pandas.DataFrame
+            The best matched records for each query sequence.
+        '''
+        columns = ['qseqid', 'sseqid', 'pident', 'length', 'mismatch',
+                   'gapopen', 'qstart', 'qend', 'sstart', 'send',
+                   'evalue', 'bitscore']
+        df = pd.read_table(diamond_res, names=columns)
+        # pick the rows that have highest bitscore for each qseqid
+        # df_max = df.groupby('qseqid').apply(
+        #     lambda r: r[r[column] == r[column].max()])
+        idx = df.groupby('qseqid')[column].idxmax()
+        df_max = df.loc[idx]
+        df_max.index = idx.index
+        return df_max[['sseqid', 'evalue', 'bitscore']]
+
+    @staticmethod
+    def parse_sam(diamond_res, column=None, collapse=False):
+        seqs = list(read(diamond_res, format='sam'))
+        columns = ['qseqid', 'sseqid', 'pident', 'length', 'mismatch',
+                   'gapopen', 'qstart', 'qend', 'sstart', 'send',
+                   'evalue', 'bitscore', 'sequence']
+        df = pd.DataFrame(columns=columns)
+        for i, seq in enumerate(seqs):
+            s = str(seq)
+
+            qseqid    = seq.metadata['QNAME']
+            sseqid    = seq.metadata['RNAME']
+            pident    = seq.metadata['ZI']
+            length    = seq.metadata['ZL']
+            mismatch  = seq.metadata['CIGAR']
+            gapopen   = ''
+            qstart    = seq.metadata['POS']
+            qend      = ''
+            sstart    = seq.metadata['ZS']
+            send      = ''
+            evalue    = seq.metadata['ZE']
+            bitscore  = seq.metadata['ZR']
+            row = pd.Series([qseqid, sseqid, pident,
+                             length, mismatch, gapopen,
+                             qstart, qend, sstart, send,
+                             evalue, bitscore, s],
+                            index=columns)
+            df.loc[i] = row
+
+        if column is not None:
+            idx = df.groupby('qseqid')[column].idxmax()
+            df_max = df.loc[idx]
+            df_max.index = idx.index
+            df = df_max[['sseqid', 'evalue', 'bitscore', 'sequence']]
+        else:
+            df = df[['sseqid', 'evalue', 'bitscore', 'sequence']]
+        return df
+
+
+def DiamondCache():
+    '''
+    Attributes
+    ----------
+    cache : list of skbio.Sequence
+        List of sequences to build cache from
+
+    '''
+    def __init__(self, seqs=None, maxSize=200000, out_dir=""):
+        fname = _generate_random_file() # substitute for tempfile
+        self.fasta = join(out_dir, '%s.fasta' % fname)
+        self.db = join(out_dir, '%s.diamond' % fname)
+        self.maxSize = maxSize
+        self.seqs = seqs
+
+    def _generate_random_file(self, N=10):
+        return ''.join(random.SystemRandom().choice(string.ascii_uppercase +\
+                                                    string.digits) for _ in range(N))
+
+    def dbname(self):
+        return self.db.name
+
+    def is_empty(self):
+        return len(self.seqs) == 0
+
+    def build(self, params=None):
+        for seq in self.seqs:
+            seq.write(self.fasta, format='fasta')
+        make_db(self.fasta, self.db, params)
+
+    def update(self, seqs):
+        """
+        Parameters
+        ----------
+        seqs : list of skbio.Sequence
+           List of sequences to update the cache.
+        """
+        self.seqs = seqs + self.seqs
+        self.seqs = self.seqs[:maxSize]
+
+    def close(self):
+        os.remove(self.fasta)
+        os.remove(self.db)
+
+
+
+
