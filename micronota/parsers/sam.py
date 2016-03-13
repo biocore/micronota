@@ -209,9 +209,11 @@ def _parse_records(fh, constructor=None, **kwargs):
         # parse the actual sequences
         else:
             tabs = line.split('\t')
+
             # extract sequence
-            tabs = tabs[:9] + tabs[10:]
             seq = tabs[9]
+            tabs = tabs[:9] + tabs[10:]
+
             req = list(map(parse_required, tabs[:10]))
             opt = list(map(parse_optional, tabs[10:]))
             req = dict(zip(_ALIGNMENT_HEADERS, req))

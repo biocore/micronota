@@ -14,6 +14,7 @@ import pandas as pd
 from burrito.parameters import FlagParameter, ValuedParameter
 from burrito.util import (
     ApplicationError, CommandLineApplication)
+from micronota.parsers import sam
 from skbio import read
 
 from tempfile import NamedTemporaryFile, mkdtemp
@@ -211,7 +212,7 @@ class FeatureAnnt(MetadataPred):
         if not self.cache.is_empty():
             # Build cache
             self.cache.build()
-            dbs = [self.cache.db.name] + self.dat:
+            dbs = [self.cache.db.name] + self.dat
 
         found = []
         res = pd.DataFrame()
@@ -334,8 +335,42 @@ class FeatureAnnt(MetadataPred):
         return df_max[['sseqid', 'evalue', 'bitscore']]
 
     @staticmethod
-    def parse_sam(diamond_res, column='bitscore', collapse=False):
-        pass
+    def parse_sam(diamond_res, column=None, collapse=False):
+        seqs = list(read(diamond_res, format='sam'))
+        columns = ['qseqid', 'sseqid', 'pident', 'length', 'mismatch',
+                   'gapopen', 'qstart', 'qend', 'sstart', 'send',
+                   'evalue', 'bitscore', 'sequence']
+        df = pd.DataFrame(columns=columns)
+        for i, seq in enumerate(seqs):
+            s = str(seq)
+
+            qseqid    = seq.metadata['QNAME']
+            sseqid    = seq.metadata['RNAME']
+            pident    = seq.metadata['ZI']
+            length    = seq.metadata['ZL']
+            mismatch  = seq.metadata['CIGAR']
+            gapopen   = ''
+            qstart    = seq.metadata['POS']
+            qend      = ''
+            sstart    = seq.metadata['ZS']
+            send      = ''
+            evalue    = seq.metadata['ZE']
+            bitscore  = seq.metadata['ZR']
+            row = pd.Series([qseqid, sseqid, pident,
+                             length, mismatch, gapopen,
+                             qstart, qend, sstart, send,
+                             evalue, bitscore, s],
+                            index=columns)
+            df.loc[i] = row
+
+        if column is not None:
+            idx = df.groupby('qseqid')[column].idxmax()
+            df_max = df.loc[idx]
+            df_max.index = idx.index
+            df = df_max[['sseqid', 'evalue', 'bitscore', 'sequence']]
+        else:
+            df = df[['sseqid', 'evalue', 'bitscore', 'sequence']]
+        return df
 
 
 def DiamondCache():
@@ -361,7 +396,7 @@ def DiamondCache():
         return self.db.name
 
     def is_empty(self):
-        return len(self.seqs) == 0:
+        return len(self.seqs) == 0
 
     def build(self, params=None):
         for seq in self.seqs:
