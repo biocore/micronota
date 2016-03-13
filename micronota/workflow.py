@@ -98,7 +98,7 @@ def identify_all_features(seq, out_dir, config):
                 params = config.param[tool]
             else:
                 params = None
-            im.update(next(obj.identify_features(f.name, params=params)))
+            im.update(next(obj(f.name, params=params)))
     return im
 
 
@@ -157,8 +157,7 @@ def annotate_all_cds(im, out_dir, kingdom, config, cpus=1):
             params = config.param[tool]
         else:
             params = None
-        res_ = obj.annotate_features(
-            pro_fp, cpus=cpus, params=params)
+        res_ = obj(pro_fp, cpus=cpus, params=params)
         res = res.append(res_)
     return _update(im, id_key, res)
 

@@ -58,7 +58,7 @@ class IntervalMetadataPred(metaclass=ABCMeta):
             self.tmp_dir = tmp_dir
         makedirs(self.tmp_dir, exist_ok=True)
 
-    def identify_features(self, input, **kwargs) -> dict:
+    def __call__(self, input, **kwargs) -> dict:
         '''Identify features for the input.
 
         Parameters
@@ -127,7 +127,7 @@ class MetadataPred(metaclass=ABCMeta):
             self.tmp_dir = tmp_dir
         makedirs(self.tmp_dir, exist_ok=True)
 
-    def annotate_features(self, input, **kwargs):
+    def __call__(self, input, **kwargs):
         '''
         Parameters
         ----------
