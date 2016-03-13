@@ -46,7 +46,6 @@ class Configuration(object):
         different OS.
     '''
     def __init__(self, misc_fp=None, param_fp=None, log_fp=None):
-        '''        '''
         self._pkg = 'micronota'
         self.features = iter({})
         self.cds = iter({})
@@ -85,8 +84,6 @@ class Configuration(object):
             self._param_fps.append(param_fp)
         self._set_param_config(self._param_fps)
 
-        self._get_db()
-
         # check all specified tools are wrapped
         self._check_avail()
 
@@ -123,12 +120,18 @@ class Configuration(object):
             if found is None:
                 raise NotImplementedError('%s not implemented.' % i)
 
-    def _get_db(self):
-        '''Return the dict of databases.'''
-        self.db = {}
-        for dirpath, dirnames, filenames in walk(self.db_dir):
+    @property
+    def db_dir(self):
+        return self._db_dir
+
+    @db_dir.setter
+    def db_dir(self, db_dir):
+        db = {}
+        self._db_dir = db_dir
+        for dirpath, dirnames, filenames in walk(db_dir):
             if not dirnames:
-                self.db[basename(dirpath)] = dirpath
+                db[basename(dirpath)] = dirpath
+        self.db = db
 
     def __repr__(self):
         from sys import platform, version
