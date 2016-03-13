@@ -8,12 +8,11 @@
 
 from os import makedirs
 from abc import ABCMeta, abstractmethod
-from tempfile import mkdtemp
+from tempfile import mkdtemp, NamedTemporaryFile
 from inspect import signature
 
 from pandas import DataFrame
 from skbio import Sequence
-from skbio.metadata import IntervalMetadata
 
 
 class SubclassImplementError(Exception):
@@ -44,7 +43,7 @@ class IntervalMetadataPred(metaclass=ABCMeta):
             sig = signature(f)
             # enforce it to return dict
             if not issubclass(sig.return_annotation, dict):
-                raise SubclassImplementError(__class__)
+                raise SubclassImplementError(C)
         return True
 
     def __init__(self, dat, out_dir, tmp_dir=None):

@@ -11,7 +11,6 @@ from shutil import rmtree
 from os import getcwd, listdir
 from os.path import join
 from unittest import TestCase, main
-from functools import partial
 from filecmp import cmp
 
 from skbio.util import get_data_path
