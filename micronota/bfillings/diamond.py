@@ -209,7 +209,7 @@ class FeatureAnnt(MetadataPred):
             out_prefix = splitext(basename(db))[0]
             daa_fp = join(self.out_dir, '%s.daa' % out_prefix)
             out_fp = join(self.out_dir, '%s.diamond' % out_prefix)
-            self.run_blast(fp, daa_fp, db,
+            self.run_blast(fp, daa_fp, db, aligner=aligner,
                            evalue=evalue, cpus=cpus, params=params)
             self.run_view(daa_fp, out_fp, params={'--outfmt': outfmt})
             res = res.append(self.parse_tabular(out_fp))
@@ -268,6 +268,7 @@ class FeatureAnnt(MetadataPred):
         blast.Parameters['--evalue'].on(evalue)
         blast.Parameters['--threads'].on(cpus)
         blast.Parameters['--tmpdir'].on(self.tmp_dir)
+
         logger.info('Running: %s' % blast.BaseCommand)
         blast_res = blast()
         blast_res.cleanUp()
