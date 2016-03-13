@@ -20,16 +20,16 @@ from micronota.config import Configuration
 class TestAnnotate(TestCase):
     def setUp(self):
         self.test_dir = abspath(
-            join('micronota', 'db', 'tests', 'data', 'uniref'))
+            join('micronota', 'db', 'tests', 'data', 'uniref', 'uniref100'))
         files = [
-            'uniref100_Swiss-Prot_Archaea.fna',
-            'uniref100_Swiss-Prot_Bacteria.fna',
-            'uniref100_Swiss-Prot_Eukaryota.fna',
-            'uniref100_Swiss-Prot_Viruses.fna',
-            'uniref100_TrEMBL_Archaea.fna',
-            'uniref100_TrEMBL_Bacteria.fna',
-            'uniref100_TrEMBL_Eukaryota.fna',
-            'uniref100_TrEMBL_Viruses.fna']
+            'Swiss-Prot_Archaea.fna',
+            'Swiss-Prot_Bacteria.fna',
+            'Swiss-Prot_Eukaryota.fna',
+            'Swiss-Prot_Viruses.fna',
+            'TrEMBL_Archaea.fna',
+            'TrEMBL_Bacteria.fna',
+            'TrEMBL_Eukaryota.fna',
+            'TrEMBL_Viruses.fna']
         files = [join(self.test_dir, f) for f in files]
         self.tmp = mkdtemp()
         self.test1 = join(self.tmp, 'test1.fna')

@@ -13,8 +13,8 @@ from unittest import main
 from shutil import rmtree
 
 from micronota.util import _DBTest, _get_named_data_path
-from micronota.db.uniref import (
-    prepare_db, prepare_metadata, sort_uniref)
+from micronota.db._uniref import create_metadata, sort_uniref
+from micronota.db.uniref100 import prepare_db
 
 
 class UnirefTests(_DBTest):
@@ -31,20 +31,20 @@ class UnirefTests(_DBTest):
 
         self.uniref_fp = _get_named_data_path('uniref100.fasta.gz')
         self.uniref_res = [
-            'uniref100_Swiss-Prot_Archaea',
-            'uniref100_Swiss-Prot_Bacteria',
-            'uniref100_Swiss-Prot_Viruses',
-            'uniref100_Swiss-Prot_Eukaryota',
-            'uniref100_Swiss-Prot_other',
-            'uniref100_TrEMBL_Archaea',
-            'uniref100_TrEMBL_Bacteria',
-            'uniref100_TrEMBL_Viruses',
-            'uniref100_TrEMBL_Eukaryota',
-            'uniref100_TrEMBL_other',
-            'uniref100__other']
+            'Swiss-Prot_Archaea',
+            'Swiss-Prot_Bacteria',
+            'Swiss-Prot_Viruses',
+            'Swiss-Prot_Eukaryota',
+            'Swiss-Prot_other',
+            'TrEMBL_Archaea',
+            'TrEMBL_Bacteria',
+            'TrEMBL_Viruses',
+            'TrEMBL_Eukaryota',
+            'TrEMBL_other',
+            '_other']
 
     def test_prepare_metadata(self):
-        n = prepare_metadata(self.uniprotkb[:2], self.obs_db_fp)
+        n = create_metadata(self.uniprotkb[:2], self.obs_db_fp)
         self.assertEqual(n, self.uniprotkb[2])
         self._test_eq_db(self.obs_db_fp, self.exp_db_fp)
 
@@ -60,11 +60,12 @@ class UnirefTests(_DBTest):
                     remove(obs)
 
     def test_sort_uniref(self):
-        sort_uniref(self.exp_db_fp, self.uniref_fp, self.tmp_dir)
+        sort_uniref(self.exp_db_fp, self.uniref_fp,
+                    join(self.tmp_dir, 'uniref100'), 100)
         self._test_eq()
 
     def test_prepare_db(self):
-        prepare_db(self.tmp_dir, self.d)
+        prepare_db(self.d, self.tmp_dir)
         self._test_eq()
         self._test_eq_db(self.obs_db_fp, self.exp_db_fp)
 
