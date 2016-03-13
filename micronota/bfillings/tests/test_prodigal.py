@@ -18,6 +18,7 @@ from skbio.util import get_data_path
 from skbio.metadata import Feature
 from burrito.util import ApplicationError
 
+from micronota.util import _get_named_data_path
 from micronota.bfillings.prodigal import (
     Prodigal, FeaturePred)
 
@@ -26,10 +27,7 @@ class ProdigalTests(TestCase):
     def setUp(self):
         self.tmp_dir = mkdtemp()
 
-        self.get_prodigal_path = partial(
-            get_data_path, subfolder=join('data', 'prodigal'))
-
-        self.positive_fps = [self.get_prodigal_path(i) for i in [
+        self.positive_fps = [_get_named_data_path(i) for i in [
             # modified from NC_018498.gbk
             'NC_018498_partial_1.gbk',
             'NC_018498_partial_1.gbk',
@@ -52,7 +50,7 @@ class ProdigalTests(TestCase):
             'empty',
             'whitespace_only']]
 
-        self.parse_fp = self.get_prodigal_path('parse.faa')
+        self.parse_fp = _get_named_data_path('parse_test.faa')
         self.parse_exp = [
             {Feature(type_='CDS',
                      id='1_1',
@@ -109,7 +107,7 @@ class ProdigalTests(TestCase):
         for fp, params, outdir in zip(self.positive_fps,
                                       self.positive_params,
                                       self.positive_outdir):
-            exp_d = self.get_prodigal_path(outdir)
+            exp_d = _get_named_data_path(outdir)
             obs_d = join(self.tmp_dir, outdir)
             pred = FeaturePred(None, obs_d)
             res = pred.run(fp, params)

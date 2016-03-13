@@ -148,7 +148,7 @@ def prepare_db(out_d, downloaded, force=False,
 
     prepare_metadata([sprot_raw, trembl_raw], metadata_db)
 
-    sort_uniref(metadata_db, uniref100_raw, out_d, force)
+    sort_uniref(metadata_db, uniref100_raw, out_d, overwrite=force)
 
 
 def sort_uniref(db_fp, uniref_fp, out_d, resolution=100, overwrite=False):
@@ -182,8 +182,7 @@ def sort_uniref(db_fp, uniref_fp, out_d, resolution=100, overwrite=False):
     logger.info('Sorting UniRef sequences')
     fns = ['%s_%s' % (i, j) for i, j in product(_status, _kingdom)]
     fns.append('_other')
-    fps = [join(out_d, 'uniref%d_%s.fasta') % (resolution, f) for f in fns]
-
+    fps = [join(out_d, 'uniref%d_%s.fasta' % (resolution, f)) for f in fns]
     for f in fns:
         _overwrite(f, overwrite)
 

@@ -12,8 +12,7 @@ from tempfile import mkdtemp
 from unittest import main
 from shutil import rmtree
 
-from micronota.bfillings.util import _get_data_dir
-from micronota.util import _DBTest
+from micronota.util import _DBTest, _get_named_data_path
 from micronota.db.uniref import (
     prepare_db, prepare_metadata, sort_uniref)
 
@@ -24,13 +23,13 @@ class UnirefTests(_DBTest):
 
         self.db_fp = 'uniprotkb.db'
         self.obs_db_fp = join(self.tmp_dir, self.db_fp)
-        self.exp_db_fp = _get_data_dir()(self.db_fp)
-        self.uniprotkb = [_get_data_dir()('uniprot_sprot.xml.gz'),
-                          _get_data_dir()('uniprot_trembl.xml.gz'),
+        self.exp_db_fp = _get_named_data_path(self.db_fp)
+        self.uniprotkb = [_get_named_data_path('uniprot_sprot.xml.gz'),
+                          _get_named_data_path('uniprot_trembl.xml.gz'),
                           12]
         self.d = dirname(self.exp_db_fp)
 
-        self.uniref_fp = _get_data_dir()('uniref100.fasta.gz')
+        self.uniref_fp = _get_named_data_path('uniref100.fasta.gz')
         self.uniref_res = [
             'uniref100_Swiss-Prot_Archaea',
             'uniref100_Swiss-Prot_Bacteria',
@@ -54,7 +53,7 @@ class UnirefTests(_DBTest):
             for suffix in ['fasta', 'dmnd']:
                 fp = '.'.join([fp, suffix])
                 obs = join(self.tmp_dir, fp)
-                exp = _get_data_dir()(fp)
+                exp = _get_named_data_path(fp)
                 if exists(exp):
                     with open(obs) as o, open(exp) as e:
                         self.assertEqual(o.read(), e.read())
