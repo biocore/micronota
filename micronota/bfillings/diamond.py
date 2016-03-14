@@ -191,8 +191,8 @@ class FeatureAnnt(MetadataPred):
     '''
     def __init__(self, dat, out_dir, tmp_dir=None, cache=None):
         super().__init__(dat, out_dir, tmp_dir)
-        if cache is not None:
-            self.dat = cache + self.dat
+        self.cache = cache
+        self.dat = dat
 
     def _annotate_fp(self, fp, aligner='blastp', evalue=0.001, cpus=1,
                      outfmt='tab', params=None) -> pd.DataFrame:
@@ -300,6 +300,8 @@ class FeatureAnnt(MetadataPred):
         ----------
         diamond_res : str
             file path
+        column : str
+            The column used to pick the best hits.
 
         Returns
         -------
@@ -313,7 +315,12 @@ class FeatureAnnt(MetadataPred):
         # pick the rows that have highest bitscore for each qseqid
         # df_max = df.groupby('qseqid').apply(
         #     lambda r: r[r[column] == r[column].max()])
-        idx = df.groupby('qseqid')[column].idxmax()
-        df_max = df.loc[idx]
-        df_max.index = idx.index
-        return df_max[['sseqid', 'evalue', 'bitscore']]
+        if column is not None:
+            idx = df.groupby('qseqid')[column].idxmax()
+            df_max = df.loc[idx]
+            df_max.index = idx.index
+            df = df_max[['sseqid', 'evalue', 'bitscore']]
+        else:
+            df = df[['sseqid', 'evalue', 'bitscore']]
+
+        return df
