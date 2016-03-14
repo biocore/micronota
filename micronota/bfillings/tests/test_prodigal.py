@@ -112,7 +112,8 @@ class ProdigalTests(TestCase):
             res = pred.run(fp, params)
             self.assertEqual(res['ExitStatus'], 0)
             for f in listdir(exp_d):
-                self.assertTrue(cmp(join(obs_d, f), join(exp_d, f)))
+                self.assertTrue(
+                    cmp(join(obs_d, f), join(exp_d, f), shallow=False))
             res['StdOut'].close()
             res['StdErr'].close()
 
