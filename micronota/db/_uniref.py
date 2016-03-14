@@ -80,7 +80,7 @@ Reference
 # ----------------------------------------------------------------------------
 
 from os.path import join, basename
-from os import stat
+from os import stat, makedirs
 from sqlite3 import connect
 from xml.etree import ElementTree as ET
 from itertools import product
@@ -97,77 +97,90 @@ _status = ['Swiss-Prot', 'TrEMBL']
 _kingdom = ['Bacteria', 'Archaea', 'Viruses', 'Eukaryota', 'other']
 
 
-def prepare_db(out_d, downloaded, force=False,
-               sprot='ftp://ftp.uniprot.org/pub/databases/uniprot/current_release/knowledgebase/complete/uniprot_sprot.xml.gz',
-               trembl='ftp://ftp.uniprot.org/pub/databases/uniprot/current_release/knowledgebase/complete/uniprot_trembl.xml.gz',
-               uniref100='ftp://ftp.uniprot.org/pub/databases/uniprot/uniref/uniref100/uniref100.fasta.gz'):
+def _prepare(downloaded, out_d, uniref_url, resolution, force=False):
     '''Prepare reference database for UniRef.
 
     Parameters
     ----------
     out_d : str
         The output directory
-    force : boolean
-        Force overwrite the files
     downloaded : str
         File directory. If the files are already downloaded,
         just use the files in the directory and skip _download.
+    resolution : int
+        50, 90, 100
+    force : boolean
+        Force overwrite the files
 
     Notes
     -----
     This function creates the following files:
 
-    * ``uniref100_Swiss-Prot_Archaea.dmnd``
-    * ``uniref100_Swiss-Prot_Bacteria.dmnd``
-    * ``uniref100_Swiss-Prot_Viruses.dmnd``
-    * ``uniref100_Swiss-Prot_other.dmnd``
-    * ``uniref100_Swiss-Prot_Eukaryota.dmnd``
-    * ``uniref100_TrEMBL_Archaea.dmnd``
-    * ``uniref100_TrEMBL_Bacteria.dmnd``
-    * ``uniref100_TrEMBL_Viruses.dmnd``
-    * ``uniref100_TrEMBL_other.dmnd``
-    * ``uniref100_TrEMBL_Eukaryota.dmnd``
-    * ``uniref100__other.dmnd``
+    * ``Swiss-Prot_Archaea.dmnd``
+    * ``Swiss-Prot_Bacteria.dmnd``
+    * ``Swiss-Prot_Viruses.dmnd``
+    * ``Swiss-Prot_other.dmnd``
+    * ``Swiss-Prot_Eukaryota.dmnd``
+    * ``TrEMBL_Archaea.dmnd``
+    * ``TrEMBL_Bacteria.dmnd``
+    * ``TrEMBL_Viruses.dmnd``
+    * ``TrEMBL_other.dmnd``
+    * ``TrEMBL_Eukaryota.dmnd``
+    * ``_other.dmnd``
 
     * ``uniprotkb.db``
     '''
-    logger = getLogger(__name__)
-    logger.info('Preparing UniRef100 database')
-
+    if resolution not in {50, 90, 100}:
+        raise ValueError('UniRef resolution must be 50, 90, or 100.')
+    fasta_out = join(out_d, 'uniref%d' % resolution)
+    _overwrite(fasta_out, force)
     metadata_db = join(out_d, 'uniprotkb.db')
-
-    sprot_raw = join(downloaded, basename(sprot))
-    trembl_raw = join(downloaded, basename(trembl))
-    uniref100_raw = join(downloaded, basename(uniref100))
+    uniref_raw = join(downloaded, basename(uniref_url))
     try:
-        _download(sprot, sprot_raw, overwrite=force)
-        _download(trembl, trembl_raw, overwrite=force)
-        _download(uniref100, uniref100_raw, overwrite=force)
+        _download(uniref_url, uniref_raw, overwrite=force)
     except FileExistsError:
         pass
 
-    prepare_metadata([sprot_raw, trembl_raw], metadata_db)
+    _prepare_metadata(metadata_db, downloaded, force=force)
 
-    sort_uniref(metadata_db, uniref100_raw, out_d, force)
+    sort_uniref(metadata_db, uniref_raw, fasta_out, resolution, force)
 
 
-def sort_uniref(db_fp, uniref_fp, out_d, resolution=100, overwrite=False):
+def _prepare_metadata(
+        metadata_db,
+        downloaded,
+        sprot='ftp://ftp.uniprot.org/pub/databases/uniprot/current_release/knowledgebase/complete/uniprot_sprot.xml.gz',
+        trembl='ftp://ftp.uniprot.org/pub/databases/uniprot/current_release/knowledgebase/complete/uniprot_trembl.xml.gz',
+        force=False):
+    _overwrite(metadata_db, force)
+
+    sprot_raw = join(downloaded, basename(sprot))
+    trembl_raw = join(downloaded, basename(trembl))
+    try:
+        _download(sprot, sprot_raw, overwrite=force)
+        _download(trembl, trembl_raw, overwrite=force)
+    except FileExistsError:
+        pass
+    create_metadata([sprot_raw, trembl_raw], metadata_db)
+
+
+def sort_uniref(db_fp, uniref_fp, out_d, resolution, force=False):
     '''Sort UniRef sequences into different partitions.
 
     This will sort UniRef100 seq into following partitions based on both
     quality and taxon:
 
-    * ``uniref100_Swiss-Prot_Archaea.fasta``
-    * ``uniref100_Swiss-Prot_Bacteria.fasta``
-    * ``uniref100_Swiss-Prot_Viruses.fasta``
-    * ``uniref100_Swiss-Prot_other.fasta``
-    * ``uniref100_Swiss-Prot_Eukaryota.fasta``
-    * ``uniref100_TrEMBL_Archaea.fasta``
-    * ``uniref100_TrEMBL_Bacteria.fasta``
-    * ``uniref100_TrEMBL_Viruses.fasta``
-    * ``uniref100_TrEMBL_other.fasta``
-    * ``uniref100_TrEMBL_Eukaryota.fasta``
-    * ``uniref100__other.fasta``
+    * ``uniref100/Swiss-Prot_Archaea.fasta``
+    * ``uniref100/Swiss-Prot_Bacteria.fasta``
+    * ``uniref100/Swiss-Prot_Viruses.fasta``
+    * ``uniref100/Swiss-Prot_other.fasta``
+    * ``uniref100/Swiss-Prot_Eukaryota.fasta``
+    * ``uniref100/TrEMBL_Archaea.fasta``
+    * ``uniref100/TrEMBL_Bacteria.fasta``
+    * ``uniref100/TrEMBL_Viruses.fasta``
+    * ``uniref100/TrEMBL_other.fasta``
+    * ``uniref100/TrEMBL_Eukaryota.fasta``
+    * ``uniref100/_other.fasta``
 
     Parameters
     ----------
@@ -178,15 +191,13 @@ def sort_uniref(db_fp, uniref_fp, out_d, resolution=100, overwrite=False):
     out_d : str
         The output directory to place the resulting fasta files.
     '''
+    _overwrite(out_d, force)
+    makedirs(out_d)
     logger = getLogger(__name__)
     logger.info('Sorting UniRef sequences')
     fns = ['%s_%s' % (i, j) for i, j in product(_status, _kingdom)]
     fns.append('_other')
-    fps = [join(out_d, 'uniref%d_%s.fasta') % (resolution, f) for f in fns]
-
-    for f in fns:
-        _overwrite(f, overwrite)
-
+    fps = [join(out_d, 'uniref%d_%s.fasta' % (resolution, f)) for f in fns]
     files = {fn: open(fp, 'w') for fp, fn in zip(fps, fns)}
 
     with connect(db_fp) as conn:
@@ -211,7 +222,7 @@ def sort_uniref(db_fp, uniref_fp, out_d, resolution=100, overwrite=False):
             make_db(fp)
 
 
-def prepare_metadata(in_fps, db_fp, **kwargs):
+def create_metadata(in_fps, db_fp, force=False):
     '''
     Parameters
     ----------
@@ -244,9 +255,10 @@ def prepare_metadata(in_fps, db_fp, **kwargs):
     The table in the database file will be dropped and re-created if
     the function is re-run.
     '''
+    _overwrite(db_fp, force)
+
     logger = getLogger(__name__)
     logger.info('Preparing metadata db for UniRef')
-    _overwrite(db_fp, **kwargs)
     status_map = {k: i for i, k in enumerate(_status)}
     kingdom_map = {k: i for i, k in enumerate(_kingdom)}
     # this is the namespace for uniprot xml files.

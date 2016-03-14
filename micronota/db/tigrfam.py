@@ -220,7 +220,7 @@ def prepare_metadata(in_d, out_fp, overwrite=True):
     the function is re-run.
     '''
     logger = getLogger(__name__)
-    logger.info('Preparing metadata db for %s' % prefix)
+    logger.info('Preparing metadata db for TIGRFAM')
 
     n = 0
     _overwrite(out_fp, overwrite)

@@ -196,18 +196,15 @@ class FeatureAnnt(MetadataPred):
     '''
     def __init__(self, dat, out_dir, tmp_dir=None, cache=None):
         super().__init__(dat, out_dir, tmp_dir)
-        if cache is not None:
-            self.cache = cache
-        else:
-            self.cache = DiamondCache()
-        # if cache is not None:
+        self.cache = cache
         self.dat = dat
 
     def get_cache(self):
         return self.cache
 
     def _annotate_fp(self, fp, aligner='blastp', evalue=0.001, cpus=1,
-                     outfmt='tab', params=None):
+                     outfmt='tab', params=None) -> pd.DataFrame:
+        '''Annotate the sequences in the file.
 
         if not self.cache.is_empty():
             # Build cache
@@ -221,7 +218,8 @@ class FeatureAnnt(MetadataPred):
             out_prefix = splitext(basename(db))[0]
             daa_fp = join(self.out_dir, '%s.daa' % out_prefix)
             out_fp = join(self.out_dir, '%s.diamond' % out_prefix)
-            self.run_blast(fp, daa_fp, db, **kwargs)
+            self.run_blast(fp, daa_fp, db, aligner=aligner,
+                           evalue=evalue, cpus=cpus, params=params)
             self.run_view(daa_fp, out_fp, params={'--outfmt': outfmt})
             res = res.append(self.parse_tabular(out_fp))
 
@@ -285,6 +283,7 @@ class FeatureAnnt(MetadataPred):
         blast.Parameters['--evalue'].on(evalue)
         blast.Parameters['--threads'].on(cpus)
         blast.Parameters['--tmpdir'].on(self.tmp_dir)
+
         logger.info('Running: %s' % blast.BaseCommand)
         blast_res = blast()
         blast_res.cleanUp()
@@ -316,6 +315,8 @@ class FeatureAnnt(MetadataPred):
         ----------
         diamond_res : str
             file path
+        column : str
+            The column used to pick the best hits.
 
         Returns
         -------

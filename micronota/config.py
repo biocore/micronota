@@ -12,6 +12,7 @@ from configparser import ConfigParser
 from logging.config import fileConfig
 from importlib.util import find_spec
 from itertools import chain
+from collections import OrderedDict
 
 import click
 
@@ -45,7 +46,6 @@ class Configuration(object):
         different OS.
     '''
     def __init__(self, misc_fp=None, param_fp=None, log_fp=None):
-        '''        '''
         self._pkg = 'micronota'
         self.features = iter({})
         self.cds = iter({})
@@ -59,32 +59,30 @@ class Configuration(object):
         log_fn = 'log.cfg'
         param_fn = 'param.cfg'
 
-        default_fp = join(root_dir, dat_dir, misc_fn)
-        global_fp = join(self.app_dir, misc_fn)
+        fp = join(self.app_dir, misc_fn)
         if misc_fp is not None:
-            self._set_misc_config(misc_fp)
-        elif exists(global_fp):
-            self._set_misc_config(global_fp)
+            self._misc_fp = abspath(misc_fp)
+        elif exists(fp):
+            self._misc_fp = fp
         else:
-            self._set_misc_config(default_fp)
+            self._misc_fp = join(root_dir, dat_dir, misc_fn)
+        self._set_misc_config(self._misc_fp)
 
-        default_fp = join(root_dir, dat_dir, log_fn)
-        global_fp = join(self.app_dir, log_fn)
+        fp = join(self.app_dir, log_fn)
         if log_fp is not None:
-            self._set_log_config(log_fp)
-        elif exists(global_fp):
-            self._set_log_config(global_fp)
+            self._log_fp = abspath(log_fp)
+        elif exists(fp):
+            self._log_fp = fp
         else:
-            self._set_log_config(default_fp)
+            self._log_fp = join(root_dir, dat_dir, log_fn)
+        self._set_log_config(self._log_fp)
 
         default_fp = join(root_dir, dat_dir, param_fn)
         global_fp = join(self.app_dir, param_fn)
-        fps = [default_fp, global_fp]
+        self._param_fps = [default_fp, global_fp]
         if param_fp is not None:
-            fps.append(param_fp)
-        self._set_param_config(fps)
-
-        self._get_db()
+            self._param_fps.append(param_fp)
+        self._set_param_config(self._param_fps)
 
         # check all specified tools are wrapped
         self._check_avail()
@@ -122,24 +120,44 @@ class Configuration(object):
             if found is None:
                 raise NotImplementedError('%s not implemented.' % i)
 
-    def _get_db(self):
-        '''Return the dict of databases.'''
-        self.db = {}
-        for dirpath, dirnames, filenames in walk(self.db_dir):
+    @property
+    def db_dir(self):
+        return self._db_dir
+
+    @db_dir.setter
+    def db_dir(self, db_dir):
+        db = {}
+        self._db_dir = db_dir
+        for dirpath, dirnames, filenames in walk(db_dir):
             if not dirnames:
-                self.db[basename(dirpath)] = dirpath
+                db[basename(dirpath)] = dirpath
+        self.db = db
 
     def __repr__(self):
         from sys import platform, version
         lines = []
 
-        info = dict()
+        info = OrderedDict()
         info['system'] = {
             'OS': platform,
             'Python': version}
-        info['micronota'] = {
-            'db directory': self.db_dir,
-            'config directory': self.app_dir}
+
+        info['micronota'] = OrderedDict([
+            ('database directory', self.db_dir),
+            ('global config directory', self.app_dir),
+            ('general config file', self._misc_fp),
+            ('log config file', self._log_fp),
+            ('param config file', ','.join(self._param_fps))])
+
+        info['databases'] = self.db
+
+        info['features'] = dict()
+        for tool in self.features:
+            info['features'][tool] = self.features[tool]
+
+        info['cds'] = dict()
+        for tool in self.cds:
+            info['cds'][tool] = self.cds[tool]
 
         info['parameters'] = dict()
         for tool in self.param:
@@ -151,22 +169,17 @@ class Configuration(object):
                 l.append('%s:%s' % (opt, v))
             info['parameters'][tool] = ' '.join(l)
 
-        info['features'] = dict()
-        for tool in self.features:
-            info['features'][tool] = self.features[tool]
-
-        info['cds'] = dict()
-        for tool in self.cds:
-            info['cds'][tool] = self.cds[tool]
-        info['databases'] = self.db
-        for k1 in sorted(info):
-            lines.append(k1)
+        for k1 in info:
+            lines.append(k1.upper())
             lines.append('=' * len(k1))
             info_ = info[k1]
             max_len = max([len(i) for i in info_])
-            for k2 in sorted(info_):
-                line = "{key:<{width}}: {value}".format(
-                    width=max_len, key=k2, value=info_[k2])
+            for k2 in info_:
+                if info_[k2] is None:
+                    line = k2
+                else:
+                    line = "{key:<{width}}: {value}".format(
+                        width=max_len, key=k2, value=info_[k2])
                 lines.append(line)
             lines.append('\n')
         return '\n'.join(lines)

@@ -1,0 +1,16 @@
+FEATURES             Location/Qualifiers
+          CDS        <1..>441
+                     /db_xref=UniRef100_B2SAT5
+                     /id=1_1
+                     /note="start_type=Edge;rbs_motif=None;rbs_spacer=None;gc_cont=0.678"
+                     /translation=MNSFRKTCAGALALIFGATSIVPTVAAPMNMDRPAINQNVIQARAHYRPQNYNRGHRPGYWHGHRGYRHYRHGYRRHNDGWWYPLAAFGAGAIIGGAISQPRPVYRAPAGSPHVQWCYSRYKSYRASDNTFQPYNGPRKQCRSPYSR
+ORIGIN
+        1 atgaacagct tcaggaagac ctgcgccggc gccctggccc tgatcttcgg cgccaccagc
+       61 atcgtgccca ccgtggccgc ccccatgaac atggacaggc ccgccatcaa ccagaacgtg
+      121 atccaggcca gggcccacta caggccccag aactacaaca ggggccacag gcccggctac
+      181 tggcacggcc acaggggcta caggcactac aggcacggct acaggaggca caacgacggc
+      241 tggtggtacc ccctggccgc cttcggcgcc ggcgccatca tcggcggcgc catcagccag
+      301 cccaggcccg tgtacagggc ccccgccggc agcccccacg tgcagtggtg ctacagcagg
+      361 tacaagagct acagggccag cgacaacacc ttccagccct acaacggccc caggaagcag
+      421 tgcaggagcc cctacagcag g
+//
