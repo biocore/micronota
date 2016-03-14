@@ -6,16 +6,18 @@
 # The full license is in the file COPYING.txt, distributed with this software.
 # ----------------------------------------------------------------------------
 
-from os import makedirs
 from os.path import join, basename, splitext
-from tempfile import NamedTemporaryFile
+import logging
 import re
 
-from skbio import Sequence, read
+from skbio import read
 from skbio.metadata import Feature
 from skbio.io.format.genbank import _parse_features
 from burrito.parameters import FlagParameter, ValuedParameter
 from burrito.util import CommandLineApplication, ResultPath
+
+from ._base import IntervalMetadataPred
+from ..parsers.embl import _parse_records
 
 
 class Prodigal(CommandLineApplication):
@@ -89,199 +91,166 @@ class Prodigal(CommandLineApplication):
         return result
 
 
-def identify_features(in_fp, out_dir, prefix='prodigal', params=None):
-    '''Predict genes for the input file.
+class FeaturePred(IntervalMetadataPred):
+    def _identify_fp(self, fp, params=None) -> dict:
+        '''Predict genes for the input sequence with Prodigal.'''
+        res = self.run(fp, params)
+        return self.parse_result(res)
 
-    Notes
-    -----
-    It will create 3 output files:
-      1. the annotation file in format of GFF3 or
-         GenBank feature table with .gbk suffix.
-      2. the nucleotide sequences for each predicted gene
-         with file suffix of .fna.
-      3. the protein sequence translated from each gene
-         with file suffix of .faa.
+    def run(self, fp, params=None):
+        '''Predict genes for the input file.
 
-    Parameters
-    ----------
-    in_fp : str
-        input file path
-    out_dir : str
-        output directory
-    prefix : str
-        prefix of output file name (without suffix)
-    params : dict
-        Other command line parameters for Prodigal. key is the option
-        (e.g. "-p") and value is the value for the option (e.g. "single").
-        If the option is a flag, set the value to None.
+        Notes
+        -----
+        It will create 3 output files:
+          1. the annotation file in format of GFF3 or
+             GenBank feature table with .gbk suffix.
+          2. the nucleotide sequences for each predicted gene
+             with file suffix of .fna.
+          3. the protein sequence translated from each gene
+             with file suffix of .faa.
 
-    Returns
-    -------
-    burrito.util.CommandLineAppResult
-        It contains opened file handlers of stdout, stderr, and the 3
-        output files, which can be accessed in a dict style with the
-        keys of "StdOut", "StdErr", "-o", "-d", "-a". The exit status
-        of the run can be similarly fetched with the key of "ExitStatus".
-    '''
-    # create dir if not exist
-    makedirs(out_dir, exist_ok=True)
+        Parameters
+        ----------
+        params : dict
+            Other command line parameters for Prodigal. key is the option
+            (e.g. "-p") and value is the value for the option (e.g. "single").
+            If the option is a flag, set the value to None.
 
-    if prefix is None:
-        prefix = splitext(basename(in_fp))[0]
-    if params is None:
-        params = {}
+        Returns
+        -------
+        ``burrito.util.CommandLineAppResult``
+            It contains opened file handlers of stdout, stderr, and the 3
+            output files, which can be accessed in a dict style with the
+            keys of "StdOut", "StdErr", "-o", "-d", "-a". The exit status
+            of the run can be similarly fetched with the key of "ExitStatus".
+        '''
+        logger = logging.getLogger(__name__)
 
-    # default is genbank
-    f_param = params.get('-f', 'gbk')
+        if params is None:
+            params = {}
 
-    out_suffices = {
-        '-a': 'faa',
-        # Write nucleotide sequences of genes to the selected file.
-        '-d': 'fna',
-        '-o': f_param}
-    for i in out_suffices:
-        out_fp = join(out_dir, '.'.join([prefix, out_suffices[i]]))
-        params[i] = out_fp
+        # default output is genbank
+        f_param = params.get('-f', 'gbk')
 
-    params['-i'] = in_fp
-    if '-p' not in params:
-        params['-p'] = 'meta'
-    app = Prodigal(params=params)
-    return app()
+        out_suffices = {
+            '-a': 'faa',
+            # output file of nucleotide sequences of genes
+            '-d': 'fna',
+            '-o': f_param}
+        out_prefix = splitext(basename(fp))[0]
+        for i in out_suffices:
+            out_fp = join(self.out_dir,
+                          '.'.join([out_prefix, out_suffices[i]]))
+            params[i] = out_fp
 
+        params['-i'] = fp
+        app = Prodigal(params=params)
+        logger.info('Running: %s' % app.BaseCommand)
+        return app()
 
-def predict_cds(seq, out_dir, prefix=None, params=None):
-    '''Predict genes for the input sequence with ``Prodigal``.
+    def parse_result(self, res, which='-a'):
+        '''Parse gene prediction result from ``Prodigal``.
 
-    Parameters
-    ----------
-    seq : str or ``skbio.Sequence`` or its child classes.
-        input fasta
-    out_dir : str
-        output directory
+        It is parsed into a dict consumable by
+        ``skbio.metadata.IntervalMetadata``.
 
-    Returns
-    -------
-    ``skbio.Sequence`` or its child classes.
-    '''
-    if isinstance(seq, str):
-        seq = Sequence(seq, metadata={'id': id(seq)})
-    if not isinstance(seq, Sequence):
-        raise ValueError('Input seq is not a right object')
-    with NamedTemporaryFile(mode='w+') as f:
-        seq.write(f)
-        interval_metadata = {}
-        if prefix is None:
-            prefix = seq.metadata['id']
-        res = identify_features(f.name, out_dir, prefix, params)
-        if res['Exitstatus'] != 0:
-            raise RuntimeError(
-                'The Prodigal prediction is finished with an error:\n%s' %
-                res['StdErr'])
-        interval_metadata = next(parse_output(res))
-        seq.interval_metadata = interval_metadata
-        return seq
+        Parameters
+        ----------
+        res : burrito.util.CommandLineAppResult
+        which : which output to parse
+        Returns
+        -------
+        ``skbio.metadata.IntervalMetadata``
+        '''
+        # make sure to move to the beginning of the file.
+        if which == '-a':
+            return self._parse_faa(res[which])
+        elif which == '-o':
+            return _parse_records(res[which], self._parse_single_record)
 
+    @staticmethod
+    def _parse_single_record(chunks):
+        '''Parse single record of Prodigal GenBank output.
 
-def parse_output(res):
-    '''Parse gene prediction result from ``Prodigal``.
+        Parameters
+        ----------
+        chunks : list of str
+            a list of lines of the record to parse.
 
-    It is parsed into a dict consumable by``skbio.meta.IntervalMetadata``.
+        Yields
+        ------
+        dict passable to ``skbio.metadata.IntervalMetadata``
+        '''
+        # get the head line
+        head = chunks[0]
+        _, description = head.split(None, 1)
+        pattern = re.compile(r'''((?:[^;"']|"[^"]*"|'[^']*')+)''')
+        desc = {}
+        for i in pattern.findall(description):
+            k, v = i.split('=', 1)
+            desc[k] = v
+        return _parse_features(chunks[1:], int(desc['seqlen']))
 
-    Parameters
-    ----------
-    res : burrito.util.CommandLineAppResult
+    @staticmethod
+    def _parse_faa(faa):
+        '''Parse the faa output of Prodigal.
 
-    Returns
-    -------
-    ``skbio.metadata.IntervalMetadata``
-    '''
-    # make sure to move to the beginning of the file.
-    # return _parse_records(res['-o'], _parse_single_record)
-    return _parse_faa(res['-a'])
+        Notice that Prodigal do not predict genes with introns.
 
+        Yields
+        ------
+        dict passable to ``skbio.metadata.IntervalMetadata``.
+        '''
+        pattern = (r'# +([0-9]+)'    # start
+                   ' +# +([0-9]+)'   # end
+                   ' +# +(-?1)'      # strand
+                   ' +# +ID=([0-9]+_[0-9]+);'
+                   'partial=([01]{2});'
+                   '(.*)')
+        im = dict()
+        i = 1
+        for seq in read(faa, format='fasta'):
+            desc = seq.metadata['description']
+            matches = re.match(pattern, desc)
+            start, end, strand, id, partial, misc = matches.groups()
+            # ordinal number of the parent seq
+            ordinal = int(id.split('_', 1)[0])
+            if ordinal > i:
+                yield im
+                # reset
+                i += 1
+                im = dict()
+            interval = []
+            feature = dict()
+            feature['translation'] = str(seq)
+            feature['type_'] = 'CDS'
 
-def _parse_single_record(chunks):
-    '''Parse single record of Prodigal GenBank output.
+            # don't forget to convert 0-based
+            interval = [(int(start)-1, int(end))]
+            feature['note'] = '"%s"' % misc
+            feature['id'] = id
+            if partial[0] == '0':
+                feature['left_partial_'] = False
+            else:
+                feature['left_partial_'] = True
+                start = '<%s' % start
+            if partial[1] == '0':
+                feature['right_partial_'] = False
+            else:
+                feature['right_partial_'] = True
+                end = '>%s' % end
+            location = '{s}..{e}'.format(s=start, e=end)
+            if strand == '-1':
+                feature['rc_'] = True
+                location = 'complement(%s)' % location
+            elif strand == '1':
+                feature['rc_'] = False
+            else:
+                raise ValueError('Inappropriate value for strand: %s' % strand)
+            feature['location'] = location
+            im[Feature(**feature)] = interval
 
-    Parameters
-    ----------
-    chunks : list of str
-        a list of lines of the record to parse.
-
-    Returns
-    -------
-    ``skbio.metadata.IntervalMetadata``
-    '''
-    # get the head line
-    head = chunks[0]
-    _, description = head.split(None, 1)
-    pattern = re.compile(r'''((?:[^;"']|"[^"]*"|'[^']*')+)''')
-    desc = {}
-    for i in pattern.findall(description):
-        k, v = i.split('=', 1)
-        desc[k] = v
-    return _parse_features(chunks[1:], int(desc['seqlen']))
-
-
-def _parse_faa(faa):
-    '''Parse the faa output of Prodigal.
-
-    Notice that Prodigal do not predict genes with introns.
-
-    Returns
-    -------
-    The dict passable to ``skbio.metadata.IntervalMetadata``.
-    '''
-    pattern = (r'# +([0-9]+)'    # start
-               ' +# +([0-9]+)'   # end
-               ' +# +(-?1)'      # strand
-               ' +# +ID=([0-9]+_[0-9]+);'
-               'partial=([01]{2});'
-               '(.*)')
-    im = dict()
-    i = 1
-    for seq in read(faa, format='fasta'):
-        desc = seq.metadata['description']
-        matches = re.match(pattern, desc)
-        start, end, strand, id, partial, misc = matches.groups()
-        # ordinal number of the parent seq
-        ordinal = int(id.split('_', 1)[0])
-        if ordinal > i:
+        if im:
+            # don't forget to return the last one if it is not empty.
             yield im
-            # reset
-            i += 1
-            im = dict()
-        interval = []
-        feature = dict()
-        feature['translation'] = str(seq)
-        feature['type_'] = 'CDS'
-
-        # don't forget to convert 0-based
-        interval = [(int(start)-1, int(end))]
-        feature['note'] = '"%s"' % misc
-        feature['id'] = id
-        if partial[0] == '0':
-            feature['left_partial_'] = False
-        else:
-            feature['left_partial_'] = True
-            start = '<%s' % start
-        if partial[1] == '0':
-            feature['right_partial_'] = False
-        else:
-            feature['right_partial_'] = True
-            end = '>%s' % end
-        location = '{s}..{e}'.format(s=start, e=end)
-        if strand == '-1':
-            feature['rc_'] = True
-            location = 'complement(%s)' % location
-        elif strand == '1':
-            feature['rc_'] = False
-        else:
-            raise ValueError('Inappropriate value for strand: %s' % strand)
-        feature['location'] = location
-        im[Feature(**feature)] = interval
-
-    if im:
-        # don't forget to return the last one if it is not empty.
-        yield im

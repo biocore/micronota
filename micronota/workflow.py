@@ -7,17 +7,21 @@
 # ----------------------------------------------------------------------------
 
 from os.path import splitext, basename, join, exists
-from os import remove, makedirs
+from os import makedirs, stat
 from importlib import import_module
 from tempfile import NamedTemporaryFile
+from logging import getLogger
 
 from skbio.metadata import IntervalMetadata
 from skbio import read, Sequence
+import pandas as pd
 
 from . import bfillings
+from .util import _overwrite
 
 
-def annotate(in_fp, in_fmt, out_dir, out_fmt, kingdom, cpus, config):
+def annotate(in_fp, in_fmt, out_dir, out_fmt,
+             cpus, kingdom, force, config):
     '''Annotate the sequences in the input file.
 
     Parameters
@@ -34,36 +38,32 @@ def annotate(in_fp, in_fmt, out_dir, out_fmt, kingdom, cpus, config):
         Kingdom index corresponding to database (i.e. virus, bacteria ...)
     cpus : int
         Number of cpus to use.
-    config : ConfigParser
+    force : boolean
+        Force to overwrite.
+    config : ``micronota.config.Configuration``
         Container for configuration options.
     '''
-    fn = splitext(basename(in_fp))[0]
-    # store annotated seq file.
-    makedirs(out_dir, exist_ok=True)
-    db_dir = config['GENERAL']['db_path']
-    out_fp = join(out_dir, '%s.gbk' % fn)
-    out = open(out_fp, 'w')
-    for seq in read(in_fp, format=in_fmt):
-        # dir for useful intermediate files for the current input seq
-        seq_tmp_dir = join(out_dir, seq.metadata['id'])
-        for sec in config:
-            if sec == 'GENERAL':
-                continue
-            if sec == 'FEATURE':
-                im = identify_all_features(seq, seq_tmp_dir, config[sec])
-                seq.interval_metadata = IntervalMetadata(im)
-            if sec == 'CDS':
-                im = annotate_all_cds(seq, out_dir, db_dir, kingdom, config[sec])
-
-        seq.interval_metadata.concat(im, inplace=True)
-        seq.write(out, format=out_fmt)
-    out.close()
+    _overwrite(out_dir, overwrite=force)
+    makedirs(out_dir, exist_ok=force)
+    prefix = splitext(basename(in_fp))[0]
+    fn = '{p}.{f}'.format(p=prefix, f=out_fmt)
+    out_fp = join(out_dir, fn)
+    with open(out_fp, 'w') as out:
+        for seq in read(in_fp, format=in_fmt):
+            # dir for useful intermediate files for the current input seq
+            # replace non alnum char with "_"
+            seq_fn = ''.join(x if x.isalnum() else '_'
+                             for x in seq.metadata['id'])
+            seq_dir = join(out_dir, seq_fn)
+            # identify all features specified
+            im = identify_all_features(seq, seq_dir, config)
+            im = annotate_all_cds(im, seq_dir, kingdom, config)
+            seq.interval_metadata.concat(IntervalMetadata(im), inplace=True)
+            seq.write(out, format=out_fmt)
 
 
-def identify_all_features(seq, out_dir, tasks,
-                          id_func='identify_features',
-                          parse_func='parse_output'):
-    '''Identify all the features for the sequence in the input file.
+def identify_all_features(seq, out_dir, config):
+    '''Identify all the features for the input sequence.
 
     It runs through all the tasks specified in sequential order.
 
@@ -73,43 +73,36 @@ def identify_all_features(seq, out_dir, tasks,
         Input sequence object.
     out_dir : str
         Output directory.
-    tasks : OrderDict-like
-        Ordered dictionary of tools to run and their parameters.
-    parse_func : str
-        Parser function found in bfillings.
+    config : ``micronota.config.Configuration``
+        Container for configuration options.
 
     Returns
     -------
     dict :
         Dictionary of skbio.metadata.Feature objects.
     '''
+    logger = getLogger(__name__)
+    logger.info('Running feature identification.')
     im = dict()
     with NamedTemporaryFile('w+') as f:
         seq.write(f.name, format='fasta')
-
-        for tool in tasks:
-            value = _get_task_value(tasks, tool)
-            if not value:
-                continue
-            try:
-                submodule = import_module('.%s' % tool, bfillings.__name__)
-            except ImportError:
-                raise ImportError('Annotation with %s seems not implemented.' % tool)
-            id_f = getattr(submodule, id_func)
-            parse_f = getattr(submodule, parse_func)
-            if value:
-                # value is just an boolean indicator
-                res = id_f(f.name, out_dir)
+        for tool in config.features:
+            db = config.features[tool]
+            if db is not None:
+                db = config.db[db]
+            seq_dir = join(out_dir, tool)
+            submodule = import_module('.%s' % tool, bfillings.__name__)
+            cls = getattr(submodule, 'FeaturePred')
+            obj = cls(db, seq_dir)
+            if tool in config.param:
+                params = config.param[tool]
             else:
-                # value is database name
-                res = id_f(f.name, out_dir, value)
-            im.update(next(parse_f(res)))
+                params = None
+            im.update(next(obj(f.name, params=params)))
     return im
 
 
-def annotate_all_cds(seq, out_dir, db_dir, kingdom, tasks,
-                     search_func='search_protein_homologs',
-                     parse_func='parse_output'):
+def annotate_all_cds(im, out_dir, kingdom, config, cpus=1):
     '''Annotate coding domain sequences (CDS).
 
     Parameters
@@ -118,89 +111,106 @@ def annotate_all_cds(seq, out_dir, db_dir, kingdom, tasks,
         Input sequence object.
     out_dir : str
         Output directory.
-    tasks : OrderDict-like
-        Ordered dictionary of tools to run and their parameters.
-    parse_func : str
-        Parser function found in bfillings.
-    kingdom : int
-        Kingdom index corresponding to database (i.e. virus, bacteria ...)
+    config : ``micronota.config.Configuration``
+        Container for configuration options.
+    kingdom : str
+        Kingdom (i.e. virus, bacteria ...) of the input sequence. It will
+        be used to prioritize databases to search.
     cpus : int
-        Number of cpus to use.
+        Number of CPUs to use.
 
     Returns
     -------
     im : skbio.metadata.IntervalMetadata
         Interval metadata object
     '''
-    uniref_dbs = ['uniref100_Swiss-Prot_Bacteria',
-                  'uniref100_Swiss-Prot_Archaea',
-                  'uniref100_Swiss-Prot_Viruses',
-                  'uniref100_Swiss-Prot_Eukaryota',
-                  'uniref100_Swiss-Prot_other',
-                  'uniref100_TrEMBL_Bacteria',
-                  'uniref100_TrEMBL_Archaea',
-                  'uniref100_TrEMBL_Viruses',
-                  'uniref100_TrEMBL_Eukaryota',
-                  'uniref100_TrEMBL_other',
-                  'uniref100__other']
+    logger = getLogger(__name__)
+    logger.info('Running CDS functional annotation.')
+    id_key = 'id'
+    res = pd.DataFrame()
+    for tool in config.cds:
+        d = join(out_dir, tool)
+        makedirs(d, exist_ok=True)
+        pro_fp = join(d, '%s.fa' % tool)
 
-    uniref_dbs = [join(db_dir, i) for i in uniref_dbs]
-    order = {'bacteria': range(11),
-             'archaea': [1, 0, 2, 3, 4, 6, 5, 7, 8, 9, 10],
-             'viruses': [2, 0, 1, 3, 4, 7, 5, 6, 8, 9, 10]}
-    im = seq.interval_metadata
-    id_old_cds = dict()
-    id_new_cds = dict()
-    for feature in im.query(type_='CDS'):
-        id_old_cds[feature['id']] = feature
-
-    for tool in tasks:
-        value = _get_task_value(tasks, tool)
-        if not value:
-            continue
+        # write the protein seq into a file
+        _write_cds(
+            pro_fp, im, id_key,
+            lambda x: x['type_'] == 'CDS' and x[id_key] not in res.index)
+        if stat(pro_fp).st_size == 0:
+            break
+        db = config.cds[tool]
+        if db in ['uniref100', 'uniref90', 'uniref50']:
+            db_dir = config.db[db]
+            db_fp = [join(db_dir, i) for i in _get_uniref_db(kingdom)]
+            # in case the db file is empty
+            db_fp = [i for i in db_fp if exists('%s.dmnd' % i)]
+        elif db == 'tigrfam':
+            pass
+        else:
+            raise ValueError('Database %s is not available.' % db)
 
         submodule = import_module('.%s' % tool, bfillings.__name__)
+        cls = getattr(submodule, 'FeatureAnnt')
+        obj = cls(dat=db_fp, out_dir=d)
+        if tool in config.param:
+            params = config.param[tool]
+        else:
+            params = None
+        res_ = obj(pro_fp, cpus=cpus, params=params)
+        res = res.append(res_)
+    return _update(im, id_key, res)
 
-        search_f = getattr(submodule, search_func)
-        parse_f = getattr(submodule, parse_func)
 
-        if value == 'uniref':
-            dbs = [uniref_dbs[i] for i in order[kingdom.lower()]]
-            for db in dbs:
-                if not id_old_cds:
-                    break
-                if not exists('%s.dmnd' % db):
-                    continue
-                tmp = NamedTemporaryFile('w+', delete=False)
-                tmp.close()
-
-                out = open(tmp.name, 'w')
-                for i in id_old_cds:
-                    pro = Sequence(id_old_cds[i]['translation'], {'id': i})
-                    pro.write(out, format='fasta')
-
-                res = search_f(tmp.name, db, out_dir)
-                hits = parse_f(res)
-                for idx, row in hits.iterrows():
-                    old_cds = id_old_cds.pop(idx)
-                    if 'db_xref' in old_cds:
-                        db_xref = ','.join(old_cds['db_xref'], row['sseqid'])
-                    else:
-                        db_xref = row['sseqid']
-                    new_cds = old_cds.update(db_xref=db_xref)
-                    im.update(old_cds, new_cds)
-
-                out.close()
-                remove(tmp.name)
-
-            for _id in id_new_cds:
-                im[id_new_cds[_id]] = im.pop(id_old_cds[_id])
+def _update(im, id_key, res):
+    '''
+    Parameters
+    ----------
+    im : dict passable to IntervalMetadata
+    '''
+    features = list(im)
+    for feature in features:
+        id = feature[id_key]
+        if id in res.index:
+            new_feature = feature.update(db_xref=res.loc[id, 'sseqid'])
+            im[new_feature] = im.pop(feature)
     return im
 
 
-def _get_task_value(tasks, tool):
-    try:
-        value = tasks.getboolean(tool)
-    except ValueError:
-        value = tasks[tool]
-    return value
+def _write_cds(fp, im, id_key, select=lambda x: x['type_'] == 'CDS'):
+    '''Return a fasta file of all the proteins of a sequence.
+
+    Parameters
+    ----------
+    fp : str
+        The output file path
+    im : iterable of Feature
+    id_key : str
+        key in ``Feature`` to get its value as seq ID
+    select : callable
+        what CDS to write down.
+    '''
+    with open(fp, 'w') as f:
+        for feature in im:
+            if select(feature):
+                pro = Sequence(
+                    feature['translation'], {'id': feature[id_key]})
+                pro.write(f, format='fasta')
+
+
+def _get_uniref_db(kingdom):
+    dbs = ['Swiss-Prot_Bacteria',
+           'Swiss-Prot_Archaea',
+           'Swiss-Prot_Viruses',
+           'Swiss-Prot_Eukaryota',
+           'Swiss-Prot_other',
+           'TrEMBL_Bacteria',
+           'TrEMBL_Archaea',
+           'TrEMBL_Viruses',
+           'TrEMBL_Eukaryota',
+           'TrEMBL_other',
+           '_other']
+    order = {'bacteria': range(11),
+             'archaea': [1, 0, 2, 3, 4, 6, 5, 7, 8, 9, 10],
+             'viruses': [2, 0, 1, 3, 4, 7, 5, 6, 8, 9, 10]}
+    return [dbs[i] for i in order[kingdom.lower()]]

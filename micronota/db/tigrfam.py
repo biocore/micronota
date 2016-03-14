@@ -128,6 +128,7 @@ import tarfile
 from os.path import join, basename
 from tempfile import mkdtemp
 from sqlite3 import connect
+from logging import getLogger
 
 from ..bfillings.hmmer import hmmpress_hmm
 
@@ -154,6 +155,8 @@ def prepare_db(out_d, downloaded, prefix='tigrfam_v15.0', force=False,
     metadata : str
         The file name of the metadata for the hmm models
     '''
+    logger = getLogger(__name__)
+    logger.info('Preparing %s database' % prefix)
 
     hmm_fp = join(out_d, '%s.hmm' % prefix)
     hmm_raw = join(downloaded, basename(hmm))
@@ -216,6 +219,9 @@ def prepare_metadata(in_d, out_fp, overwrite=True):
     The table in the database file will be dropped and re-created if
     the function is re-run.
     '''
+    logger = getLogger(__name__)
+    logger.info('Preparing metadata db for TIGRFAM')
+
     n = 0
     _overwrite(out_fp, overwrite)
     with connect(out_fp) as conn:
