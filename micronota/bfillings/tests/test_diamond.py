@@ -117,7 +117,6 @@ class TestDiamondCache(DiamondTests):
 
 class TestParseSam(TestCase):
     def setUp(self):
-        #fat = FeatureAnnt(dat=[self.db],out_dir=self.out_dir)
         tests = [('blastp', 'WP_009885814.faa'),
                  ('blastx', 'WP_009885814.fna')]
         self.blast = [
@@ -128,11 +127,11 @@ class TestParseSam(TestCase):
 
         self.exp = \
             pd.DataFrame({
-                'sseqid' : ['UniRef100_P47599', 'UniRef100_B2HPZ3',
-                            'UniRef100_A4T166'],
-                'evalue' : [2.1e-229, 2.9e-58, 3.3e-57],
-                'bitscore' : [2009, 533, 524],
-                'sequence' :[
+                'sseqid': ['UniRef100_P47599', 'UniRef100_B2HPZ3',
+                           'UniRef100_A4T166'],
+                'evalue': [2.1e-229, 2.9e-58, 3.3e-57],
+                'bitscore': [2009, 533, 524],
+                'sequence': [
                             'MQSHKILVVNAGSSSIKFQLFNDKKQVLAKGLCERIFIDGFFKLEFNQK'
                             'KIEEKVQFNDHNLAVKHFLNALKKNKIITELSEIGLIGHRVVQGANYFT'
                             'DAVLVDTHSLAKIKEFIKLAPLHNKPEADVIEIFLKEIKTAKNVAVFDT'
@@ -159,7 +158,6 @@ class TestParseSam(TestCase):
                             'VADYIAKYLNQLSGEIDSLVFTGGVGENASYCVQLIIEKVASLGFKTNS'
                             'NLFGNYQDSSLISTNESKYQIFRVRTNEELMI']
                 })
-
 
     def test_parse_sam(self):
         for test in self.blast:

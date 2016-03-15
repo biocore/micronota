@@ -7,7 +7,7 @@
 # ----------------------------------------------------------------------------
 
 from os import stat, remove
-from os.path import join, basename, splitext
+from os.path import join, basename, splitext, exists
 from logging import getLogger
 
 import pandas as pd
@@ -17,11 +17,10 @@ from burrito.util import (
 from micronota.parsers import sam
 from skbio import read
 
-from tempfile import NamedTemporaryFile, mkdtemp
-
 from .util import _get_parameter
 from ._base import MetadataPred
-import string, random
+import string
+import random
 
 _OPTIONS_FLAG = {
     i: _get_parameter(FlagParameter, i)
@@ -351,7 +350,7 @@ class FeatureAnnt(MetadataPred):
         pandas.DataFrame
             The best matched records for each query sequence.
         '''
-        seqs = list(read(diamond_res, format='sam'))
+        seqs = read(diamond_res, format='sam')
         columns = ['qseqid', 'sseqid', 'pident', 'length', 'mismatch',
                    'gapopen', 'qstart', 'qend', 'sstart', 'send',
                    'evalue', 'bitscore', 'sequence']
@@ -359,18 +358,18 @@ class FeatureAnnt(MetadataPred):
         for i, seq in enumerate(seqs):
             s = str(seq)
 
-            qseqid    = seq.metadata['QNAME']
-            sseqid    = seq.metadata['RNAME']
-            pident    = seq.metadata['ZI']
-            length    = seq.metadata['ZL']
-            mismatch  = seq.metadata['CIGAR']
-            gapopen   = ''
-            qstart    = seq.metadata['POS']
-            qend      = ''
-            sstart    = seq.metadata['ZS']
-            send      = ''
-            evalue    = seq.metadata['ZE']
-            bitscore  = seq.metadata['ZR']
+            qseqid = seq.metadata['QNAME']
+            sseqid = seq.metadata['RNAME']
+            pident = seq.metadata['ZI']
+            length = seq.metadata['ZL']
+            mismatch = seq.metadata['CIGAR']
+            gapopen = ''
+            qstart = seq.metadata['POS']
+            qend = ''
+            sstart = seq.metadata['ZS']
+            send = ''
+            evalue = seq.metadata['ZE']
+            bitscore = seq.metadata['ZR']
             row = pd.Series([qseqid, sseqid, pident,
                              length, mismatch, gapopen,
                              qstart, qend, sstart, send,
@@ -384,7 +383,7 @@ class FeatureAnnt(MetadataPred):
             df_max.index = idx.index
             df = df_max[['sseqid', 'evalue', 'bitscore', 'sequence']]
         else:
-            df = df[['sseqid', 'evalue', 'bitscore','sequence']]
+            df = df[['sseqid', 'evalue', 'bitscore', 'sequence']]
         return df
 
 
@@ -392,20 +391,33 @@ class DiamondCache():
     '''
     Attributes
     ----------
-    cache : list of skbio.Sequence
-        List of sequences to build cache from
-
+    out_dir : str
+        output directory file path
+    fname : str
+        fasta file to store cached sequences
+    db : str
+        diamond database to store cached sequences
+    maxSize : int
+        maxinum size of DiamondCache
+    seqs : list of skbio.Sequence
+        list of sequence objects
     '''
     def __init__(self, seqs=None, maxSize=200000, out_dir=""):
-        self.fname = self._generate_random_file() # substitute for tempfile
+        self.out_dir = out_dir
+        self.fname = self._generate_random_file()  # substitute for tempfile
         self.fasta = join(out_dir, '%s.fasta' % self.fname)
-        self.db = join(out_dir, '%s.diamond.dmnd' % self.fname)
+        self.db = join(out_dir, '%s.dmnd' % self.fname)
         self.maxSize = maxSize
         self.seqs = seqs
 
     def _generate_random_file(self, N=10):
-        return ''.join(random.SystemRandom().choice(string.ascii_uppercase +\
-                                                    string.digits) for _ in range(N))
+        s = ''.join(random.SystemRandom().choice(
+                string.ascii_uppercase + string.digits) for _ in range(N))
+        # look for unique filepath
+        while exists(join(self.out_dir, s)):
+            s = ''.join(random.SystemRandom().choice(
+                    string.ascii_uppercase + string.digits) for _ in range(N))
+        return s
 
     def dbname(self):
         return self.db.name
@@ -431,4 +443,3 @@ class DiamondCache():
     def close(self):
         remove(self.fasta)
         remove(self.db)
-
