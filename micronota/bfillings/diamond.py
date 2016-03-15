@@ -14,7 +14,6 @@ import pandas as pd
 from burrito.parameters import FlagParameter, ValuedParameter
 from burrito.util import (
     ApplicationError, CommandLineApplication)
-from micronota.parsers import sam
 from skbio import read
 
 from .util import _get_parameter

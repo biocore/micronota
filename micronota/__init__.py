@@ -7,7 +7,7 @@
 # ----------------------------------------------------------------------------
 
 # import the parsers so they are available
-from .parsers import embl  # noqa
+from .parsers import embl, sam  # noqa
 
 
 __credits__ = "https://github.com/biocore/micronota/graphs/contributors"
