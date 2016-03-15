@@ -105,6 +105,15 @@ class TestDiamondCache(DiamondTests):
         exp = pred.parse_tabular(exp_fp)
         self.assertEquals(exp['sseqid'].values, obs['sseqid'].values)
 
+    def test_cache_empty_db(self):
+        np.random.seed(0)
+        aligner, query, exp_fp = self.blast
+        pred = FeatureAnnt([], mkdtemp(dir=self.tmp_dir),
+                           cache=self.cache)
+        obs = pred(query, aligner=aligner)
+        exp = pred.parse_tabular(exp_fp)
+        self.assertEquals(exp['sseqid'].values, obs['sseqid'].values)
+
 
 class TestParseSam(TestCase):
     def setUp(self):
