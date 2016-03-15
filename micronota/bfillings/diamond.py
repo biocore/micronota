@@ -6,8 +6,8 @@
 # The full license is in the file COPYING.txt, distributed with this software.
 # ----------------------------------------------------------------------------
 
-from os import stat
-from os.path import join, basename, splitext
+from os import stat, remove
+from os.path import join, basename, splitext, exists
 from logging import getLogger
 
 import pandas as pd
@@ -18,7 +18,8 @@ from skbio import read
 
 from .util import _get_parameter
 from ._base import MetadataPred
-
+import string
+import random
 
 _OPTIONS_FLAG = {
     i: _get_parameter(FlagParameter, i)
@@ -188,6 +189,8 @@ class FeatureAnnt(MetadataPred):
     ----------
     dat : list of str
         list of file path to databases.
+    cache : list of skbio.Sequence
+        list of skbio.Sequences to search against.
     '''
     def __init__(self, dat, out_dir, tmp_dir=None, cache=None):
         super().__init__(dat, out_dir, tmp_dir)
@@ -195,17 +198,20 @@ class FeatureAnnt(MetadataPred):
         self.dat = dat
 
     def _annotate_fp(self, fp, aligner='blastp', evalue=0.001, cpus=1,
-                     outfmt='tab', params=None) -> pd.DataFrame:
-        '''Annotate the sequences in the file.
+                     outfmt='tab', params=None):
+        '''Annotate the sequences in the file.'''
 
-        Parameters
-        ----------
-        params : dict-like
-            Parameters for diamond blastp/blastx that pass to ``run_blast``.
-        '''
+        if self.has_cache():
+            # Build cache
+            self.cache.build()
+            dbs = [self.cache.db] + self.dat
+        else:
+            dbs = self.dat
+
         found = []
         res = pd.DataFrame()
-        for db in self.dat:
+        seqs = []
+        for db in dbs:
             out_prefix = splitext(basename(db))[0]
             daa_fp = join(self.out_dir, '%s.daa' % out_prefix)
             out_fp = join(self.out_dir, '%s.diamond' % out_prefix)
@@ -213,6 +219,7 @@ class FeatureAnnt(MetadataPred):
                            evalue=evalue, cpus=cpus, params=params)
             self.run_view(daa_fp, out_fp, params={'--outfmt': outfmt})
             res = res.append(self.parse_tabular(out_fp))
+
             found.extend(res.index)
             # save to a tmp file the seqs that do not hit current database
             new_fp = join(self.tmp_dir, '%s.fa' % out_prefix)
@@ -220,11 +227,17 @@ class FeatureAnnt(MetadataPred):
                 for seq in read(fp, format='fasta'):
                     if seq.metadata['id'] not in found:
                         seq.write(f, format='fasta')
+                        seqs.append(seq)
             # no seq left
             if stat(new_fp).st_size == 0:
                 break
             else:
                 fp = new_fp
+
+        # Update cache (inplace)
+        if self.has_cache():
+            self.cache.update(seqs)
+            self.cache.close()
         return res
 
     def run_blast(self, fp, daa_fp, db, aligner='blastp', evalue=0.001, cpus=1,
@@ -315,12 +328,117 @@ class FeatureAnnt(MetadataPred):
         # pick the rows that have highest bitscore for each qseqid
         # df_max = df.groupby('qseqid').apply(
         #     lambda r: r[r[column] == r[column].max()])
+        idx = df.groupby('qseqid')[column].idxmax()
+        df_max = df.loc[idx]
+        df_max.index = idx.index
+        return df_max[['sseqid', 'evalue', 'bitscore']]
+
+    @staticmethod
+    def parse_sam(diamond_res, column=None, collapse=False):
+        '''Parse the output of diamond blastp/blastx.
+
+        Parameters
+        ----------
+        diamond_res : str
+            file path
+        column : str
+            The column used to pick the best hits.
+
+        Returns
+        -------
+        pandas.DataFrame
+            The best matched records for each query sequence.
+        '''
+        seqs = read(diamond_res, format='sam')
+        columns = ['qseqid', 'sseqid', 'pident', 'length', 'mismatch',
+                   'gapopen', 'qstart', 'qend', 'sstart', 'send',
+                   'evalue', 'bitscore', 'sequence']
+        df = pd.DataFrame(columns=columns)
+        for i, seq in enumerate(seqs):
+            s = str(seq)
+
+            qseqid = seq.metadata['QNAME']
+            sseqid = seq.metadata['RNAME']
+            pident = seq.metadata['ZI']
+            length = seq.metadata['ZL']
+            mismatch = seq.metadata['CIGAR']
+            gapopen = ''
+            qstart = seq.metadata['POS']
+            qend = ''
+            sstart = seq.metadata['ZS']
+            send = ''
+            evalue = seq.metadata['ZE']
+            bitscore = seq.metadata['ZR']
+            row = pd.Series([qseqid, sseqid, pident,
+                             length, mismatch, gapopen,
+                             qstart, qend, sstart, send,
+                             evalue, bitscore, s],
+                            index=columns)
+            df.loc[i] = row
+
         if column is not None:
             idx = df.groupby('qseqid')[column].idxmax()
             df_max = df.loc[idx]
             df_max.index = idx.index
-            df = df_max[['sseqid', 'evalue', 'bitscore']]
+            df = df_max[['sseqid', 'evalue', 'bitscore', 'sequence']]
         else:
-            df = df[['sseqid', 'evalue', 'bitscore']]
-
+            df = df[['sseqid', 'evalue', 'bitscore', 'sequence']]
         return df
+
+
+class DiamondCache():
+    '''
+    Attributes
+    ----------
+    out_dir : str
+        output directory file path
+    fname : str
+        fasta file to store cached sequences
+    db : str
+        diamond database to store cached sequences
+    maxSize : int
+        maxinum size of DiamondCache
+    seqs : list of skbio.Sequence
+        list of sequence objects
+    '''
+    def __init__(self, seqs=None, maxSize=200000, out_dir=""):
+        self.out_dir = out_dir
+        self.fname = self._generate_random_file()  # substitute for tempfile
+        self.fasta = join(out_dir, '%s.fasta' % self.fname)
+        self.db = join(out_dir, '%s.dmnd' % self.fname)
+        self.maxSize = maxSize
+        self.seqs = seqs
+
+    def _generate_random_file(self, N=10):
+        s = ''.join(random.SystemRandom().choice(
+                string.ascii_uppercase + string.digits) for _ in range(N))
+        # look for unique filepath
+        while exists(join(self.out_dir, s)):
+            s = ''.join(random.SystemRandom().choice(
+                    string.ascii_uppercase + string.digits) for _ in range(N))
+        return s
+
+    def dbname(self):
+        return self.db.name
+
+    def is_empty(self):
+        return (self.seqs is None) or len(self.seqs) == 0
+
+    def build(self, params=None):
+        for seq in self.seqs:
+            seq.write(self.fasta, format='fasta')
+        make_db(self.fasta, self.db, params)
+
+    def update(self, seqs):
+        """
+        Parameters
+        ----------
+        seqs : list of skbio.Sequence
+           List of sequences to update the cache.
+        """
+        self.seqs = seqs + self.seqs
+        self.seqs = self.seqs[:self.maxSize]
+
+    def close(self):
+        remove(self.fasta)
+        remove(self.db)
