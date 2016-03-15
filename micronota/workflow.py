@@ -18,10 +18,11 @@ import pandas as pd
 
 from . import bfillings
 from .util import _overwrite
+from . bfillings.diamond import DiamondCache as dc
 
 
 def annotate(in_fp, in_fmt, out_dir, out_fmt,
-             cpus, kingdom, force, config):
+             cpus, kingdom, force, config, cache=False):
     '''Annotate the sequences in the input file.
 
     Parameters
@@ -48,7 +49,16 @@ def annotate(in_fp, in_fmt, out_dir, out_fmt,
     prefix = splitext(basename(in_fp))[0]
     fn = '{p}.{f}'.format(p=prefix, f=out_fmt)
     out_fp = join(out_dir, fn)
+
+    # declare DiamondCache
+    if cache:
+        cache = dc()
+    else:
+        cache = None
+
     with open(out_fp, 'w') as out:
+        # cache
+        # submit slurm jobs
         for seq in read(in_fp, format=in_fmt):
             # dir for useful intermediate files for the current input seq
             # replace non alnum char with "_"
@@ -57,7 +67,9 @@ def annotate(in_fp, in_fmt, out_dir, out_fmt,
             seq_dir = join(out_dir, seq_fn)
             # identify all features specified
             im = identify_all_features(seq, seq_dir, config)
-            im = annotate_all_cds(im, seq_dir, kingdom, config)
+            # pass in and retrieve DiamondCache
+            im, cache = annotate_all_cds(im, seq_dir, kingdom, config, cache=cache)
+
             seq.interval_metadata.concat(IntervalMetadata(im), inplace=True)
             seq.write(out, format=out_fmt)
 
@@ -102,7 +114,7 @@ def identify_all_features(seq, out_dir, config):
     return im
 
 
-def annotate_all_cds(im, out_dir, kingdom, config, cpus=1):
+def annotate_all_cds(im, out_dir, kingdom, config, cpus=1, cache=None):
     '''Annotate coding domain sequences (CDS).
 
     Parameters
@@ -152,14 +164,17 @@ def annotate_all_cds(im, out_dir, kingdom, config, cpus=1):
 
         submodule = import_module('.%s' % tool, bfillings.__name__)
         cls = getattr(submodule, 'FeatureAnnt')
-        obj = cls(dat=db_fp, out_dir=d)
+        if tool == 'diamond':
+            obj = cls(dat=db_fp, out_dir=d, cache=cache)
+        else:
+            obj = cls(dat=db_fp, out_dir=d)
         if tool in config.param:
             params = config.param[tool]
         else:
             params = None
         res_ = obj(pro_fp, cpus=cpus, params=params)
         res = res.append(res_)
-    return _update(im, id_key, res)
+    return _update(im, id_key, res), obj.cache
 
 
 def _update(im, id_key, res):

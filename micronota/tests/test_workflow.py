@@ -50,7 +50,7 @@ class TestAnnotate(TestCase):
         config = Configuration()
         config.db_dir = self.test_dir
         annotate(self.test1, 'fasta', self.obs_tmp, 'genbank',
-                 1, 'archaea', True, config)
+                 1, 'archaea', True, config, cache=False)
         self.assertTrue(cmp(
             get_data_path(self.test1_exp),
             join(self.obs_tmp, self.test1_exp),

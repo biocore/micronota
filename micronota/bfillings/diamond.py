@@ -196,20 +196,14 @@ class FeatureAnnt(MetadataPred):
     '''
     def __init__(self, dat, out_dir, tmp_dir=None, cache=None):
         super().__init__(dat, out_dir, tmp_dir)
-        if cache is None:
-            self.cache = DiamondCache(out_dir=out_dir)
-        else:
-            self.cache = cache
+        self.cache = cache
         self.dat = dat
-
-    def get_cache(self):
-        return self.cache
 
     def _annotate_fp(self, fp, aligner='blastp', evalue=0.001, cpus=1,
                      outfmt='tab', params=None):
         '''Annotate the sequences in the file.'''
 
-        if not self.cache.is_empty():
+        if self.has_cache():
             # Build cache
             self.cache.build()
             dbs = [self.cache.db] + self.dat
@@ -243,7 +237,7 @@ class FeatureAnnt(MetadataPred):
                 fp = new_fp
 
         # Update cache (inplace)
-        if not self.cache.is_empty():
+        if self.has_cache():
             self.cache.update(seqs)
             self.cache.close()
         return res

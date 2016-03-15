@@ -92,6 +92,8 @@ class IntervalMetadataPred(metaclass=ABCMeta):
     def _identify_fp(self, fp, **kwargs):
         '''Identify features on the sequence in the input file.'''
 
+    def has_cache(self):
+        return self.cache is not None
 
 class MetadataPred(metaclass=ABCMeta):
     '''
@@ -157,6 +159,9 @@ class MetadataPred(metaclass=ABCMeta):
         with NamedTemporaryFile('w+', self.tmp_dir) as f:
             seq.write(f)
             self._annotate_fp(f.name, **kwargs)
+
+    def has_cache(self):
+        return self.cache is not None
 
     @abstractmethod
     def _annotate_fp(self, fp, **kwargs):
