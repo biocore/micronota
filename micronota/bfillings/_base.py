@@ -95,6 +95,7 @@ class IntervalMetadataPred(metaclass=ABCMeta):
     def has_cache(self):
         return self.cache is not None
 
+
 class MetadataPred(metaclass=ABCMeta):
     '''
     Attributes
@@ -171,4 +172,3 @@ class MetadataPred(metaclass=ABCMeta):
         ----------
         fp : input file of sequences
         '''
-
