@@ -17,7 +17,12 @@ from burrito.util import ApplicationError
 
 from micronota.util import _get_named_data_path
 from micronota.bfillings.diamond import (
-    DiamondMakeDB, make_db, FeatureAnnt)
+    DiamondMakeDB, make_db, FeatureAnnt,
+    DiamondCache)
+import pandas as pd
+import pandas.util.testing as pdt
+import numpy as np
+import skbio
 
 
 class DiamondTests(TestCase):
@@ -80,7 +85,28 @@ class DiamondBlastTests(DiamondTests):
                         r'(Error reading file)|(Invalid input file format)'):
                     pred(i, aligner=aligner)
 
-class FeatAnntTests(TestCase):
+
+class TestDiamondCache(DiamondTests):
+    def setUp(self):
+        super().setUp()
+        tests = ('blastp', 'WP_009885814.faa')
+        self.blast = \
+            (tests[0], get_data_path(tests[1]),
+             _get_named_data_path('%s.diamond' % tests[1]))
+        seqs = skbio.read(_get_named_data_path('cache.faa'), format='fasta')
+        self.cache = DiamondCache(list(seqs))
+
+    def test_cache(self):
+        np.random.seed(0)
+        aligner, query, exp_fp = self.blast
+        pred = FeatureAnnt([self.db], mkdtemp(dir=self.tmp_dir),
+                           cache=self.cache)
+        obs = pred(query, aligner=aligner)
+        exp = pred.parse_tabular(exp_fp)
+        self.assertEquals(exp['sseqid'].values, obs['sseqid'].values)
+
+
+class TestParseSam(TestCase):
     def setUp(self):
         #fat = FeatureAnnt(dat=[self.db],out_dir=self.out_dir)
         tests = [('blastp', 'WP_009885814.faa'),
@@ -88,7 +114,7 @@ class FeatAnntTests(TestCase):
         self.blast = [
             (i[0],
              get_data_path(i[1]),
-             _get_data_dir()('%s.sam' % i[1]))
+             _get_named_data_path(('%s.sam' % i[1])))
             for i in tests]
 
         self.exp = \
@@ -141,6 +167,7 @@ class FeatAnntTests(TestCase):
             exp = df.reindex_axis(sorted(self.exp.columns), axis=1)
 
             pdt.assert_frame_equal(df, exp)
+
 
 if __name__ == '__main__':
     main()

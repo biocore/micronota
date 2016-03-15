@@ -6,7 +6,7 @@
 # The full license is in the file COPYING.txt, distributed with this software.
 # ----------------------------------------------------------------------------
 
-from os import stat
+from os import stat, remove
 from os.path import join, basename, splitext
 from logging import getLogger
 
@@ -196,20 +196,25 @@ class FeatureAnnt(MetadataPred):
     '''
     def __init__(self, dat, out_dir, tmp_dir=None, cache=None):
         super().__init__(dat, out_dir, tmp_dir)
-        self.cache = cache
+        if cache is None:
+            self.cache = DiamondCache(out_dir=out_dir)
+        else:
+            self.cache = cache
         self.dat = dat
 
     def get_cache(self):
         return self.cache
 
     def _annotate_fp(self, fp, aligner='blastp', evalue=0.001, cpus=1,
-                     outfmt='tab', params=None) -> pd.DataFrame:
-        '''Annotate the sequences in the file.
+                     outfmt='tab', params=None):
+        '''Annotate the sequences in the file.'''
 
         if not self.cache.is_empty():
             # Build cache
             self.cache.build()
-            dbs = [self.cache.db.name] + self.dat
+            dbs = [self.cache.db] + self.dat
+        else:
+            dbs = self.dat
 
         found = []
         res = pd.DataFrame()
@@ -240,6 +245,7 @@ class FeatureAnnt(MetadataPred):
         # Update cache (inplace)
         if not self.cache.is_empty():
             self.cache.update(seqs)
+            self.cache.close()
         return res
 
     def run_blast(self, fp, daa_fp, db, aligner='blastp', evalue=0.001, cpus=1,
@@ -337,6 +343,20 @@ class FeatureAnnt(MetadataPred):
 
     @staticmethod
     def parse_sam(diamond_res, column=None, collapse=False):
+        '''Parse the output of diamond blastp/blastx.
+
+        Parameters
+        ----------
+        diamond_res : str
+            file path
+        column : str
+            The column used to pick the best hits.
+
+        Returns
+        -------
+        pandas.DataFrame
+            The best matched records for each query sequence.
+        '''
         seqs = list(read(diamond_res, format='sam'))
         columns = ['qseqid', 'sseqid', 'pident', 'length', 'mismatch',
                    'gapopen', 'qstart', 'qend', 'sstart', 'send',
@@ -370,11 +390,11 @@ class FeatureAnnt(MetadataPred):
             df_max.index = idx.index
             df = df_max[['sseqid', 'evalue', 'bitscore', 'sequence']]
         else:
-            df = df[['sseqid', 'evalue', 'bitscore', 'sequence']]
+            df = df[['sseqid', 'evalue', 'bitscore','sequence']]
         return df
 
 
-def DiamondCache():
+class DiamondCache():
     '''
     Attributes
     ----------
@@ -383,9 +403,9 @@ def DiamondCache():
 
     '''
     def __init__(self, seqs=None, maxSize=200000, out_dir=""):
-        fname = _generate_random_file() # substitute for tempfile
-        self.fasta = join(out_dir, '%s.fasta' % fname)
-        self.db = join(out_dir, '%s.diamond' % fname)
+        self.fname = self._generate_random_file() # substitute for tempfile
+        self.fasta = join(out_dir, '%s.fasta' % self.fname)
+        self.db = join(out_dir, '%s.diamond.dmnd' % self.fname)
         self.maxSize = maxSize
         self.seqs = seqs
 
@@ -397,7 +417,7 @@ def DiamondCache():
         return self.db.name
 
     def is_empty(self):
-        return len(self.seqs) == 0
+        return (self.seqs is None) or len(self.seqs) == 0
 
     def build(self, params=None):
         for seq in self.seqs:
@@ -412,12 +432,9 @@ def DiamondCache():
            List of sequences to update the cache.
         """
         self.seqs = seqs + self.seqs
-        self.seqs = self.seqs[:maxSize]
+        self.seqs = self.seqs[:self.maxSize]
 
     def close(self):
-        os.remove(self.fasta)
-        os.remove(self.db)
-
-
-
+        remove(self.fasta)
+        remove(self.db)
 
