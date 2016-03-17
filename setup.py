@@ -62,7 +62,7 @@ setup(name='micronota',
       install_requires=[
           'click >= 6',
           'scikit-bio >= 0.4.0',
-          'burrito >= 0.9.1'
+          'burrito >= 0.9'
       ],
       extras_require={'test': ["nose", "pep8", "flake8"],
                       'coverage': ["coverage"],
