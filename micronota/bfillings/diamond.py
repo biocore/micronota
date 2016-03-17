@@ -105,6 +105,9 @@ class Diamond(CommandLineApplication):
     '''diamond controller.'''
     _command = 'diamond'
     _suppress_stderr = False
+    _synonyms = {'cpus': '--threads',
+                 'tmpdir': '--tmpdir',
+                 'evalue': '--evalue'}
 
     # This re-implementation is required for subcommands
     def _get_base_command(self):
@@ -202,7 +205,6 @@ class FeatureAnnt(MetadataPred):
         '''Annotate the sequences in the file.'''
 
         if self.has_cache():
-            # Build cache
             self.cache.build()
             dbs = [self.cache.db] + self.dat
         else:
@@ -218,8 +220,9 @@ class FeatureAnnt(MetadataPred):
             self.run_blast(fp, daa_fp, db, aligner=aligner,
                            evalue=evalue, cpus=cpus, params=params)
             self.run_view(daa_fp, out_fp, params={'--outfmt': outfmt})
-            res = res.append(self.parse_tabular(out_fp))
-
+            # res = res.append(self.parse_tabular(out_fp))
+            res = res.append(
+                self._filter_best(self.parse_tabular(out_fp)))
             found.extend(res.index)
             # save to a tmp file the seqs that do not hit current database
             new_fp = join(self.tmp_dir, '%s.fa' % out_prefix)
@@ -325,25 +328,16 @@ class FeatureAnnt(MetadataPred):
                    'gapopen', 'qstart', 'qend', 'sstart', 'send',
                    'evalue', 'bitscore']
         df = pd.read_table(diamond_res, names=columns)
-        # pick the rows that have highest bitscore for each qseqid
-        # df_max = df.groupby('qseqid').apply(
-        #     lambda r: r[r[column] == r[column].max()])
-        idx = df.groupby('qseqid')[column].idxmax()
-        df_max = df.loc[idx]
-        df_max.index = idx.index
-        return df_max[['sseqid', 'evalue', 'bitscore']]
+        return df
 
     @staticmethod
-    def parse_sam(diamond_res, column=None, collapse=False):
+    def parse_sam(diamond_res):
         '''Parse the output of diamond blastp/blastx.
 
         Parameters
         ----------
         diamond_res : str
             file path
-        column : str
-            The column used to pick the best hits.
-
         Returns
         -------
         pandas.DataFrame
@@ -351,42 +345,56 @@ class FeatureAnnt(MetadataPred):
         '''
         seqs = read(diamond_res, format='sam')
         columns = ['qseqid', 'sseqid', 'pident', 'length', 'mismatch',
-                   'gapopen', 'qstart', 'qend', 'sstart', 'send',
-                   'evalue', 'bitscore', 'sequence']
+                   'qstart', 'sstart', 'evalue', 'bitscore', 'sequence']
         df = pd.DataFrame(columns=columns)
         for i, seq in enumerate(seqs):
-            s = str(seq)
+            sseq = str(seq)
 
             qseqid = seq.metadata['QNAME']
             sseqid = seq.metadata['RNAME']
             pident = seq.metadata['ZI']
-            length = seq.metadata['ZL']
+            qlen = seq.metadata['ZL']
             mismatch = seq.metadata['CIGAR']
-            gapopen = ''
             qstart = seq.metadata['POS']
-            qend = ''
             sstart = seq.metadata['ZS']
-            send = ''
             evalue = seq.metadata['ZE']
             bitscore = seq.metadata['ZR']
             row = pd.Series([qseqid, sseqid, pident,
-                             length, mismatch, gapopen,
-                             qstart, qend, sstart, send,
-                             evalue, bitscore, s],
+                             qlen, mismatch,
+                             qstart, sstart,
+                             evalue, bitscore, sseq],
                             index=columns)
             df.loc[i] = row
 
-        if column is not None:
-            idx = df.groupby('qseqid')[column].idxmax()
-            df_max = df.loc[idx]
-            df_max.index = idx.index
-            df = df_max[['sseqid', 'evalue', 'bitscore', 'sequence']]
-        else:
-            df = df[['sseqid', 'evalue', 'bitscore', 'sequence']]
         return df
 
+    @staticmethod
+    def _filter_best(df, column='evalue'):
+        # pick the rows that have highest bitscore for each qseqid
+        # df_max = df.groupby('qseqid').apply(
+        #     lambda r: r[r[column] == r[column].max()])
+        if column == 'evalue':
+            idx = df.groupby('qseqid')[column].idxmin()
+        elif column == 'bitscore':
+            idx = df.groupby('qseqid')[column].idxmax()
+        df_best = df.loc[idx]
+        df_best.index = idx.index
+        return df_best
 
-class DiamondCache():
+    @staticmethod
+    def _filter_uniref(df, pident=90, cov=80):
+        '''Filter away the hits using the same UniRef clustering standards.'''
+        select = df.pident >= pident
+
+        for row in df.itertuples():
+            if row.pident <= pident:
+                continue
+            qlen = row.qend - row.qstart
+            slen = row.send - row.sstart
+            # if qlen * 100 / len(row.sequence) >= 80:
+
+
+class DiamondCache:
     '''
     Attributes
     ----------

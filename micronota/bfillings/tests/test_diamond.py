@@ -7,11 +7,16 @@
 # ----------------------------------------------------------------------------
 
 from tempfile import mkdtemp
+from filecmp import cmp
 from shutil import rmtree
 from os import getcwd
 from os.path import join
+from collections import namedtuple
 from unittest import TestCase, main
 
+import numpy as np
+import pandas as pd
+import skbio
 from skbio.util import get_data_path
 from burrito.util import ApplicationError
 
@@ -19,10 +24,6 @@ from micronota.util import _get_named_data_path
 from micronota.bfillings.diamond import (
     DiamondMakeDB, make_db, FeatureAnnt,
     DiamondCache)
-import pandas as pd
-import pandas.util.testing as pdt
-import numpy as np
-import skbio
 
 
 class DiamondTests(TestCase):
@@ -86,7 +87,7 @@ class DiamondBlastTests(DiamondTests):
                     pred(i, aligner=aligner)
 
 
-class TestDiamondCache(DiamondTests):
+class DiamondCacheTests(DiamondTests):
     def setUp(self):
         super().setUp()
         tests = ('blastp', 'WP_009885814.faa')
@@ -115,66 +116,32 @@ class TestDiamondCache(DiamondTests):
         self.assertEquals(exp['sseqid'].values, obs['sseqid'].values)
 
 
-class TestParseSam(TestCase):
+class ParsingTests(TestCase):
     def setUp(self):
-        tests = [('blastp', 'WP_009885814.faa'),
-                 ('blastx', 'WP_009885814.fna')]
-        self.blast = [
-            (i[0],
-             get_data_path(i[1]),
-             _get_named_data_path(('%s.sam' % i[1])))
-            for i in tests]
-
-        self.exp = \
-            pd.DataFrame({
-                'sseqid': ['UniRef100_P47599', 'UniRef100_B2HPZ3',
-                           'UniRef100_A4T166'],
-                'evalue': [2.1e-229, 2.9e-58, 3.3e-57],
-                'bitscore': [2009, 533, 524],
-                'sequence': [
-                            'MQSHKILVVNAGSSSIKFQLFNDKKQVLAKGLCERIFIDGFFKLEFNQK'
-                            'KIEEKVQFNDHNLAVKHFLNALKKNKIITELSEIGLIGHRVVQGANYFT'
-                            'DAVLVDTHSLAKIKEFIKLAPLHNKPEADVIEIFLKEIKTAKNVAVFDT'
-                            'TFHTTIPRENYLYAVPENXEKNNLVRRYGFHGTSYKYINEFLEKKFNKK'
-                            'PLNLIVCHLGNGASVCAIKQGKSLNTSMGFTPLEGLIMGTRSGDIDPAI'
-                            'VSYIAEQQKLSCNDVVNELNKKSGMFAITGSSDMRDIFDKPEINDIAIK'
-                            'MYVNRVADYIAKYLNQLSGEIDSLVFTGGVGENASYCVQLIIEKVASLG'
-                            'FKTNSNLFGNYQDSSLISTNESKYQIFRVRTNEELMIVEDALRVSTNIK'
-                            'K',
-                            'ILVVNAGSSSIKFQLFNDKKQVLAKGLCERIFIDGFFKLEFNQKKIEEK'
-                            'VQFNDHNLAVKHFLNALKKNKIITELSEIGLIGHRVVQGANYFTDAVLV'
-                            'DTHSLAKIKEFIKLAPLHNKPEADVIEIFLKEIKTAKNVAVFDTTFHTT'
-                            'IPRENYLYAVPENXEKNNLVRRYGFHGTSYKYINEFLEKKFNKKPLNLI'
-                            'VCHLGNGASVCAIKQGKSLNTSMGFTPLEGLIMGTRSGDIDPAIVSYIA'
-                            'EQQKLSCNDVVNELNKKSGMFAITGSSDMRDIFDKPEINDIAIKMYVNR'
-                            'VADYIAKYLNQLSGEIDSLVFTGGVGENASYCVQLIIEKVASLGFKTNS'
-                            'NLFGNYQDSSLISTNESKYQIFRVRTNEELMIVEDALRV',
-                            'ILVVNAGSSSIKFQLFNDKKQVLAKGLCERIFIDGFFKLEFNQKKIEEK'
-                            'VQFNDHNLAVKHFLNALKKNKIITELSEIGLIGHRVVQGANYFTDAVLV'
-                            'DTHSLAKIKEFIKLAPLHNKPEADVIEIFLKEIKTAKNVAVFDTTFHTT'
-                            'IPRENYLYAVPENXEKNNLVRRYGFHGTSYKYINEFLEKKFNKKPLNLI'
-                            'VCHLGNGASVCAIKQGKSLNTSMGFTPLEGLIMGTRSGDIDPAIVSYIA'
-                            'EQQKLSCNDVVNELNKKSGMFAITGSSDMRDIFDKPEINDIAIKMYVNR'
-                            'VADYIAKYLNQLSGEIDSLVFTGGVGENASYCVQLIIEKVASLGFKTNS'
-                            'NLFGNYQDSSLISTNESKYQIFRVRTNEELMI']
-                })
+        self.tmp_dir = mkdtemp()
+        cases = ['WP_009885814.fna', 'WP_009885814.faa']
+        Test = namedtuple('Test', ['input', 'exp', 'obs'])
+        self.sam_tests = [Test(_get_named_data_path('%s.sam' % i),
+                               _get_named_data_path('%s.txt' % i),
+                               join(self.tmp_dir, '%s.txt' % i))
+                          for i in cases]
+        self.filter_tests = [Test(_get_named_data_path('%s.diamond' % i),
+                                  _get_named_data_path('%s.best' % i),
+                                  join(self.tmp_dir, '%s.best'))
+                             for i in cases]
 
     def test_parse_sam(self):
-        for test in self.blast:
-            df = FeatureAnnt.parse_sam(test[2])
-            df = df.reindex_axis(sorted(df.columns), axis=1)
-            exp = df.reindex_axis(sorted(self.exp.columns), axis=1)
+        for test in self.sam_tests:
+            df = FeatureAnnt.parse_sam(test.input)
+            df.to_csv(test.obs, sep='\t', index=False)
+            self.assertTrue(cmp(test.exp, test.obs, shallow=False))
 
-            pdt.assert_frame_equal(df, exp)
-
-    def test_parse_sam_best(self):
-        for test in self.blast:
-            df = FeatureAnnt.parse_sam(test[2], column='bitscore')
-            df = df.reindex_axis(sorted(df.columns), axis=1)
-            exp = df.reindex_axis(sorted(self.exp.columns), axis=1)
-
-            pdt.assert_frame_equal(df, exp)
-
+    def test_filter_best(self):
+        for test in self.filter_tests:
+            df = FeatureAnnt.parse_tabular(test.input)
+            df_filter = FeatureAnnt._filter_best(df)
+            df_filter.to_csv(test.obs, sep='\t', index=False)
+            self.assertTrue(cmp(test.exp, test.obs, shallow=False))
 
 if __name__ == '__main__':
     main()
