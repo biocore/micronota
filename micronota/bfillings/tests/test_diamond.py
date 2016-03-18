@@ -128,6 +128,10 @@ class ParsingTests(TestCase):
                                   _get_named_data_path('%s.best' % i),
                                   join(self.tmp_dir, '%s.best'))
                              for i in cases]
+        self.filter_tests2 = [Test(_get_named_data_path('%s.sam' % i),
+                                   _get_named_data_path('%s.idcov' % i),
+                                   join(self.tmp_dir, '%s.idcov'))
+                              for i in cases]
 
     def test_parse_sam(self):
         for test in self.sam_tests:
@@ -141,6 +145,14 @@ class ParsingTests(TestCase):
             df_filter = FeatureAnnt._filter_best(df)
             df_filter.to_csv(test.obs, sep='\t', index=False)
             self.assertTrue(cmp(test.exp, test.obs, shallow=False))
+
+    def test_filter_id_cov(self):
+        for test in self.filter_tests2:
+            df = FeatureAnnt.parse_sam(test.input)
+            df_filter = FeatureAnnt._filter_id_cov(df, pident=30, cov=92)
+            df_filter.to_csv(test.obs, sep='\t', index=False)
+            self.assertTrue(cmp(test.exp, test.obs, shallow=False))
+
 
 if __name__ == '__main__':
     main()

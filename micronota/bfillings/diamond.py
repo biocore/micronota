@@ -11,6 +11,7 @@ from os.path import join, basename, splitext, exists
 from logging import getLogger
 
 import pandas as pd
+import re
 from burrito.parameters import FlagParameter, ValuedParameter
 from burrito.util import (
     ApplicationError, CommandLineApplication)
@@ -350,8 +351,8 @@ class FeatureAnnt(MetadataPred):
             The best matched records for each query sequence.
         '''
         seqs = read(diamond_res, format='sam')
-        columns = ['qseqid', 'sseqid', 'pident', 'length', 'mismatch',
-                   'qstart', 'sstart', 'evalue', 'bitscore', 'sequence']
+        columns = ['qseqid', 'sseqid', 'pident', 'qlen', 'mismatch',
+                   'qstart', 'sstart', 'evalue', 'bitscore', 'sseq']
         df = pd.DataFrame(columns=columns)
         for i, seq in enumerate(seqs):
             sseq = str(seq)
@@ -388,10 +389,19 @@ class FeatureAnnt(MetadataPred):
         return df_best
 
     @staticmethod
-    def _filter_uniref(df, pident=90, cov=80):
+    def _filter_id_cov(df, pident=90, cov=80):
         '''Filter away the hits using the same UniRef clustering standards.'''
-        # select = df.pident >= pident
+        select_id = df.pident >= pident
+        aligned_length = df.mismatch.apply(_compute_aligned_length)
+        select_cov = ((aligned_length * 100 / df.qlen >= cov) &
+                      (aligned_length * 100 / df.sseq.apply(len) >= cov))
         # if qlen * 100 / len(row.sequence) >= 80:
+        return df[select_id & select_cov]
+
+
+def _compute_aligned_length(cigar):
+    aligned = re.findall('([0-9]+)M', cigar)
+    return sum(int(i) for i in aligned)
 
 
 class DiamondCache:
