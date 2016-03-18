@@ -15,7 +15,6 @@ from collections import namedtuple
 from unittest import TestCase, main
 
 import numpy as np
-import pandas as pd
 import skbio
 from skbio.util import get_data_path
 from burrito.util import ApplicationError
@@ -63,18 +62,19 @@ class DiamondMakeDBTests(DiamondTests):
 class DiamondBlastTests(DiamondTests):
     def setUp(self):
         super().setUp()
-        tests = [('blastp', 'WP_009885814.faa'),
+        cases = [('blastp', 'WP_009885814.faa'),
                  ('blastx', 'WP_009885814.fna')]
-        self.blast = [
-            (i[0], get_data_path(i[1]),
-             _get_named_data_path('%s.diamond' % i[1]))
-            for i in tests]
+        Test = namedtuple('Test', ['aligner', 'input', 'exp'])
+        self.tests = [Test(i[0],
+                           get_data_path(i[1]),
+                           _get_named_data_path('%s.diamond' % i[1]))
+                      for i in cases]
 
     def test_blast(self):
-        for aligner, query, exp_fp in self.blast:
+        for test in self.tests:
             pred = FeatureAnnt([self.db], mkdtemp(dir=self.tmp_dir))
-            obs = pred(query, aligner=aligner)
-            exp = pred.parse_tabular(exp_fp)
+            obs = pred(test.input, aligner=test.aligner)
+            exp = pred._filter_best(pred.parse_tabular(test.exp))
             self.assertTrue(exp.equals(obs))
 
     def test_blast_wrong_input(self):
@@ -91,9 +91,8 @@ class DiamondCacheTests(DiamondTests):
     def setUp(self):
         super().setUp()
         tests = ('blastp', 'WP_009885814.faa')
-        self.blast = \
-            (tests[0], get_data_path(tests[1]),
-             _get_named_data_path('%s.diamond' % tests[1]))
+        self.blast = (tests[0], get_data_path(tests[1]),
+                      _get_named_data_path('%s.diamond' % tests[1]))
         seqs = skbio.read(_get_named_data_path('cache.faa'), format='fasta')
         self.cache = DiamondCache(list(seqs))
 
@@ -103,8 +102,8 @@ class DiamondCacheTests(DiamondTests):
         pred = FeatureAnnt([self.db], mkdtemp(dir=self.tmp_dir),
                            cache=self.cache)
         obs = pred(query, aligner=aligner)
-        exp = pred.parse_tabular(exp_fp)
-        self.assertEquals(exp['sseqid'].values, obs['sseqid'].values)
+        exp = pred._filter_best(pred.parse_tabular(exp_fp))
+        self.assertEqual(exp['sseqid'].values, obs['sseqid'].values)
 
     def test_cache_empty_db(self):
         np.random.seed(0)
@@ -112,8 +111,8 @@ class DiamondCacheTests(DiamondTests):
         pred = FeatureAnnt([], mkdtemp(dir=self.tmp_dir),
                            cache=self.cache)
         obs = pred(query, aligner=aligner)
-        exp = pred.parse_tabular(exp_fp)
-        self.assertEquals(exp['sseqid'].values, obs['sseqid'].values)
+        exp = pred._filter_best(pred.parse_tabular(exp_fp))
+        self.assertEqual(exp['sseqid'].values, obs['sseqid'].values)
 
 
 class ParsingTests(TestCase):

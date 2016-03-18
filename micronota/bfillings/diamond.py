@@ -183,6 +183,8 @@ def make_db(in_fp, out_fp=None, params=None):
     app.Parameters['--db'].on(out_fp)
     res = app()
     res.cleanUp()
+    res['StdOut'].close()
+    res['StdErr'].close()
     return res
 
 
@@ -288,6 +290,8 @@ class FeatureAnnt(MetadataPred):
         logger.info('Running: %s' % blast.BaseCommand)
         blast_res = blast()
         blast_res.cleanUp()
+        blast_res['StdOut'].close()
+        blast_res['StdErr'].close()
         return blast_res
 
     def run_view(self, daa_fp, out_fp, params=None):
@@ -306,6 +310,8 @@ class FeatureAnnt(MetadataPred):
         logger.info('Running: %s' % view.BaseCommand)
         view_res = view()
         view_res.cleanUp()
+        view_res['StdOut'].close()
+        view_res['StdErr'].close()
         return view_res
 
     @staticmethod
@@ -384,14 +390,8 @@ class FeatureAnnt(MetadataPred):
     @staticmethod
     def _filter_uniref(df, pident=90, cov=80):
         '''Filter away the hits using the same UniRef clustering standards.'''
-        select = df.pident >= pident
-
-        for row in df.itertuples():
-            if row.pident <= pident:
-                continue
-            qlen = row.qend - row.qstart
-            slen = row.send - row.sstart
-            # if qlen * 100 / len(row.sequence) >= 80:
+        # select = df.pident >= pident
+        # if qlen * 100 / len(row.sequence) >= 80:
 
 
 class DiamondCache:
