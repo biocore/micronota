@@ -1,0 +1,2 @@
+qseqid	sseqid	pident	length	mismatch	gapopen	qstart	qend	sstart	send	evalue	bitscore
+gi|402552294:454259-455440	UniRef100_P47599	99.7	393	1	0	1182	4	1	393	5.0999999999999966e-228	773.9
