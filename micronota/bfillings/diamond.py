@@ -355,7 +355,8 @@ class FeatureAnnt(MetadataPred):
                    'qstart', 'sstart', 'evalue', 'bitscore', 'sseq']
         df = pd.DataFrame(columns=columns)
         for i, seq in enumerate(seqs):
-            if seq == []: continue
+            if seq == []:
+                continue
             sseq = str(seq)
 
             qseqid = seq.metadata['QNAME']
