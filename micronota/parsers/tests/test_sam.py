@@ -83,7 +83,7 @@ class ReaderTests(SamIOTests):
             self.assertEqual(str(obs), str(exp))
 
     def test_sam_header(self):
-        exp = [[]]
+        exp = []
         obs = list(_sam_to_generator(self.header_fp))
         self.assertEqual(obs, exp)
 

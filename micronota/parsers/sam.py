@@ -142,8 +142,6 @@ def parse_required(s):
 
 
 def _construct(record, constructor=None, **kwargs):
-    if len(record) != 2:
-        return []
     seq, md = record
     if constructor is None:
         constructor = Sequence
@@ -189,7 +187,14 @@ def _parse_records(fh, constructor=None, **kwargs):
     metadata = {}
     optional_headers = []
     headers = _ALIGNMENT_HEADERS
-    res = []
+
+    # http://stackoverflow.com/a/13243870/1167475
+    def empty():
+        return
+        yield
+
+    res = None
+
     for line in _line_generator(fh, skip_blanks=True, strip=True):
         # parse the header (would be nice to abstract this pattern out)
         if line.startswith('@'):
@@ -224,5 +229,6 @@ def _parse_records(fh, constructor=None, **kwargs):
             md = merge_dicts(metadata, req, *opt)
             res = seq, md
             yield res
-            res = []
-    yield res
+
+    if res is None:
+        return empty()
