@@ -1,11 +1,9 @@
 r'''
 SAM Parser
-=====================
+==========
 
 SAM stores input query sequences that have mapped to a reference [#]_.
 The SAM format has a header section, where each line is denoted by @.
-This header contains information about the program used to generate the
-genbank file.
 
 Each line following the header lines encodes information for a single read.
 Each line is structured as follows.
@@ -107,11 +105,10 @@ def _sam_sniffer(fh):
     except StopIteration:
         return False, {}
 
-    try:
-        assert line.startswith('@HD')
-    except SAMFormatError:
+    if line.startswith('@HD'):
+        return True, {}
+    else:
         return False, {}
-    return True, {}
 
 
 def _is_float(input):
