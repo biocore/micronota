@@ -160,6 +160,7 @@ def _sam_to_generator(fh, constructor=None, **kwargs):
     for record in _parse_records(fh):
         yield _construct(record, constructor, **kwargs)
 
+
 @sam.reader(Sequence)
 def _sam_to_sequence(fh, seq_num=1, **kwargs):
     record = _get_nth_sequence(_parse_records(fh), seq_num)
