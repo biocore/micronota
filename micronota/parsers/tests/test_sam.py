@@ -42,6 +42,7 @@ class SamIOTests(TestCase):
                  'ZS': 1,
                  'MD': '102V117R54S5'
              })
+        self.header_fp = get_data_path('header.sam')
 
 
 class SnifferTests(SamIOTests):
@@ -80,6 +81,12 @@ class ReaderTests(SamIOTests):
             self.assertEqual(sorted(obs.metadata.items()),
                              sorted(exp.metadata.items()))
             self.assertEqual(str(obs), str(exp))
+
+    def test_sam_header(self):
+        exp = [[]]
+        obs = list(_sam_to_generator(self.header_fp))
+        self.assertEqual(obs, exp)
+
 
 if __name__ == "__main__":
     main()
