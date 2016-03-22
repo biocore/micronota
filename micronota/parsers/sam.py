@@ -184,6 +184,14 @@ def _parse_records(fh, constructor=None, **kwargs):
     metadata = {}
     optional_headers = []
     headers = _ALIGNMENT_HEADERS
+
+    # http://stackoverflow.com/a/13243870/1167475
+    def empty():
+        return
+        yield
+
+    res = None
+
     for line in _line_generator(fh, skip_blanks=True, strip=True):
         # parse the header (would be nice to abstract this pattern out)
         if line.startswith('@'):
@@ -216,4 +224,8 @@ def _parse_records(fh, constructor=None, **kwargs):
             req = dict(zip(_ALIGNMENT_HEADERS, req))
 
             md = merge_dicts(metadata, req, *opt)
-            yield seq, md
+            res = seq, md
+            yield res
+
+    if res is None:
+        return empty()
