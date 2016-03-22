@@ -224,4 +224,5 @@ def _parse_records(fh, constructor=None, **kwargs):
             md = merge_dicts(metadata, req, *opt)
             res = seq, md
             yield res
+            res = []
     yield res
