@@ -58,28 +58,17 @@ Reference
 ---------
 .. [#] https://samtools.github.io/hts-specs/SAMv1.pdf
 '''
-from skbio.util._misc import merge_dicts
-from skbio.io import create_format, FileFormatError
+
+from skbio.io import create_format
 from skbio.sequence import Sequence, DNA, RNA, Protein
 from skbio.io.format._base import (
     _line_generator, _get_nth_sequence, _too_many_blanks)
 
 
-class SAMFormatError(FileFormatError):
-    pass
-
 sam = create_format('sam')
 
-# File headers
-_HEADERS = ['HD',      # The header line
-            'SQ',      # Reference sequence dictionary
-            'RG',      # Read group
-            'PG',      # Program
-            'CO'       # one-line text comment
-            ]
-
 # Alignment headers
-_ALIGNMENT_HEADERS = [
+_REQUIRED_FIELDS = [
           'QNAME',   # Query template NAME.
           'FLAG',    # Combination of bitwise FLAGs
           'RNAME',   # Reference sequence NAME of the alignment
@@ -89,7 +78,7 @@ _ALIGNMENT_HEADERS = [
           'RNEXT',   # Reference sequence name of the primary alignment of NEXT
           'PNEXT',   # Position of the primary alignment of the NEXT read
           'TLEN',    # signed observed template length
-          # 'SEQ',     # segment sequence
+          'SEQ',     # segment sequence
           'QUAL',    # ASCII of base quality
 ]
 
@@ -111,33 +100,6 @@ def _sam_sniffer(fh):
         return False, {}
 
 
-def _is_float(input):
-    try:
-        float(input)
-    except ValueError:
-        return False
-    return True
-
-
-def parse_optional(s):
-    _field, _type, _val = s.split(':')
-    if _type == 'i':
-        return {_field: int(_val)}
-    elif _type == 'f':
-        return {_field: float(_val)}
-    else:
-        return {_field: _val}
-
-
-def parse_required(s):
-    if s.isdigit():
-        return int(s)
-    elif _is_float(s):
-        return float(s)
-    else:
-        return s
-
-
 def _construct(record, constructor=None, **kwargs):
     seq, md = record
     if constructor is None:
@@ -153,7 +115,7 @@ def _construct(record, constructor=None, **kwargs):
 @sam.reader(None)
 def _sam_to_generator(fh, constructor=None, **kwargs):
     for record in _parse_records(fh):
-        yield _construct(record, constructor, **kwargs)
+        yield from _construct(record, constructor, **kwargs)
 
 
 @sam.reader(Sequence)
@@ -181,51 +143,71 @@ def _sam_to_RNA(fh, seq_num=1, **kwargs):
 
 
 def _parse_records(fh, constructor=None, **kwargs):
-    metadata = {}
-    optional_headers = []
-    headers = _ALIGNMENT_HEADERS
-
-    # http://stackoverflow.com/a/13243870/1167475
-    def empty():
-        return
-        yield
-
+    md = {}
     res = None
-
+    opt_fields = {}
+    n = len(_REQUIRED_FIELDS)
     for line in _line_generator(fh, skip_blanks=True, strip=True):
         # parse the header (would be nice to abstract this pattern out)
         if line.startswith('@'):
-            tabs = line.split('\t')
-            key = tabs[0][1:]
-            # FIXME:  The vals variable needs to be explicitly tested
-            vals = tabs[1:]
-            if key == 'CO':
-                val = vals[0]
-                optional_headers = val.split(',')
-                headers = _ALIGNMENT_HEADERS + optional_headers
-                headers = headers[:9] + headers[10:]
+            key, val = line.split('\t', 1)
+            if key == '@CO' and val.startswith('Reporting'):
+                _, s = val.split(None, 1)
+                opt_fields = _parse_co(s)
             else:
-                vals = tabs[1:]
-                if len(vals) > 1:
-                    metadata[key] = vals
-                else:
-                    metadata[key] = vals[0]
-
+                md[key] = val
         # parse the actual sequences
         else:
             tabs = line.split('\t')
+            # zip stops generating after the shorter list of the two
+            md = dict(zip(_REQUIRED_FIELDS, tabs))
+            seq = md.pop('SEQ')
 
-            # extract sequence
-            seq = tabs[9]
-            tabs = tabs[:9] + tabs[10:]
+            opt = (_parse_optional(field) for field in tabs[n:])
+            opt = {opt_fields.get(k, k): v for k, v in opt}
+            md.update(opt)
 
-            req = list(map(parse_required, tabs[:10]))
-            opt = list(map(parse_optional, tabs[10:]))
-            req = dict(zip(_ALIGNMENT_HEADERS, req))
-
-            md = merge_dicts(metadata, req, *opt)
             res = seq, md
             yield res
-
+    # this is to fix the skbio's surprising behavior of read into generator
     if res is None:
-        return empty()
+        return iter([])
+
+
+def _parse_optional(s):
+    field, t, v = s.split(':')
+    if t == 'i':
+        v = int(v)
+    elif t == 'f':
+        v = float(v)
+    return field, v
+
+
+def _parse_required(s):
+    if s.isdigit():
+        return int(s)
+    else:
+        try:
+            return float(s)
+        except ValueError:
+            return s
+
+
+def _parse_co(s):
+    '''Parse CO string.
+
+    Examples
+    --------
+    >>> s = 'AS: bitScore, ZR: rawScore, ZE: expected, ZI: percent identity, ZL: reference length, ZF: frame, ZS: query start DNA coordinate'
+    >>> _parse_co(s)
+    {'AS': 'bitScore',
+     'ZE': 'expected',
+     'ZF': 'frame',
+     'ZI': 'percent identity',
+     'ZL': 'reference length',
+     'ZR': 'rawScore',
+     'ZS': 'query start DNA coordinate'}
+    '''
+    items = s.split(', ')
+    fields = (i.split(': ', 1) for i in items)
+    return dict(fields)
