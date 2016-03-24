@@ -110,8 +110,7 @@ class DiamondCacheTests(DiamondTests):
         aligner, query, exp_fp = self.blast
         pred = FeatureAnnt([self.db], mkdtemp(dir=self.tmp_dir),
                            cache=DiamondCache())
-
-        obs = pred(query, aligner=aligner)
+        pred(query, aligner=aligner)
         self.assertTrue(len(pred.cache.seqs) > 0)
 
     def test_cache_empty_db(self):

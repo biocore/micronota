@@ -226,7 +226,6 @@ class FeatureAnnt(MetadataPred):
             # res = res.append(self.parse_tabular(out_fp))
             res = res.append(
                 self._filter_best(self.parse_tabular(out_fp)))
-            
             # save to a tmp file the seqs that do not hit current database
             new_fp = join(self.tmp_dir, '%s.fa' % out_prefix)
             with open(new_fp, 'w') as f:
@@ -463,7 +462,7 @@ class DiamondCache:
         self.seqs = self.seqs[:self.maxSize]
 
     def close(self):
-        # Remove files if they exist 
+        # Remove files if they exist
         # They won't be present if the cache is empty
         if exists(self.fasta):
             remove(self.fasta)
