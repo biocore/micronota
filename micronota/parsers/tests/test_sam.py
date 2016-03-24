@@ -19,9 +19,9 @@ class SamIOTests(TestCase):
              'YPVKVNGRYVMDPSPIPKFDNPKMDMMPALQLFGAGREKRIYA'
              'VPPFTHVESLDFDDHPFTVQQWDEPCAICGSTHSYLDEVVLDD'
              'AGNRMFVCSDTDYCRQQNEAKSQ', {
-                 'HD': ['VN:1.5', 'SO:query'],
-                 'PG': 'PN:DIAMOND',
-                 'mm': 'BlastX',
+                 '@HD': 'VN:1.5\tSO:query',
+                 '@PG': 'PN:DIAMOND',
+                 '@mm': 'BlastX',
                  'QNAME': 'WP_000002278.1',
                  'FLAG': 0,
                  'RNAME': 'UniRef100_P16688',

@@ -115,7 +115,7 @@ def _construct(record, constructor=None, **kwargs):
 @sam.reader(None)
 def _sam_to_generator(fh, constructor=None, **kwargs):
     for record in _parse_records(fh):
-        yield from _construct(record, constructor, **kwargs)
+        yield _construct(record, constructor, **kwargs)
 
 
 @sam.reader(Sequence)
@@ -143,35 +143,29 @@ def _sam_to_RNA(fh, seq_num=1, **kwargs):
 
 
 def _parse_records(fh, constructor=None, **kwargs):
-    md = {}
     res = None
-    opt_fields = {}
+    header_md = {}
     n = len(_REQUIRED_FIELDS)
     for line in _line_generator(fh, skip_blanks=True, strip=True):
+        md = {}
         # parse the header (would be nice to abstract this pattern out)
         if line.startswith('@'):
             key, val = line.split('\t', 1)
-            if key == '@CO' and val.startswith('Reporting'):
-                _, s = val.split(None, 1)
-                opt_fields = _parse_co(s)
-            else:
-                md[key] = val
+            if key != '@CO':
+                header_md[key] = val
         # parse the actual sequences
         else:
             tabs = line.split('\t')
             # zip stops generating after the shorter list of the two
-            md = dict(zip(_REQUIRED_FIELDS, tabs))
+            md = {k: _parse_required(v) for k, v in zip(_REQUIRED_FIELDS, tabs)}
+
             seq = md.pop('SEQ')
 
             opt = (_parse_optional(field) for field in tabs[n:])
-            opt = {opt_fields.get(k, k): v for k, v in opt}
             md.update(opt)
-
+            md.update(header_md)
             res = seq, md
             yield res
-    # this is to fix the skbio's surprising behavior of read into generator
-    if res is None:
-        return iter([])
 
 
 def _parse_optional(s):
@@ -191,23 +185,3 @@ def _parse_required(s):
             return float(s)
         except ValueError:
             return s
-
-
-def _parse_co(s):
-    '''Parse CO string.
-
-    Examples
-    --------
-    >>> s = 'AS: bitScore, ZR: rawScore, ZE: expected, ZI: percent identity, ZL: reference length, ZF: frame, ZS: query start DNA coordinate'
-    >>> _parse_co(s)
-    {'AS': 'bitScore',
-     'ZE': 'expected',
-     'ZF': 'frame',
-     'ZI': 'percent identity',
-     'ZL': 'reference length',
-     'ZR': 'rawScore',
-     'ZS': 'query start DNA coordinate'}
-    '''
-    items = s.split(', ')
-    fields = (i.split(': ', 1) for i in items)
-    return dict(fields)
