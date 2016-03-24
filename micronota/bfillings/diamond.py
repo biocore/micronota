@@ -207,7 +207,7 @@ class FeatureAnnt(MetadataPred):
                      outfmt='tab', params=None):
         '''Annotate the sequences in the file.'''
 
-        if self.has_cache():
+        if self.has_cache() and not self.cache.is_empty():
             self.cache.build()
             dbs = [self.cache.db] + self.dat
         else:
@@ -226,7 +226,7 @@ class FeatureAnnt(MetadataPred):
             # res = res.append(self.parse_tabular(out_fp))
             res = res.append(
                 self._filter_best(self.parse_tabular(out_fp)))
-            found.extend(res.index)
+            
             # save to a tmp file the seqs that do not hit current database
             new_fp = join(self.tmp_dir, '%s.fa' % out_prefix)
             with open(new_fp, 'w') as f:
@@ -234,12 +234,12 @@ class FeatureAnnt(MetadataPred):
                     if seq.metadata['id'] not in found:
                         seq.write(f, format='fasta')
                         seqs.append(seq)
+            found.extend(res.index)
             # no seq left
             if stat(new_fp).st_size == 0:
                 break
             else:
                 fp = new_fp
-
         # Update cache (inplace)
         if self.has_cache():
             self.cache.update(seqs)
@@ -425,7 +425,10 @@ class DiamondCache:
         self.fasta = join(out_dir, '%s.fasta' % self.fname)
         self.db = join(out_dir, '%s.dmnd' % self.fname)
         self.maxSize = maxSize
-        self.seqs = seqs
+        if seqs is None:
+            self.seqs = []
+        else:
+            self.seqs = seqs
 
     def _generate_random_file(self, N=10):
         s = ''.join(random.SystemRandom().choice(
@@ -443,6 +446,8 @@ class DiamondCache:
         return (self.seqs is None) or len(self.seqs) == 0
 
     def build(self, params=None):
+        if self.is_empty():
+            return
         for seq in self.seqs:
             seq.write(self.fasta, format='fasta')
         make_db(self.fasta, self.db, params)
@@ -458,5 +463,9 @@ class DiamondCache:
         self.seqs = self.seqs[:self.maxSize]
 
     def close(self):
-        remove(self.fasta)
-        remove(self.db)
+        # Remove files if they exist 
+        # They won't be present if the cache is empty
+        if exists(self.fasta):
+            remove(self.fasta)
+        if exists(self.db):
+            remove(self.db)

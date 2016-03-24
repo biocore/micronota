@@ -90,7 +90,7 @@ class DiamondBlastTests(DiamondTests):
 class DiamondCacheTests(DiamondTests):
     def setUp(self):
         super().setUp()
-        tests = ('blastp', 'WP_009885814.faa')
+        tests = ('blastx', 'WP_009885814.fna')
         self.blast = (tests[0], get_data_path(tests[1]),
                       _get_named_data_path('%s.diamond' % tests[1]))
         seqs = skbio.read(_get_named_data_path('cache.faa'), format='fasta')
@@ -103,7 +103,16 @@ class DiamondCacheTests(DiamondTests):
                            cache=self.cache)
         obs = pred(query, aligner=aligner)
         exp = pred._filter_best(pred.parse_tabular(exp_fp))
-        self.assertEqual(exp['sseqid'].values, obs['sseqid'].values)
+        self.assertSetEqual(set(exp['sseqid'].values), set(obs['sseqid'].values))
+
+    def test_cache_initialize(self):
+        np.random.seed(0)
+        aligner, query, exp_fp = self.blast
+        pred = FeatureAnnt([self.db], mkdtemp(dir=self.tmp_dir),
+                           cache=DiamondCache())
+
+        obs = pred(query, aligner=aligner)
+        self.assertTrue(len(pred.cache.seqs) > 0)
 
     def test_cache_empty_db(self):
         np.random.seed(0)

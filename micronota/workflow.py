@@ -18,7 +18,7 @@ import pandas as pd
 
 from . import bfillings
 from .util import _overwrite
-from . bfillings.diamond import DiamondCache as dc
+from . bfillings.diamond import DiamondCache
 
 
 def annotate(in_fp, in_fmt, out_dir, out_fmt,
@@ -52,7 +52,7 @@ def annotate(in_fp, in_fmt, out_dir, out_fmt,
 
     # declare DiamondCache
     if cache:
-        cache = dc()
+        cache = DiamondCache()
     else:
         cache = None
 

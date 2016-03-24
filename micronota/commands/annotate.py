@@ -38,4 +38,4 @@ def cli(ctx, input_fp, in_fmt, output_dir, out_fmt,
     '''Annotate prokaryotic genomes.'''
     annotate(input_fp, in_fmt, output_dir, out_fmt,
              cpus, kingdom, force,
-             ctx.parent.config)
+             ctx.parent.config, cache=True)
