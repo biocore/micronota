@@ -173,13 +173,14 @@ class Configuration(object):
             lines.append(k1.upper())
             lines.append('=' * len(k1))
             info_ = info[k1]
-            max_len = max([len(i) for i in info_])
-            for k2 in info_:
-                if info_[k2] is None:
-                    line = k2
-                else:
-                    line = "{key:<{width}}: {value}".format(
-                        width=max_len, key=k2, value=info_[k2])
-                lines.append(line)
+            if info_:
+                max_len = max([len(i) for i in info_])
+                for k2 in info_:
+                    if info_[k2] is None:
+                        line = k2
+                    else:
+                        line = "{key:<{width}}: {value}".format(
+                            width=max_len, key=k2, value=info_[k2])
+                    lines.append(line)
             lines.append('\n')
         return '\n'.join(lines)
