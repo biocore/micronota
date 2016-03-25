@@ -77,7 +77,7 @@ class DiamondBlastTests(DiamondTests):
             exp = pred._filter_best(pred.parse_tabular('%s.diamond' % test.exp))
             self.assertTrue(exp.equals(obs))
             obs = pred(test.input, aligner=test.aligner, outfmt='sam')
-            exp = pred._filter_id_cov(pred.parse_sam('%s.idcov' % test.exp))
+            exp = pred._filter_id_cov(pred.parse_sam('%s.sam' % test.exp))
             self.assertTrue(exp.equals(obs))
 
     def test_blast_wrong_input(self):
