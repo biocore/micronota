@@ -140,6 +140,7 @@ def annotate_all_cds(im, out_dir, kingdom, config, cpus=1, cache=None):
     logger.info('Running CDS functional annotation.')
     id_key = 'id'
     res = pd.DataFrame()
+    obj_cache = cache
     for tool in config.cds:
         d = join(out_dir, tool)
         makedirs(d, exist_ok=True)
@@ -174,7 +175,8 @@ def annotate_all_cds(im, out_dir, kingdom, config, cpus=1, cache=None):
             params = None
         res_ = obj(pro_fp, cpus=cpus, params=params)
         res = res.append(res_)
-    return _update(im, id_key, res), obj.cache
+        obj_cache = obj.cache
+    return _update(im, id_key, res), obj_cache
 
 
 def _update(im, id_key, res):

@@ -213,9 +213,9 @@ class FeatureAnnt(MetadataPred):
         else:
             dbs = self.dat
 
+        seqs = []
         found = []
         res = pd.DataFrame()
-        seqs = []
         logger = getLogger(__name__)
         for db in dbs:
             out_prefix = splitext(basename(db))[0]
@@ -231,7 +231,6 @@ class FeatureAnnt(MetadataPred):
             elif outfmt == 'sam':
                 res = res.append(
                     self._filter_id_cov(self.parse_sam(out_fp)))
-            found.extend(res.index)
             # save to a tmp file the seqs that do not hit current database
             new_fp = join(self.tmp_dir, '%s.fa' % out_prefix)
             num_hits = 0
@@ -353,6 +352,7 @@ class FeatureAnnt(MetadataPred):
         ----------
         diamond_res : str
             file path
+
         Returns
         -------
         pandas.DataFrame
