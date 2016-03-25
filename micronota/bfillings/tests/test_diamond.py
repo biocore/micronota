@@ -67,14 +67,17 @@ class DiamondBlastTests(DiamondTests):
         Test = namedtuple('Test', ['aligner', 'input', 'exp'])
         self.tests = [Test(i[0],
                            get_data_path(i[1]),
-                           _get_named_data_path('%s.diamond' % i[1]))
+                           _get_named_data_path(i[1]))
                       for i in cases]
 
     def test_blast(self):
         for test in self.tests:
             pred = FeatureAnnt([self.db], mkdtemp(dir=self.tmp_dir))
-            obs = pred(test.input, aligner=test.aligner)
-            exp = pred._filter_best(pred.parse_tabular(test.exp))
+            obs = pred(test.input, aligner=test.aligner, outfmt='tab')
+            exp = pred._filter_best(pred.parse_tabular('%s.diamond' % test.exp))
+            self.assertTrue(exp.equals(obs))
+            obs = pred(test.input, aligner=test.aligner, outfmt='sam')
+            exp = pred._filter_id_cov(pred.parse_sam('%s.sam' % test.exp))
             self.assertTrue(exp.equals(obs))
 
     def test_blast_wrong_input(self):
@@ -151,14 +154,14 @@ class ParsingTests(TestCase):
         for test in self.filter_tests:
             df = FeatureAnnt.parse_tabular(test.input)
             df_filter = FeatureAnnt._filter_best(df)
-            df_filter.to_csv(test.obs, sep='\t', index=False)
+            df_filter.to_csv(test.obs, sep='\t')
             self.assertTrue(cmp(test.exp, test.obs, shallow=False))
 
     def test_filter_id_cov(self):
         for test in self.filter_tests2:
             df = FeatureAnnt.parse_sam(test.input)
             df_filter = FeatureAnnt._filter_id_cov(df, pident=30, cov=92)
-            df_filter.to_csv(test.obs, sep='\t', index=False)
+            df_filter.to_csv(test.obs, sep='\t')
             self.assertTrue(cmp(test.exp, test.obs, shallow=False))
 
 

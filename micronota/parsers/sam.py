@@ -1,11 +1,9 @@
 r'''
 SAM Parser
-=====================
+==========
 
 SAM stores input query sequences that have mapped to a reference [#]_.
 The SAM format has a header section, where each line is denoted by @.
-This header contains information about the program used to generate the
-genbank file.
 
 Each line following the header lines encodes information for a single read.
 Each line is structured as follows.
@@ -60,28 +58,17 @@ Reference
 ---------
 .. [#] https://samtools.github.io/hts-specs/SAMv1.pdf
 '''
-from skbio.util._misc import merge_dicts
-from skbio.io import create_format, FileFormatError
+
+from skbio.io import create_format
 from skbio.sequence import Sequence, DNA, RNA, Protein
 from skbio.io.format._base import (
     _line_generator, _get_nth_sequence, _too_many_blanks)
 
 
-class SAMFormatError(FileFormatError):
-    pass
-
 sam = create_format('sam')
 
-# File headers
-_HEADERS = ['HD',      # The header line
-            'SQ',      # Reference sequence dictionary
-            'RG',      # Read group
-            'PG',      # Program
-            'CO'       # one-line text comment
-            ]
-
 # Alignment headers
-_ALIGNMENT_HEADERS = [
+_REQUIRED_FIELDS = [
           'QNAME',   # Query template NAME.
           'FLAG',    # Combination of bitwise FLAGs
           'RNAME',   # Reference sequence NAME of the alignment
@@ -91,7 +78,7 @@ _ALIGNMENT_HEADERS = [
           'RNEXT',   # Reference sequence name of the primary alignment of NEXT
           'PNEXT',   # Position of the primary alignment of the NEXT read
           'TLEN',    # signed observed template length
-          # 'SEQ',     # segment sequence
+          'SEQ',     # segment sequence
           'QUAL',    # ASCII of base quality
 ]
 
@@ -107,38 +94,10 @@ def _sam_sniffer(fh):
     except StopIteration:
         return False, {}
 
-    try:
-        assert line.startswith('@HD')
-    except SAMFormatError:
+    if line.startswith('@HD'):
+        return True, {}
+    else:
         return False, {}
-    return True, {}
-
-
-def _is_float(input):
-    try:
-        float(input)
-    except ValueError:
-        return False
-    return True
-
-
-def parse_optional(s):
-    _field, _type, _val = s.split(':')
-    if _type == 'i':
-        return {_field: int(_val)}
-    elif _type == 'f':
-        return {_field: float(_val)}
-    else:
-        return {_field: _val}
-
-
-def parse_required(s):
-    if s.isdigit():
-        return int(s)
-    elif _is_float(s):
-        return float(s)
-    else:
-        return s
 
 
 def _construct(record, constructor=None, **kwargs):
@@ -184,39 +143,45 @@ def _sam_to_RNA(fh, seq_num=1, **kwargs):
 
 
 def _parse_records(fh, constructor=None, **kwargs):
-    metadata = {}
-    optional_headers = []
-    headers = _ALIGNMENT_HEADERS
+    res = None
+    header_md = {}
+    n = len(_REQUIRED_FIELDS)
     for line in _line_generator(fh, skip_blanks=True, strip=True):
+        md = {}
         # parse the header (would be nice to abstract this pattern out)
         if line.startswith('@'):
-            tabs = line.split('\t')
-            key = tabs[0][1:]
-            # FIXME:  The vals variable needs to be explicitly tested
-            vals = tabs[1:]
-            if key == 'CO':
-                val = vals[0]
-                optional_headers = val.split(',')
-                headers = _ALIGNMENT_HEADERS + optional_headers
-                headers = headers[:9] + headers[10:]
-            else:
-                vals = tabs[1:]
-                if len(vals) > 1:
-                    metadata[key] = vals
-                else:
-                    metadata[key] = vals[0]
-
+            key, val = line.split('\t', 1)
+            if key != '@CO':
+                header_md[key] = val
         # parse the actual sequences
         else:
             tabs = line.split('\t')
+            # zip stops generating after the shorter list of the two
+            md = {k: _parse_required(v) for k, v in zip(_REQUIRED_FIELDS, tabs)}
 
-            # extract sequence
-            seq = tabs[9]
-            tabs = tabs[:9] + tabs[10:]
+            seq = md.pop('SEQ')
 
-            req = list(map(parse_required, tabs[:10]))
-            opt = list(map(parse_optional, tabs[10:]))
-            req = dict(zip(_ALIGNMENT_HEADERS, req))
+            opt = (_parse_optional(field) for field in tabs[n:])
+            md.update(opt)
+            md.update(header_md)
+            res = seq, md
+            yield res
 
-            md = merge_dicts(metadata, req, *opt)
-            yield seq, md
+
+def _parse_optional(s):
+    field, t, v = s.split(':')
+    if t == 'i':
+        v = int(v)
+    elif t == 'f':
+        v = float(v)
+    return field, v
+
+
+def _parse_required(s):
+    if s.isdigit():
+        return int(s)
+    else:
+        try:
+            return float(s)
+        except ValueError:
+            return s

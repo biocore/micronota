@@ -231,11 +231,10 @@ def _embl_sniffer(fh):
     except StopIteration:
         return False, {}
 
-    try:
-        assert line.startswith('ID')
-    except EMBLFormatError:
+    if line.startswith('ID'):
+        return True, {}
+    else:
         return False, {}
-    return True, {}
 
 
 @embl.reader(None)

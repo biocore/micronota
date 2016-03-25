@@ -204,7 +204,7 @@ class FeatureAnnt(MetadataPred):
         self.dat = dat
 
     def _annotate_fp(self, fp, aligner='blastp', evalue=0.001, cpus=1,
-                     outfmt='tab', params=None):
+                     outfmt='sam', params=None):
         '''Annotate the sequences in the file.'''
 
         if self.has_cache() and not self.cache.is_empty():
@@ -216,6 +216,7 @@ class FeatureAnnt(MetadataPred):
         found = []
         res = pd.DataFrame()
         seqs = []
+        logger = getLogger(__name__)
         for db in dbs:
             out_prefix = splitext(basename(db))[0]
             daa_fp = join(self.out_dir, '%s.daa' % out_prefix)
@@ -224,15 +225,23 @@ class FeatureAnnt(MetadataPred):
                            evalue=evalue, cpus=cpus, params=params)
             self.run_view(daa_fp, out_fp, params={'--outfmt': outfmt})
             # res = res.append(self.parse_tabular(out_fp))
-            res = res.append(
-                self._filter_best(self.parse_tabular(out_fp)))
+            if outfmt == 'tab':
+                res = res.append(
+                    self._filter_best(self.parse_tabular(out_fp)))
+            elif outfmt == 'sam':
+                res = res.append(
+                    self._filter_id_cov(self.parse_sam(out_fp)))
+            found.extend(res.index)
             # save to a tmp file the seqs that do not hit current database
             new_fp = join(self.tmp_dir, '%s.fa' % out_prefix)
+            num_hits = 0
             with open(new_fp, 'w') as f:
                 for seq in read(fp, format='fasta'):
                     if seq.metadata['id'] not in found:
                         seq.write(f, format='fasta')
                         seqs.append(seq)
+                        num_hits += 1
+            logger.info('Number of diamond hits: %d' % num_hits)
             found.extend(res.index)
             # no seq left
             if stat(new_fp).st_size == 0:
@@ -304,7 +313,7 @@ class FeatureAnnt(MetadataPred):
             Output file.
         '''
         logger = getLogger(__name__)
-        view = DiamondView(InputHandler='_input_as_paths')
+        view = DiamondView(InputHandler='_input_as_paths', params=params)
         view.Parameters['--daa'].on(daa_fp)
         view.Parameters['--out'].on(out_fp)
         logger.info('Running: %s' % view.BaseCommand)
@@ -349,10 +358,13 @@ class FeatureAnnt(MetadataPred):
         pandas.DataFrame
             The best matched records for each query sequence.
         '''
-        seqs = read(diamond_res, format='sam')
         columns = ['qseqid', 'sseqid', 'pident', 'qlen', 'mismatch',
                    'qstart', 'sstart', 'evalue', 'bitscore', 'sseq']
         df = pd.DataFrame(columns=columns)
+        try:
+            seqs = read(diamond_res, format='sam')
+        except StopIteration:
+            return df
         for i, seq in enumerate(seqs):
             sseq = str(seq)
 
@@ -384,7 +396,7 @@ class FeatureAnnt(MetadataPred):
         elif column == 'bitscore':
             idx = df.groupby('qseqid')[column].idxmax()
         df_best = df.loc[idx]
-        df_best.index = idx.index
+        df_best.set_index('qseqid', drop=True, inplace=True)
         return df_best
 
     @staticmethod
@@ -395,10 +407,25 @@ class FeatureAnnt(MetadataPred):
         select_cov = ((aligned_length * 100 / df.qlen >= cov) &
                       (aligned_length * 100 / df.sseq.apply(len) >= cov))
         # if qlen * 100 / len(row.sequence) >= 80:
-        return df[select_id & select_cov]
+        df_filtered = df[select_id & select_cov]
+        df_filtered.set_index('qseqid', drop=True, inplace=True)
+        return df_filtered
 
 
 def _compute_aligned_length(cigar):
+    '''Compute the length of ungapped region in the alignment.
+
+    It includes both matched and mismatched regions.
+
+    Examples
+    --------
+    >>> [_compute_aligned_length(i) for i in (
+    ...     '',
+    ...     '45D',
+    ...     '18M2D19M')]
+    [0, 0, 37]
+
+    '''
     aligned = re.findall('([0-9]+)M', cigar)
     return sum(int(i) for i in aligned)
 

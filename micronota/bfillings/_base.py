@@ -7,7 +7,7 @@
 # ----------------------------------------------------------------------------
 
 from os import makedirs
-from abc import ABCMeta, abstractmethod
+from abc import ABC, abstractmethod
 from tempfile import mkdtemp, NamedTemporaryFile
 from inspect import signature
 
@@ -22,7 +22,7 @@ class SubclassImplementError(Exception):
         super().__init__('%s: %s' % (message, cls))
 
 
-class IntervalMetadataPred(metaclass=ABCMeta):
+class IntervalMetadataPred(ABC):
     '''
     Attributes
     ----------
@@ -96,7 +96,7 @@ class IntervalMetadataPred(metaclass=ABCMeta):
         return self.cache is not None
 
 
-class MetadataPred(metaclass=ABCMeta):
+class MetadataPred(ABC):
     '''
     Attributes
     ----------

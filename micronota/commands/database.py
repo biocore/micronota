@@ -41,7 +41,7 @@ def create_db(ctx, databases, cache_dir, force):
     grandparent_ctx = ctx.parent.parent
     config = grandparent_ctx.config
     func_name = 'prepare_db'
-
+    makedirs(cache_dir, exist_ok=True)
     for d in databases:
         submodule = import_module('.%s' % d, db.__name__)
         f = getattr(submodule, func_name)
