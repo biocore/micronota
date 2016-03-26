@@ -15,7 +15,7 @@ import re
 from burrito.parameters import FlagParameter, ValuedParameter
 from burrito.util import (
     ApplicationError, CommandLineApplication)
-from skbio import read
+from skbio import read, Sequence
 
 from .util import _get_parameter
 from ._base import MetadataPred
@@ -214,7 +214,7 @@ class FeatureAnnt(MetadataPred):
             dbs = self.dat
 
         seqs = []
-        found = []
+        found = {}
         res = pd.DataFrame()
         logger = getLogger(__name__)
         for db in dbs:
@@ -231,17 +231,25 @@ class FeatureAnnt(MetadataPred):
             elif outfmt == 'sam':
                 res = res.append(
                     self._filter_id_cov(self.parse_sam(out_fp)))
+
+                for x in res.index:
+                    seqs.append(
+                        Sequence(res.loc[x, 'sseq'],
+                                 metadata={'id': res.loc[x, 'sseqid']}))
+
             # save to a tmp file the seqs that do not hit current database
             new_fp = join(self.tmp_dir, '%s.fa' % out_prefix)
-            num_hits = 0
+            num_left = 0
+
+            found.extend(res.index)
             with open(new_fp, 'w') as f:
                 for seq in read(fp, format='fasta'):
                     if seq.metadata['id'] not in found:
                         seq.write(f, format='fasta')
-                        seqs.append(seq)
-                        num_hits += 1
-            logger.info('Number of diamond hits: %d' % num_hits)
-            found.extend(res.index)
+                        num_left += 1
+            logger.info('Number of diamond hits: %d' % len(res.index))
+            logger.info('Number of sequence left unmatched: %d' % num_left)
+
             # no seq left
             if stat(new_fp).st_size == 0:
                 break
@@ -383,7 +391,6 @@ class FeatureAnnt(MetadataPred):
                              evalue, bitscore, sseq],
                             index=columns)
             df.loc[i] = row
-
         return df
 
     @staticmethod

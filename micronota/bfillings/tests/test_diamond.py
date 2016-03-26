@@ -74,7 +74,8 @@ class DiamondBlastTests(DiamondTests):
         for test in self.tests:
             pred = FeatureAnnt([self.db], mkdtemp(dir=self.tmp_dir))
             obs = pred(test.input, aligner=test.aligner, outfmt='tab')
-            exp = pred._filter_best(pred.parse_tabular('%s.diamond' % test.exp))
+            exp = pred._filter_best(
+                pred.parse_tabular('%s.diamond' % test.exp))
             self.assertTrue(exp.equals(obs))
             obs = pred(test.input, aligner=test.aligner, outfmt='sam')
             exp = pred._filter_id_cov(pred.parse_sam('%s.sam' % test.exp))
@@ -106,7 +107,8 @@ class DiamondCacheTests(DiamondTests):
                            cache=self.cache)
         obs = pred(query, aligner=aligner)
         exp = pred._filter_best(pred.parse_tabular(exp_fp))
-        self.assertSetEqual(set(exp['sseqid'].values), set(obs['sseqid'].values))
+        self.assertSetEqual(set(exp['sseqid'].values),
+                            set(obs['sseqid'].values))
 
     def test_cache_initialize(self):
         np.random.seed(0)
