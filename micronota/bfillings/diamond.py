@@ -214,7 +214,7 @@ class FeatureAnnt(MetadataPred):
             dbs = self.dat
 
         seqs = []
-        found = {}
+        found = set()
         res = pd.DataFrame()
         logger = getLogger(__name__)
         for db in dbs:
@@ -241,7 +241,7 @@ class FeatureAnnt(MetadataPred):
             new_fp = join(self.tmp_dir, '%s.fa' % out_prefix)
             num_left = 0
 
-            found.extend(res.index)
+            found = found | set(res.index)
             with open(new_fp, 'w') as f:
                 for seq in read(fp, format='fasta'):
                     if seq.metadata['id'] not in found:
