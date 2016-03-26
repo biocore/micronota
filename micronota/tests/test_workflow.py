@@ -71,22 +71,22 @@ class TestAnnotate(TestCase):
 
 class TestAnnotateCDS(TestCase):
     def setUp(self):
+        seq = ('MNSFRKTCAGALALIFGATSIVPTVAAPMNMDRPAINQNVIQARAHYR'
+               'PQNYNRGHRPGYWHGHRGYRHYRHGYRRHNDGWWYPLAAFGAGAIIGG'
+               'AISQPRPVYRAPAGSPHVQWCYSRYKSYRASDNTFQPYNGPRKQCRSP'
+               'YSR')[0]
+        note = "start_type=Edge;rbs_motif=None;rbs_spacer=None;gc_cont=0.678"
         self.test_dir = abspath(
             join('micronota', 'db', 'tests', 'data', 'uniref', 'uniref100'))
         self.im = {
-            Feature(
-                note="start_type=Edge;rbs_motif=None;"
-                     "rbs_spacer=None;gc_cont=0.678",
-                 id="1_1",
-                 translation='MNSFRKTCAGALALIFGATSIVPTVAAPMNMDRPAINQNVIQARAHYR'
-                             'PQNYNRGHRPGYWHGHRGYRHYRHGYRRHNDGWWYPLAAFGAGAIIGG'
-                             'AISQPRPVYRAPAGSPHVQWCYSRYKSYRASDNTFQPYNGPRKQCRSP'
-                             'YSR',
-                 location='<1..>441',
-                 left_partial_=True,
-                 rc_=False,
-                 type_='CDS',
-                 right_partial_=True): [(0, 441)]}
+            Feature(note=note,
+                    id="1_1",
+                    translation=seq,
+                    location='<1..>441',
+                    left_partial_=True,
+                    rc_=False,
+                    type_='CDS',
+                    right_partial_=True): [(0, 441)]}
         self.obs_tmp = mkdtemp()
 
     def test_annotate_all_cds_no_cache(self):
