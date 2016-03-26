@@ -14,8 +14,10 @@ from filecmp import cmp
 
 from skbio import read, write
 from skbio.util import get_data_path
+from skbio.metadata import Feature
 
-from micronota.workflow import annotate
+from micronota.bfillings.diamond import DiamondCache
+from micronota.workflow import annotate, annotate_all_cds
 from micronota.config import Configuration
 
 
@@ -65,6 +67,46 @@ class TestAnnotate(TestCase):
             get_data_path(self.test1_exp),
             join(self.obs_tmp, self.test1_exp),
             shallow=False))
+
+
+class TestAnnotateCDS(TestCase):
+    def setUp(self):
+        self.test_dir = abspath(
+            join('micronota', 'db', 'tests', 'data', 'uniref', 'uniref100'))
+        self.im = {
+            Feature(
+                note="start_type=Edge;rbs_motif=None;"
+                     "rbs_spacer=None;gc_cont=0.678",
+                 id="1_1",
+                 translation='MNSFRKTCAGALALIFGATSIVPTVAAPMNMDRPAINQNVIQARAHYR'
+                             'PQNYNRGHRPGYWHGHRGYRHYRHGYRRHNDGWWYPLAAFGAGAIIGG'
+                             'AISQPRPVYRAPAGSPHVQWCYSRYKSYRASDNTFQPYNGPRKQCRSP'
+                             'YSR',
+                 location='<1..>441',
+                 left_partial_=True,
+                 rc_=False,
+                 type_='CDS',
+                 right_partial_=True): [(0, 441)]}
+        self.obs_tmp = mkdtemp()
+
+    def test_annotate_all_cds_no_cache(self):
+
+        config = Configuration()
+        config.db_dir = self.test_dir
+        im, cache = annotate_all_cds(self.im, out_dir=self.obs_tmp,
+                                     kingdom='archaea', config=config,
+                                     cpus=1, cache=None)
+        self.assertTrue(cache is None)
+
+    def test_annotate_all_cds_cache_enabled(self):
+
+        config = Configuration()
+        config.db_dir = self.test_dir
+        im, cache = annotate_all_cds(self.im, out_dir=self.obs_tmp,
+                                     kingdom='archaea', config=config,
+                                     cpus=1, cache=DiamondCache())
+        self.assertTrue(cache is not None)
+        self.assertTrue(len(cache.seqs) > 0)
 
 
 if __name__ == '__main__':
