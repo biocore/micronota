@@ -120,7 +120,7 @@ class DiamondCacheTests(DiamondTests):
     def test_cache_initialize(self):
         np.random.seed(0)
         for test in self.tests:
-            aligner, query, _ = test.aligner, test.input, test.exp
+            aligner, query = test.aligner, test.input
             pred = FeatureAnnt([self.db], mkdtemp(dir=self.tmp_dir),
                                cache=DiamondCache())
             pred(query, aligner=aligner)
