@@ -242,7 +242,7 @@ class FeatureAnnt(MetadataPred):
                 for seq in read(fp, format='fasta'):
                     if seq.metadata['id'] not in found:
                         seq.write(f, format='fasta')
-                        num_left += 1
+                    num_left += 1
             logger.info('Number of diamond hits: %d' % len(res.index))
             logger.info('Number of sequence left unmatched: %d' % num_left)
 
@@ -251,11 +251,11 @@ class FeatureAnnt(MetadataPred):
                 break
             else:
                 fp = new_fp
-
-        for x in res.index:
-            seqs.append(
-                Sequence(res.loc[x, 'sseq'],
-                         metadata={'id': res.loc[x, 'sseqid']}))
+        if outfmt == 'sam' and self.has_cache():
+            for x in res.index:
+                seqs.append(
+                    Sequence(res.loc[x, 'sseq'],
+                             metadata={'id': res.loc[x, 'sseqid']}))
 
         # Update cache (inplace)
         if self.has_cache():
