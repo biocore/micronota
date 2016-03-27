@@ -232,10 +232,6 @@ class FeatureAnnt(MetadataPred):
                 res = res.append(
                     self._filter_id_cov(self.parse_sam(out_fp)))
 
-                for x in res.index:
-                    seqs.append(
-                        Sequence(res.loc[x, 'sseq'],
-                                 metadata={'id': res.loc[x, 'sseqid']}))
 
             # save to a tmp file the seqs that do not hit current database
             new_fp = join(self.tmp_dir, '%s.fa' % out_prefix)
@@ -255,6 +251,12 @@ class FeatureAnnt(MetadataPred):
                 break
             else:
                 fp = new_fp
+
+        for x in res.index:
+            seqs.append(
+                Sequence(res.loc[x, 'sseq'],
+                         metadata={'id': res.loc[x, 'sseqid']}))
+
         # Update cache (inplace)
         if self.has_cache():
             self.cache.update(seqs)

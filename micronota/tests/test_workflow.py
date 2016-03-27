@@ -74,7 +74,8 @@ class TestAnnotateCDS(TestCase):
         seq = ('MNSFRKTCAGALALIFGATSIVPTVAAPMNMDRPAINQNVIQARAHYR'
                'PQNYNRGHRPGYWHGHRGYRHYRHGYRRHNDGWWYPLAAFGAGAIIGG'
                'AISQPRPVYRAPAGSPHVQWCYSRYKSYRASDNTFQPYNGPRKQCRSP'
-               'YSR')[0]
+               'YSR')
+
         note = "start_type=Edge;rbs_motif=None;rbs_spacer=None;gc_cont=0.678"
         self.test_dir = abspath(
             join('micronota', 'db', 'tests', 'data', 'uniref', 'uniref100'))

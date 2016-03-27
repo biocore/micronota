@@ -180,7 +180,8 @@ def annotate_all_cds(im, out_dir, kingdom, config, cpus=1, cache=None):
         res_ = obj(pro_fp, cpus=cpus, params=params)
         res = res.append(res_)
         obj_cache = obj.cache
-        return _update(im, id_key, res), obj_cache
+
+    return _update(im, id_key, res), obj_cache
 
 
 def _update(im, id_key, res):
