@@ -232,7 +232,6 @@ class FeatureAnnt(MetadataPred):
                 res = res.append(
                     self._filter_id_cov(self.parse_sam(out_fp)))
 
-
             # save to a tmp file the seqs that do not hit current database
             new_fp = join(self.tmp_dir, '%s.fa' % out_prefix)
             num_left = 0
