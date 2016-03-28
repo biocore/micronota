@@ -74,7 +74,8 @@ class DiamondBlastTests(DiamondTests):
         for test in self.tests:
             pred = FeatureAnnt([self.db], mkdtemp(dir=self.tmp_dir))
             obs = pred(test.input, aligner=test.aligner, outfmt='tab')
-            exp = pred._filter_best(pred.parse_tabular('%s.diamond' % test.exp))
+            exp = pred._filter_best(
+                pred.parse_tabular('%s.diamond' % test.exp))
             self.assertTrue(exp.equals(obs))
             obs = pred(test.input, aligner=test.aligner, outfmt='sam')
             exp = pred._filter_id_cov(pred.parse_sam('%s.sam' % test.exp))
@@ -93,29 +94,47 @@ class DiamondBlastTests(DiamondTests):
 class DiamondCacheTests(DiamondTests):
     def setUp(self):
         super().setUp()
-        tests = ('blastp', 'WP_009885814.faa')
-        self.blast = (tests[0], get_data_path(tests[1]),
-                      _get_named_data_path('%s.diamond' % tests[1]))
+        cases = [('blastp', 'WP_009885814.faa'),
+                 ('blastx', 'WP_009885814.fna')]
+        Test = namedtuple('Test', ['aligner', 'input', 'exp'])
+        self.tests = [Test(i[0],
+                           get_data_path(i[1]),
+                           _get_named_data_path('%s.diamond' % i[1]))
+                      for i in cases]
+
         seqs = skbio.read(_get_named_data_path('cache.faa'), format='fasta')
         self.cache = DiamondCache(list(seqs))
 
     def test_cache(self):
         np.random.seed(0)
-        aligner, query, exp_fp = self.blast
-        pred = FeatureAnnt([self.db], mkdtemp(dir=self.tmp_dir),
-                           cache=self.cache)
-        obs = pred(query, aligner=aligner)
-        exp = pred._filter_best(pred.parse_tabular(exp_fp))
-        self.assertEqual(exp['sseqid'].values, obs['sseqid'].values)
+        for test in self.tests:
+            aligner, query, exp_fp = test.aligner, test.input, test.exp
+
+            pred = FeatureAnnt([self.db], mkdtemp(dir=self.tmp_dir),
+                               cache=self.cache)
+            obs = pred(query, aligner=aligner)
+            exp = pred._filter_best(pred.parse_tabular(exp_fp))
+            self.assertSetEqual(set(exp['sseqid'].values),
+                                set(obs['sseqid'].values))
+
+    def test_cache_initialize(self):
+        np.random.seed(0)
+        for test in self.tests:
+            aligner, query = test.aligner, test.input
+            pred = FeatureAnnt([self.db], mkdtemp(dir=self.tmp_dir),
+                               cache=DiamondCache())
+            pred(query, aligner=aligner)
+            self.assertTrue(len(pred.cache.seqs) > 0)
 
     def test_cache_empty_db(self):
         np.random.seed(0)
-        aligner, query, exp_fp = self.blast
-        pred = FeatureAnnt([], mkdtemp(dir=self.tmp_dir),
-                           cache=self.cache)
-        obs = pred(query, aligner=aligner)
-        exp = pred._filter_best(pred.parse_tabular(exp_fp))
-        self.assertEqual(exp['sseqid'].values, obs['sseqid'].values)
+        for test in self.tests:
+            aligner, query, exp_fp = test.aligner, test.input, test.exp
+            pred = FeatureAnnt([], mkdtemp(dir=self.tmp_dir),
+                               cache=self.cache)
+            obs = pred(query, aligner=aligner)
+            exp = pred._filter_best(pred.parse_tabular(exp_fp))
+            self.assertEqual(exp['sseqid'].values, obs['sseqid'].values)
 
 
 class ParsingTests(TestCase):

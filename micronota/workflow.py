@@ -18,7 +18,7 @@ import pandas as pd
 
 from . import bfillings
 from .util import _overwrite
-from . bfillings.diamond import DiamondCache as dc
+from . bfillings.diamond import DiamondCache
 
 
 def annotate(in_fp, in_fmt, out_dir, out_fmt,
@@ -35,7 +35,7 @@ def annotate(in_fp, in_fmt, out_dir, out_fmt,
         Output file directory.
     out_fmt : str
         Output file format.
-    kingdom : int
+    kingdom : str
         Kingdom index corresponding to database (i.e. virus, bacteria ...)
     cpus : int
         Number of cpus to use.
@@ -52,13 +52,11 @@ def annotate(in_fp, in_fmt, out_dir, out_fmt,
 
     # declare DiamondCache
     if cache:
-        cache = dc()
+        cache = DiamondCache()
     else:
         cache = None
 
     with open(out_fp, 'w') as out:
-        # cache
-        # submit slurm jobs
         for seq in read(in_fp, format=in_fmt):
             # dir for useful intermediate files for the current input seq
             # replace non alnum char with "_"
@@ -119,27 +117,34 @@ def annotate_all_cds(im, out_dir, kingdom, config, cpus=1, cache=None):
 
     Parameters
     ----------
-    seq : skbio.Sequence
-        Input sequence object.
+    im : dict
+        Keys correspond to skbio.metadata.Feature objects and values correspond
+        to a list of tuples representing intervals.
     out_dir : str
         Output directory.
-    config : ``micronota.config.Configuration``
-        Container for configuration options.
     kingdom : str
         Kingdom (i.e. virus, bacteria ...) of the input sequence. It will
         be used to prioritize databases to search.
+    config : ``micronota.config.Configuration``
+        Container for configuration options.
     cpus : int
         Number of CPUs to use.
+    cache : DiamondCache or None
+        A DiamondCache object to store cached sequences.
 
     Returns
     -------
-    im : skbio.metadata.IntervalMetadata
-        Interval metadata object
+    im : dict
+        Keys correspond to skbio.metadata.Feature objects and values correspond
+        to a list of tuples representing intervals.
+    cache: DiamondCache or None
+        An updated cache object
     '''
     logger = getLogger(__name__)
     logger.info('Running CDS functional annotation.')
     id_key = 'id'
     res = pd.DataFrame()
+    obj_cache = cache
     for tool in config.cds:
         d = join(out_dir, tool)
         makedirs(d, exist_ok=True)
@@ -174,7 +179,9 @@ def annotate_all_cds(im, out_dir, kingdom, config, cpus=1, cache=None):
             params = None
         res_ = obj(pro_fp, cpus=cpus, params=params)
         res = res.append(res_)
-    return _update(im, id_key, res), obj.cache
+        obj_cache = obj.cache
+
+    return _update(im, id_key, res), obj_cache
 
 
 def _update(im, id_key, res):

@@ -15,7 +15,7 @@ import re
 from burrito.parameters import FlagParameter, ValuedParameter
 from burrito.util import (
     ApplicationError, CommandLineApplication)
-from skbio import read
+from skbio import read, Sequence
 
 from .util import _get_parameter
 from ._base import MetadataPred
@@ -207,15 +207,16 @@ class FeatureAnnt(MetadataPred):
                      outfmt='sam', params=None):
         '''Annotate the sequences in the file.'''
 
-        if self.has_cache():
+        if self.has_cache() and not self.cache.is_empty():
             self.cache.build()
             dbs = [self.cache.db] + self.dat
         else:
             dbs = self.dat
 
-        found = []
-        res = pd.DataFrame()
         seqs = []
+        found = set()
+        res = pd.DataFrame()
+        logger = getLogger(__name__)
         for db in dbs:
             out_prefix = splitext(basename(db))[0]
             daa_fp = join(self.out_dir, '%s.daa' % out_prefix)
@@ -230,19 +231,26 @@ class FeatureAnnt(MetadataPred):
             elif outfmt == 'sam':
                 res = res.append(
                     self._filter_id_cov(self.parse_sam(out_fp)))
-            found.extend(res.index)
+
             # save to a tmp file the seqs that do not hit current database
             new_fp = join(self.tmp_dir, '%s.fa' % out_prefix)
+            found = found | set(res.index)
             with open(new_fp, 'w') as f:
                 for seq in read(fp, format='fasta'):
                     if seq.metadata['id'] not in found:
                         seq.write(f, format='fasta')
-                        seqs.append(seq)
+            logger.info('Number of diamond hits: %d' % len(res.index))
+
             # no seq left
             if stat(new_fp).st_size == 0:
                 break
             else:
                 fp = new_fp
+        if outfmt == 'sam' and self.has_cache():
+            for x in res.index:
+                seqs.append(
+                    Sequence(res.loc[x, 'sseq'],
+                             metadata={'id': res.loc[x, 'sseqid']}))
 
         # Update cache (inplace)
         if self.has_cache():
@@ -349,6 +357,7 @@ class FeatureAnnt(MetadataPred):
         ----------
         diamond_res : str
             file path
+
         Returns
         -------
         pandas.DataFrame
@@ -379,7 +388,6 @@ class FeatureAnnt(MetadataPred):
                              evalue, bitscore, sseq],
                             index=columns)
             df.loc[i] = row
-
         return df
 
     @staticmethod
@@ -447,7 +455,10 @@ class DiamondCache:
         self.fasta = join(out_dir, '%s.fasta' % self.fname)
         self.db = join(out_dir, '%s.dmnd' % self.fname)
         self.maxSize = maxSize
-        self.seqs = seqs
+        if seqs is None:
+            self.seqs = []
+        else:
+            self.seqs = seqs
 
     def _generate_random_file(self, N=10):
         s = ''.join(random.SystemRandom().choice(
@@ -465,6 +476,8 @@ class DiamondCache:
         return (self.seqs is None) or len(self.seqs) == 0
 
     def build(self, params=None):
+        if self.is_empty():
+            return
         for seq in self.seqs:
             seq.write(self.fasta, format='fasta')
         make_db(self.fasta, self.db, params)
@@ -480,5 +493,9 @@ class DiamondCache:
         self.seqs = self.seqs[:self.maxSize]
 
     def close(self):
-        remove(self.fasta)
-        remove(self.db)
+        # Remove files if they exist
+        # They won't be present if the cache is empty
+        if exists(self.fasta):
+            remove(self.fasta)
+        if exists(self.db):
+            remove(self.db)
