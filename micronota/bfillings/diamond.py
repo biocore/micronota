@@ -234,16 +234,12 @@ class FeatureAnnt(MetadataPred):
 
             # save to a tmp file the seqs that do not hit current database
             new_fp = join(self.tmp_dir, '%s.fa' % out_prefix)
-            num_left = 0
-
             found = found | set(res.index)
             with open(new_fp, 'w') as f:
                 for seq in read(fp, format='fasta'):
                     if seq.metadata['id'] not in found:
                         seq.write(f, format='fasta')
-                        num_left += 1
             logger.info('Number of diamond hits: %d' % len(res.index))
-            logger.info('Number of sequence left unmatched: %d' % num_left)
 
             # no seq left
             if stat(new_fp).st_size == 0:
