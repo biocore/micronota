@@ -241,7 +241,7 @@ class FeatureAnnt(MetadataPred):
                 for seq in read(fp, format='fasta'):
                     if seq.metadata['id'] not in found:
                         seq.write(f, format='fasta')
-                    num_left += 1
+                        num_left += 1
             logger.info('Number of diamond hits: %d' % len(res.index))
             logger.info('Number of sequence left unmatched: %d' % num_left)
 
