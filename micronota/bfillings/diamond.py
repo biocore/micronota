@@ -9,187 +9,186 @@
 from os import stat, remove
 from os.path import join, basename, splitext, exists
 from logging import getLogger
+import re
 
 import pandas as pd
-import re
-from burrito.parameters import FlagParameter, ValuedParameter
-from burrito.util import (
-    ApplicationError, CommandLineApplication)
 from skbio import read, Sequence
+from dumpling import (
+    check_choice, Dumpling, OptionParam, Parameters)
 
-from .util import _get_parameter
-from ._base import MetadataPred
 import string
 import random
 
-_OPTIONS_FLAG = {
-    i: _get_parameter(FlagParameter, i)
-    for i in [
-            # only show alignments of forward strand
-            '--forwardonly']}
+blast_params = [
+    OptionParam('--threads', 'cpus', help='number of cpu threads.'),
 
-_OPTIONS_VALUE = {
-    i: _get_parameter(ValuedParameter, i, Delimiter=' ')
-    for i in [
-            '--threads',
-            # 11 Gap open penalty.
-            '--in',
-            '--block-size',
-            '--gapopen',
-            # 1 Gap extension penalty.
-            '--gapextend',
-            # BLOSUM62 Scoring matrix.
-            '--matrix',
-            # Enable SEG masking of low complexity segments in the query.
-            # (yes/no). The default is no for blastp and yes for blastx.
-            '--seg',
-            # -k 25 The maximum number of target sequences per query to
-            # keep alignments for.
-            '--max-target-seqs',
-            # Keep alignments within the given percentage range of the top
-            # alignment score for a query (overrides –max-target-seqs option).
-            '--top',
-            # -e 0.001 Maximum expected value to keep an alignment.
-            '--evalue',
-            # Minimum bit score to keep an alignment. Setting this option
-            # will override the --evalue parameter.
-            '--min-score',
-            # Trigger the sensitive alignment mode with a 16x9 seed
-            # shape config.
-            '--sensitive',
-            # Dynamic programming band for seed extension.
-            '--band',
-            # Compression for output file (0=none, 1=gzip).]
-            '--compress',
-            # Format of output file. (tab = BLAST tabular format;
-            # sam = SAM format)
-            '--outfmt']}
+    OptionParam('--gapopen', help='Gap open penalty.'),
+    OptionParam('--gapextend', help='Gap extension penalty.'),
+    OptionParam('--matrix', help='Scoring matrix.'),
+    OptionParam('--seg', help='Enable SEG masking.'),
+    OptionParam('--max-target-seqs', '-k',
+                help='The maximum number of hits per query to keep alignments for.'),
+    OptionParam('--top',
+                help='Keep alignments within the given percentage range of the top alignment'),
+    OptionParam('--evalue', '-e', help='Maximum expected value to keep an alignment.'),
+    OptionParam('--min-score',
+                help=('Minimum bit score to keep an alignment. Setting this option'
+                      'will override the --evalue parameter.')),
+    OptionParam('--query-cover',
+                help='Report only alignments above the given percentage of query cover.'),
+    OptionParam('--salltitles',
+                help='Print full length subject titles in output.'),
 
-_OPTIONS_PATH = {
-    i: _get_parameter(ValuedParameter, i, Delimiter=' ', IsPath=True)
-    for i in [
-            '--db',
-            # -q Path to query input file in FASTA or FASTQ format
-            # (may be gzip compressed).
-            '--query',
-            '--tmpdir',
-            # -a
-            '--daa',
-            # output file
-            '--out']}
+    OptionParam('--band', help=''),
+    OptionParam('--index-chunks', '-c',
+                help='The number of chunks for processing the seed index.'),
 
-_PARAMETERS = {}
-_PARAMETERS.update(_OPTIONS_FLAG)
-_PARAMETERS.update(_OPTIONS_VALUE)
-_PARAMETERS.update(_OPTIONS_PATH)
-_PARAMETERS_BLAST = {
-    i: _PARAMETERS[i]
-    for i in
-    ['--threads',
-     '--db',
-     '--query',
-     '--tmpdir',
-     '--daa',
-     '--gapopen',
-     '--gapextend',
-     '--matrix',
-     '--max-target-seqs',
-     '--top',
-     '--evalue',
-     '--min-score',
-     '--sensitive',
-     '--band',
-     '--compress']}
+    OptionParam('--sensitive',
+                help=('Trigger the sensitive alignment mode with a 16x9 seed'
+                      'shape config.')),
+    OptionParam('--tmpdir', '-t',
+                help='Directory to be used for temporary storage.'),
+
+    OptionParam('--db', '-d', help='Path to DIAMOND database file'),
+    OptionParam('--daa', '-a',
+                help='Path to DAA file.'),
+    OptionParam('--query', '-q',
+                help=('Path to query input file in FASTA or FASTQ format '
+                      '(may be gzip compressed).'))]
 
 
-class Diamond(CommandLineApplication):
-    '''diamond controller.'''
-    _command = 'diamond'
-    _suppress_stderr = False
-    _synonyms = {'cpus': '--threads',
-                 'tmpdir': '--tmpdir',
-                 'evalue': '--evalue'}
-
-    # This re-implementation is required for subcommands
-    def _get_base_command(self):
-        if self._subcommand is None:
-            raise ApplicationError('_subcommand has not been set.')
-        # prevent append multiple subcommand
-        if not self._command.endswith(self._subcommand):
-            self._command = self._command_delimiter.join(
-                [self._command, self._subcommand])
-        return super()._get_base_command()
-
-    BaseCommand = property(_get_base_command)
-
-    def _accept_exit_status(self, exit_status):
-        return exit_status == 0
+makedb_params = [
+    OptionParam('--threads', '-p', name='cpus'),
+    OptionParam('--in', name='fasta',
+                help='protein reference database file in FASTA format (may be gzip compressed)'),
+    OptionParam('--db', '-d',
+                help='DIAMOND database file.'),
+    OptionParam('--block-size',
+                help='Block size in billions of sequence letters to be processed at a time.')]
 
 
-class DiamondMakeDB(Diamond):
-    '''diamond makedb controller.'''
-    _subcommand = 'makedb'
-    _parameters = {
-        i: _PARAMETERS[i]
-        for i in
-        ['--in', '--block-size', '--threads', '--db']}
+view_params = [
+    OptionParam('--outfmt', name='fmt', action=check_choice(('tab', 'sam')),
+                help=('Format of output file. (tab = BLAST tabular format;'
+                      'sam = SAM format)')),
+    OptionParam('--daa', '-a',
+                help='Path to DAA file.'),
+    OptionParam('--out', '-o',
+                help='Path to output file.'),
+    OptionParam('--compress', action=check_choice((0, 1)),
+                help='Compression for output file (0=none, 1=gzip).')]
 
 
-class DiamondBlastp(Diamond):
-    '''diamond blastp controller.'''
-    _subcommand = 'blastp'
-    _parameters = _PARAMETERS_BLAST
+def run_blast(query, daa, aligner='blastp', **kwargs):
+    '''Search query sequences against the database.
+
+    Parameters
+    ----------
+    query : str
+        The file path of the query seq
+    daa : str
+        The file path of the output daa file
+    aligner : str
+        The aligner. blastp or blastx
+    kwargs : dict
+        keyword arguments. Command line parameters for diamond blastp
+        or blastx.
+    Returns
+    -------
+    str
+        The file path of the blast result.
+    '''
+    logger = getLogger(__name__)
+
+    blast = Dumpling(['diamond', aligner],
+                     params=Parameters(*blast_params))
+    blast.update(query=query, daa=daa, **kwargs)
+    logger.info('Running {}'.format(blast.command))
+    blast()
+    return blast
 
 
-class DiamondBlastx(Diamond):
-    '''diamond blastp controller.'''
-    _subcommand = 'blastx'
-    _parameters = _PARAMETERS_BLAST
+def run_view(daa, out, fmt='sam', **kwargs):
+    '''
+    Parameters
+    ----------
+    daa : str
+        Input file resulting from diamond blast.
+    out : str
+        Output file.
+    '''
+    logger = getLogger(__name__)
+    view = Dumpling(['diamond', 'view'],
+                    params=Parameters(*view_params))
+    view.update(daa=daa, out=out, fmt=fmt, **kwargs)
+    logger.info('Running {}'.format(view.command))
+    view()
+    return view
 
 
-class DiamondView(Diamond):
-    '''diamond view controller.'''
-    _subcommand = 'view'
-    _parameters = {
-        i: _PARAMETERS[i]
-        for i in
-        ['--daa', '--out', '--outfmt', '--forwardonly']}
-
-
-def make_db(in_fp, out_fp=None, params=None):
+def run_makedb(fasta, db=None, **kwargs):
     '''Format database from a fasta file.
 
     This is similar to running ``diamond makedb --in db.faa --db db``.
 
     Parameters
     ----------
-    in_fp : str
+    fasta : str
         Input path for the fasta file.
-    out_fp : str or None (default)
+    db : str or None (default)
         Output path for the formatted database file. It will be named
         after input file in the same directory by default.
-    params : dict
-        Other command line parameters for diamond blastp. key is the option
-        (e.g. "-T") and value is the value for the option (e.g. "50").
-        If the option is a flag, set the value to None.
+    kwargs : dict
+        keyword arguments. Other command line parameters for diamond makedb.
+
     Returns
     -------
-    int
-        The exit code of the command.
+    `Dumpling`
     '''
-    if out_fp is None:
-        out_fp = splitext(in_fp)[0]
-    app = DiamondMakeDB(InputHandler='_input_as_paths', params=params)
-    app.Parameters['--in'].on(in_fp)
-    app.Parameters['--db'].on(out_fp)
-    res = app()
-    res.cleanUp()
-    res['StdOut'].close()
-    res['StdErr'].close()
-    return res
+    logger = getLogger(__name__)
+    if db is None:
+        db = splitext(fasta)[0]
+    makedb = Dumpling(['diamond', 'makedb'], params=Parameters(*makedb_params),
+                      version='0.7.12', url='https://github.com/bbuchfink/diamond')
+    makedb.update(fasta=fasta, db=db, **kwargs)
+    logger.info('Running {}'.format(makedb.command))
+    makedb()
+    return makedb
 
 
-class FeatureAnnt(MetadataPred):
+def run(out_dir, query, db, fmt='sam', aligner='blastp', **kwargs):
+    '''
+    Run Diamond search.
+
+    Parameters
+    ----------
+    out_dir : str
+        output dir
+    query : str
+        file path to query sequence
+    db : str
+        file path the db
+    fmt : str ('sam' or 'tab')
+        output file format
+    aligner : str ('blastp' or 'blastx'
+        which aligning mode to use
+    kwargs : dict
+        keyword arguments passing to `run_blast`
+
+    Returns
+    -------
+    None
+    '''
+    logger = getLogger(__name__)
+    prefix = splitext(basename(db))[0]
+    daa = join(out_dir, '{}.daa'.format(prefix))
+    out = join(out_dir, '{0}.{1}'.format(prefix, fmt))
+    logger.info('Running Diamond search ...')
+    run_blast(daa=daa, db=db, query=query, aligner=aligner, **kwargs)
+    run_view(daa=daa, out=out, fmt=fmt)
+
+
+class FeatureAnnt:
     '''
     Attributes
     ----------
@@ -258,162 +257,93 @@ class FeatureAnnt(MetadataPred):
             self.cache.close()
         return res
 
-    def run_blast(self, fp, daa_fp, db, aligner='blastp', evalue=0.001, cpus=1,
-                  params=None):
-        '''Search query sequences against the database.
 
-        Parameters
-        ----------
-        fp : str
-            File path for the query sequence.
-        daa_fp : str
-            Output file path.
-        cpus : int
-            Number of CPUs. Default to 1. If it is set to 0, it will use
-            all available CPUs.
-        evalue : float
-            Default to 0.01. Threshold E-value.
-        params : dict
-            Other command line parameters for diamond blastp. key is the option
-            (e.g. "-T") and value is the value for the option (e.g. "50").
-            If the option is a flag, set the value to None.
+def parse_tabular(diamond_res, column='bitscore'):
+    '''Parse the tabular output of diamond blastp/blastx.
 
-        Returns
-        -------
-        str
-            The file path of the blast result.
-        '''
-        logger = getLogger(__name__)
+    Parameters
+    ----------
+    diamond_res : str
+        file path to Diamond tabular output
+    column : str
+        The column used to pick the best hits.
 
-        if aligner == 'blastp':
-            app = DiamondBlastp
-        elif aligner == 'blastx':
-            app = DiamondBlastx
-        else:
-            raise ValueError('Unknown aligner: %s.' % aligner)
+    Returns
+    -------
+    pandas.DataFrame
+        The hit records for each query sequence.
+    '''
+    columns = ['qseqid', 'sseqid', 'pident', 'length', 'mismatch',
+               'gapopen', 'qstart', 'qend', 'sstart', 'send',
+               'evalue', 'bitscore']
+    df = pd.read_table(diamond_res, names=columns)
+    return df
 
-        blast = app(InputHandler='_input_as_paths', params=params)
-        blast.Parameters['--query'].on(fp)
-        blast.Parameters['--daa'].on(daa_fp)
-        blast.Parameters['--db'].on(db)
-        blast.Parameters['--evalue'].on(evalue)
-        blast.Parameters['--threads'].on(cpus)
-        blast.Parameters['--tmpdir'].on(self.tmp_dir)
 
-        logger.info('Running: %s' % blast.BaseCommand)
-        blast_res = blast()
-        blast_res.cleanUp()
-        blast_res['StdOut'].close()
-        blast_res['StdErr'].close()
-        return blast_res
+def parse_sam(diamond_res):
+    '''Parse the output of diamond blastp/blastx.
 
-    def run_view(self, daa_fp, out_fp, params=None):
-        '''
-        Parameters
-        ----------
-        daa_fp : str
-            Input file resulting from diamond blast.
-        out_fp : str
-            Output file.
-        '''
-        logger = getLogger(__name__)
-        view = DiamondView(InputHandler='_input_as_paths', params=params)
-        view.Parameters['--daa'].on(daa_fp)
-        view.Parameters['--out'].on(out_fp)
-        logger.info('Running: %s' % view.BaseCommand)
-        view_res = view()
-        view_res.cleanUp()
-        view_res['StdOut'].close()
-        view_res['StdErr'].close()
-        return view_res
+    Parameters
+    ----------
+    diamond_res : str
+        file path
 
-    @staticmethod
-    def parse_tabular(diamond_res, column='bitscore'):
-        '''Parse the output of diamond blastp/blastx.
-
-        Parameters
-        ----------
-        diamond_res : str
-            file path
-        column : str
-            The column used to pick the best hits.
-
-        Returns
-        -------
-        pandas.DataFrame
-            The best matched records for each query sequence.
-        '''
-        columns = ['qseqid', 'sseqid', 'pident', 'length', 'mismatch',
-                   'gapopen', 'qstart', 'qend', 'sstart', 'send',
-                   'evalue', 'bitscore']
-        df = pd.read_table(diamond_res, names=columns)
+    Returns
+    -------
+    pandas.DataFrame
+        The best matched records for each query sequence.
+    '''
+    columns = ['qseqid', 'sseqid', 'pident', 'qlen', 'mismatch',
+               'qstart', 'sstart', 'evalue', 'bitscore', 'sseq']
+    df = pd.DataFrame(columns=columns)
+    try:
+        seqs = read(diamond_res, format='sam')
+    except StopIteration:
         return df
+    for i, seq in enumerate(seqs):
+        sseq = str(seq)
 
-    @staticmethod
-    def parse_sam(diamond_res):
-        '''Parse the output of diamond blastp/blastx.
+        qseqid = seq.metadata['QNAME']
+        sseqid = seq.metadata['RNAME']
+        pident = seq.metadata['ZI']
+        qlen = seq.metadata['ZL']
+        mismatch = seq.metadata['CIGAR']
+        qstart = seq.metadata['POS']
+        sstart = seq.metadata['ZS']
+        evalue = seq.metadata['ZE']
+        bitscore = seq.metadata['ZR']
+        row = pd.Series([qseqid, sseqid, pident,
+                         qlen, mismatch,
+                         qstart, sstart,
+                         evalue, bitscore, sseq],
+                        index=columns)
+        df.loc[i] = row
+    return df
 
-        Parameters
-        ----------
-        diamond_res : str
-            file path
 
-        Returns
-        -------
-        pandas.DataFrame
-            The best matched records for each query sequence.
-        '''
-        columns = ['qseqid', 'sseqid', 'pident', 'qlen', 'mismatch',
-                   'qstart', 'sstart', 'evalue', 'bitscore', 'sseq']
-        df = pd.DataFrame(columns=columns)
-        try:
-            seqs = read(diamond_res, format='sam')
-        except StopIteration:
-            return df
-        for i, seq in enumerate(seqs):
-            sseq = str(seq)
+def _filter_best(df, column='evalue'):
+    # pick the rows that have highest bitscore for each qseqid
+    # df_max = df.groupby('qseqid').apply(
+    #     lambda r: r[r[column] == r[column].max()])
+    if column == 'evalue':
+        idx = df.groupby('qseqid')[column].idxmin()
+    elif column == 'bitscore':
+        idx = df.groupby('qseqid')[column].idxmax()
+    df_best = df.loc[idx]
+    df_best.set_index('qseqid', drop=True, inplace=True)
+    return df_best
 
-            qseqid = seq.metadata['QNAME']
-            sseqid = seq.metadata['RNAME']
-            pident = seq.metadata['ZI']
-            qlen = seq.metadata['ZL']
-            mismatch = seq.metadata['CIGAR']
-            qstart = seq.metadata['POS']
-            sstart = seq.metadata['ZS']
-            evalue = seq.metadata['ZE']
-            bitscore = seq.metadata['ZR']
-            row = pd.Series([qseqid, sseqid, pident,
-                             qlen, mismatch,
-                             qstart, sstart,
-                             evalue, bitscore, sseq],
-                            index=columns)
-            df.loc[i] = row
-        return df
 
-    @staticmethod
-    def _filter_best(df, column='evalue'):
-        # pick the rows that have highest bitscore for each qseqid
-        # df_max = df.groupby('qseqid').apply(
-        #     lambda r: r[r[column] == r[column].max()])
-        if column == 'evalue':
-            idx = df.groupby('qseqid')[column].idxmin()
-        elif column == 'bitscore':
-            idx = df.groupby('qseqid')[column].idxmax()
-        df_best = df.loc[idx]
-        df_best.set_index('qseqid', drop=True, inplace=True)
-        return df_best
-
-    @staticmethod
-    def _filter_id_cov(df, pident=90, cov=80):
-        '''Filter away the hits using the same UniRef clustering standards.'''
-        select_id = df.pident >= pident
-        aligned_length = df.mismatch.apply(_compute_aligned_length)
-        select_cov = ((aligned_length * 100 / df.qlen >= cov) &
-                      (aligned_length * 100 / df.sseq.apply(len) >= cov))
-        # if qlen * 100 / len(row.sequence) >= 80:
-        df_filtered = df[select_id & select_cov]
-        df_filtered.set_index('qseqid', drop=True, inplace=True)
-        return df_filtered
+def _filter_ident_overlap(df, pident=90, cov=80):
+    '''Filter away the hits using the same UniRef clustering standards.'''
+    select_id = df.pident >= pident
+    aligned_length = df.mismatch.apply(_compute_aligned_length)
+    select_cov = ((aligned_length * 100 / df.qlen >= cov) &
+                  (aligned_length * 100 / df.sseq.apply(len) >= cov))
+    # if qlen * 100 / len(row.sequence) >= 80:
+    df_filtered = df[select_id & select_cov]
+    df_filtered.set_index('qseqid', drop=True, inplace=True)
+    return df_filtered
 
 
 def _compute_aligned_length(cigar):

@@ -9,86 +9,78 @@
 from tempfile import mkdtemp
 from filecmp import cmp
 from shutil import rmtree
-from os import getcwd
 from os.path import join
 from collections import namedtuple
 from unittest import TestCase, main
+from subprocess import CalledProcessError
 
 import numpy as np
 import skbio
 from skbio.util import get_data_path
-from burrito.util import ApplicationError
 
 from micronota.util import _get_named_data_path
 from micronota.bfillings.diamond import (
-    DiamondMakeDB, make_db, FeatureAnnt,
+    run_view, run_makedb, run_blast, run,
     DiamondCache)
 
 
 class DiamondTests(TestCase):
     def setUp(self):
         self.tmp_dir = mkdtemp()
-        self.db_fa = _get_named_data_path('db.faa')
-        self.db = _get_named_data_path('db.dmnd')
+
+        self.faa = _get_named_data_path('db.faa')
+        self.obs_db = join(self.tmp_dir, 'db.dmnd')
+        self.exp_db = _get_named_data_path('db.dmnd')
+
+        cases = [('blastp', 'test.faa', 'test.faa.daa', 'test.faa.tab', 'test.faa.sam'),
+                 ('blastx', 'test.fna', 'test.fna.daa', 'test.fna.tab', 'test.fna.sam')]
+        Case = namedtuple('Case', ['aligner', 'query', 'daa', 'tab', 'sam'])
+        self.cases = [Case(*i) for i in cases]
+
         self.neg_fp = [get_data_path(i) for i in
                        ['empty', 'whitespace_only']]
 
-    def tearDown(self):
-        rmtree(self.tmp_dir)
+    # def tearDown(self):
+    #     rmtree(self.tmp_dir)
 
 
-class DiamondMakeDBTests(DiamondTests):
-    def test_base_command(self):
-        c = DiamondMakeDB()
-        self.assertEqual(
-            c.BaseCommand,
-            'cd "%s/"; %s' % (getcwd(), c._command))
-
-    def test_make_db(self):
-        fp = join(self.tmp_dir, 'db.dmnd')
-        make_db(self.db_fa, fp)
-        with open(fp, 'rb') as obs, open(self.db, 'rb') as exp:
+class RunTests(DiamondTests):
+    def test_run_makedb(self):
+        run_makedb(self.faa, self.obs_db)
+        with open(self.obs_db, 'rb') as obs, open(self.exp_db, 'rb') as exp:
             self.assertEqual(obs.read(), exp.read())
 
-    def test_make_db_wrong_input(self):
-        fp = join(self.tmp_dir, 'db.dmnd')
+    def test_run_makedb_wrong_input(self):
         for i in self.neg_fp:
             with self.assertRaisesRegex(
-                    ApplicationError,
-                    r'(Error reading file)|(Invalid input file format)'):
-                make_db(i, fp)
+                    CalledProcessError,
+                    r'returned non-zero exit status 1'):
+                run_makedb(i, self.obs_db)
 
+    def test_blast_view(self):
+        for case in self.cases:
+            obs_daa = join(self.tmp_dir, case.daa)
+            # exp_daa = _get_named_data_path(case.daa)
+            run_blast(aligner=case.aligner,
+                      query=case.query, daa=obs_daa, db=self.exp_db,
+                      tmpdir=self.tmp_dir)
+            # self.assertTrue(cmp(obs_daa, exp_daa))
 
-class DiamondBlastTests(DiamondTests):
-    def setUp(self):
-        super().setUp()
-        cases = [('blastp', 'WP_009885814.faa'),
-                 ('blastx', 'WP_009885814.fna')]
-        Test = namedtuple('Test', ['aligner', 'input', 'exp'])
-        self.tests = [Test(i[0],
-                           get_data_path(i[1]),
-                           _get_named_data_path(i[1]))
-                      for i in cases]
+            obs_tab = join(self.tmp_dir, case.tab)
+            exp_tab = _get_named_data_path(case.tab)
+            run_view(daa=obs_daa, out=obs_tab, fmt='tab')
+            self.assertTrue(cmp(obs_tab, exp_tab))
 
-    def test_blast(self):
-        for test in self.tests:
-            pred = FeatureAnnt([self.db], mkdtemp(dir=self.tmp_dir))
-            obs = pred(test.input, aligner=test.aligner, outfmt='tab')
-            exp = pred._filter_best(
-                pred.parse_tabular('%s.diamond' % test.exp))
-            self.assertTrue(exp.equals(obs))
-            obs = pred(test.input, aligner=test.aligner, outfmt='sam')
-            exp = pred._filter_id_cov(pred.parse_sam('%s.sam' % test.exp))
-            self.assertTrue(exp.equals(obs))
+            obs_sam = join(self.tmp_dir, case.sam)
+            exp_sam = _get_named_data_path(case.sam)
+            run_view(daa=obs_daa, out=obs_sam, fmt='sam')
+            self.assertTrue(cmp(obs_sam, exp_sam))
 
-    def test_blast_wrong_input(self):
-        pred = FeatureAnnt([self.db], self.tmp_dir)
-        for i in self.neg_fp:
-            for aligner in ['blastp', 'blastx']:
-                with self.assertRaisesRegex(
-                        ApplicationError,
-                        r'(Error reading file)|(Invalid input file format)'):
-                    pred(i, aligner=aligner)
+    def test_run(self):
+        for case in self.cases:
+            run(self.tmp_dir, case.query, self.exp_db, aligner=case.aligner, tmpdir=self.tmp_dir)
+            obs = join(self.tmp_dir, 'db.sam')
+            self.assertTrue(cmp(obs, _get_named_data_path(case.sam)))
 
 
 class DiamondCacheTests(DiamondTests):
