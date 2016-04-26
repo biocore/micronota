@@ -6,18 +6,15 @@
 # The full license is in the file COPYING.txt, distributed with this software.
 # ----------------------------------------------------------------------------
 
-from os import stat, remove
-from os.path import join, basename, splitext, exists
+from os.path import join, basename, splitext
 from logging import getLogger
 import re
 
 import pandas as pd
-from skbio import read, Sequence
+
 from dumpling import (
     check_choice, Dumpling, OptionParam, Parameters)
 
-import string
-import random
 
 blast_params = [
     OptionParam('--threads', 'cpus', help='number of cpu threads.'),
@@ -156,7 +153,7 @@ def run_makedb(fasta, db=None, **kwargs):
     return makedb
 
 
-def run(out_dir, query, db, fmt='sam', aligner='blastp', **kwargs):
+def run(out_dir, query, db, query_cover=0, fmt='sam', aligner='blastp', **kwargs):
     '''
     Run Diamond search.
 
@@ -168,6 +165,8 @@ def run(out_dir, query, db, fmt='sam', aligner='blastp', **kwargs):
         file path to query sequence
     db : str
         file path the db
+    query_cover : `Numeric`
+        report hits above the given percentage of query cover.
     fmt : str ('sam' or 'tab')
         output file format
     aligner : str ('blastp' or 'blastx'
@@ -184,86 +183,16 @@ def run(out_dir, query, db, fmt='sam', aligner='blastp', **kwargs):
     daa = join(out_dir, '{}.daa'.format(prefix))
     out = join(out_dir, '{0}.{1}'.format(prefix, fmt))
     logger.info('Running Diamond search ...')
-    run_blast(daa=daa, db=db, query=query, aligner=aligner, **kwargs)
+    run_blast(daa=daa, db=db, query=query, aligner=aligner, query_cover=query_cover, **kwargs)
     run_view(daa=daa, out=out, fmt=fmt)
 
 
-class FeatureAnnt:
-    '''
-    Attributes
-    ----------
-    dat : list of str
-        list of file path to databases.
-    cache : list of skbio.Sequence
-        list of skbio.Sequences to search against.
-    '''
-    def __init__(self, dat, out_dir, tmp_dir=None, cache=None):
-        super().__init__(dat, out_dir, tmp_dir)
-        self.cache = cache
-        self.dat = dat
-
-    def _annotate_fp(self, fp, aligner='blastp', evalue=0.001, cpus=1,
-                     outfmt='sam', params=None):
-        '''Annotate the sequences in the file.'''
-
-        if self.has_cache() and not self.cache.is_empty():
-            self.cache.build()
-            dbs = [self.cache.db] + self.dat
-        else:
-            dbs = self.dat
-
-        seqs = []
-        found = set()
-        res = pd.DataFrame()
-        logger = getLogger(__name__)
-        for db in dbs:
-            out_prefix = splitext(basename(db))[0]
-            daa_fp = join(self.out_dir, '%s.daa' % out_prefix)
-            out_fp = join(self.out_dir, '%s.diamond' % out_prefix)
-            self.run_blast(fp, daa_fp, db, aligner=aligner,
-                           evalue=evalue, cpus=cpus, params=params)
-            self.run_view(daa_fp, out_fp, params={'--outfmt': outfmt})
-            # res = res.append(self.parse_tabular(out_fp))
-            if outfmt == 'tab':
-                res = res.append(
-                    self._filter_best(self.parse_tabular(out_fp)))
-            elif outfmt == 'sam':
-                res = res.append(
-                    self._filter_id_cov(self.parse_sam(out_fp)))
-
-            # save to a tmp file the seqs that do not hit current database
-            new_fp = join(self.tmp_dir, '%s.fa' % out_prefix)
-            found = found | set(res.index)
-            with open(new_fp, 'w') as f:
-                for seq in read(fp, format='fasta'):
-                    if seq.metadata['id'] not in found:
-                        seq.write(f, format='fasta')
-            logger.info('Number of diamond hits: %d' % len(res.index))
-
-            # no seq left
-            if stat(new_fp).st_size == 0:
-                break
-            else:
-                fp = new_fp
-        if outfmt == 'sam' and self.has_cache():
-            for x in res.index:
-                seqs.append(
-                    Sequence(res.loc[x, 'sseq'],
-                             metadata={'id': res.loc[x, 'sseqid']}))
-
-        # Update cache (inplace)
-        if self.has_cache():
-            self.cache.update(seqs)
-            self.cache.close()
-        return res
-
-
-def parse_tabular(diamond_res, column='bitscore'):
+def parse_tabular(res, column='bitscore'):
     '''Parse the tabular output of diamond blastp/blastx.
 
     Parameters
     ----------
-    diamond_res : str
+    res : str
         file path to Diamond tabular output
     column : str
         The column used to pick the best hits.
@@ -276,52 +205,56 @@ def parse_tabular(diamond_res, column='bitscore'):
     columns = ['qseqid', 'sseqid', 'pident', 'length', 'mismatch',
                'gapopen', 'qstart', 'qend', 'sstart', 'send',
                'evalue', 'bitscore']
-    df = pd.read_table(diamond_res, names=columns)
+    df = pd.read_table(res, names=columns)
     return df
 
 
-def parse_sam(diamond_res):
-    '''Parse the output of diamond blastp/blastx.
+def parse_sam(res):
+    '''Parse the SAM output of diamond blastp/blastx.
 
     Parameters
     ----------
-    diamond_res : str
-        file path
+    res : str
+        file path to Diamond SAM output
 
     Returns
     -------
     pandas.DataFrame
-        The best matched records for each query sequence.
+        The hit records for each query sequence.
     '''
-    columns = ['qseqid', 'sseqid', 'pident', 'qlen', 'mismatch',
-               'qstart', 'sstart', 'evalue', 'bitscore', 'sseq']
-    df = pd.DataFrame(columns=columns)
-    try:
-        seqs = read(diamond_res, format='sam')
-    except StopIteration:
-        return df
-    for i, seq in enumerate(seqs):
-        sseq = str(seq)
+    columns = [
+        'qseqid',   # Query template NAME.
+        'FLAG',    # Combination of bitwise FLAGs
+        'sseqid',   # Reference sequence NAME of the alignment
+        'POS',     # 1-based leftmost mapping position of the first base
+        'MAPQ',    # Mapping quality. -10log10(P_err).
+        'CIGAR',   # CIGAR string
+        'RNEXT',   # Reference sequence name of the primary alignment of NEXT
+        'PNEXT',   # Position of the primary alignment of the NEXT read
+        'TLEN',    # signed observed template length
+        'SEQ',     # segment sequence
+        'QUAL']    # ASCII of base quality
+    optional = [
+        'bitscore',
+        'NM',       # Edit distance to the reference
+        'slen',     # subject seq length
+        'rawscore',
+        'evalue',
+        'pident',
+        'frame',
+        'qstart',   # start position of alignment
+        'MD']
 
-        qseqid = seq.metadata['QNAME']
-        sseqid = seq.metadata['RNAME']
-        pident = seq.metadata['ZI']
-        qlen = seq.metadata['ZL']
-        mismatch = seq.metadata['CIGAR']
-        qstart = seq.metadata['POS']
-        sstart = seq.metadata['ZS']
-        evalue = seq.metadata['ZE']
-        bitscore = seq.metadata['ZR']
-        row = pd.Series([qseqid, sseqid, pident,
-                         qlen, mismatch,
-                         qstart, sstart,
-                         evalue, bitscore, sseq],
-                        index=columns)
-        df.loc[i] = row
+    df = pd.read_table(res, names=columns + optional, comment='@')
+
+    for col in optional:
+        df[col] = df[col].apply(_convert)
+
     return df
 
 
-def _filter_best(df, column='evalue'):
+def filter_best(df, column='evalue'):
+    '''Filter out the best hits by their e-value or bitscore.'''
     # pick the rows that have highest bitscore for each qseqid
     # df_max = df.groupby('qseqid').apply(
     #     lambda r: r[r[column] == r[column].max()])
@@ -330,19 +263,33 @@ def _filter_best(df, column='evalue'):
     elif column == 'bitscore':
         idx = df.groupby('qseqid')[column].idxmax()
     df_best = df.loc[idx]
-    df_best.set_index('qseqid', drop=True, inplace=True)
+    # df_best.set_index('qseqid', drop=True, inplace=True)
     return df_best
 
 
-def _filter_ident_overlap(df, pident=90, cov=80):
-    '''Filter away the hits using the same UniRef clustering standards.'''
+def filter_ident_overlap(df, pident=90, overlap=80):
+    '''Filter away the hits using the same UniRef clustering standards.
+
+    Parameters
+    ----------
+    df : `pandas.DataFrame`
+        parsed from `parse_sam`
+    pident : `Numeric`
+        minimal percentage of identity
+    overlap : `Numeric`
+        minimal percentage of overlap for subject sequences.
+
+    Returns
+    -------
+    `pandas.DataFrame`
+        The data frame only containing hits that pass the thresholds.
+    '''
     select_id = df.pident >= pident
-    aligned_length = df.mismatch.apply(_compute_aligned_length)
-    select_cov = ((aligned_length * 100 / df.qlen >= cov) &
-                  (aligned_length * 100 / df.sseq.apply(len) >= cov))
+    overlap_length = df.CIGAR.apply(_compute_aligned_length)
+    select_overlap = overlap_length * 100 / df.slen >= overlap
     # if qlen * 100 / len(row.sequence) >= 80:
-    df_filtered = df[select_id & select_cov]
-    df_filtered.set_index('qseqid', drop=True, inplace=True)
+    df_filtered = df[select_id & select_overlap]
+    # df_filtered.set_index('qseqid', drop=True, inplace=True)
     return df_filtered
 
 
@@ -364,68 +311,10 @@ def _compute_aligned_length(cigar):
     return sum(int(i) for i in aligned)
 
 
-class DiamondCache:
-    '''
-    Attributes
-    ----------
-    out_dir : str
-        output directory file path
-    fname : str
-        fasta file to store cached sequences
-    db : str
-        diamond database to store cached sequences
-    maxSize : int
-        maxinum size of DiamondCache
-    seqs : list of skbio.Sequence
-        list of sequence objects
-    '''
-    def __init__(self, seqs=None, maxSize=200000, out_dir=""):
-        self.out_dir = out_dir
-        self.fname = self._generate_random_file()  # substitute for tempfile
-        self.fasta = join(out_dir, '%s.fasta' % self.fname)
-        self.db = join(out_dir, '%s.dmnd' % self.fname)
-        self.maxSize = maxSize
-        if seqs is None:
-            self.seqs = []
-        else:
-            self.seqs = seqs
-
-    def _generate_random_file(self, N=10):
-        s = ''.join(random.SystemRandom().choice(
-                string.ascii_uppercase + string.digits) for _ in range(N))
-        # look for unique filepath
-        while exists(join(self.out_dir, s)):
-            s = ''.join(random.SystemRandom().choice(
-                    string.ascii_uppercase + string.digits) for _ in range(N))
-        return s
-
-    def dbname(self):
-        return self.db.name
-
-    def is_empty(self):
-        return (self.seqs is None) or len(self.seqs) == 0
-
-    def build(self, params=None):
-        if self.is_empty():
-            return
-        for seq in self.seqs:
-            seq.write(self.fasta, format='fasta')
-        make_db(self.fasta, self.db, params)
-
-    def update(self, seqs):
-        """
-        Parameters
-        ----------
-        seqs : list of skbio.Sequence
-           List of sequences to update the cache.
-        """
-        self.seqs = seqs + self.seqs
-        self.seqs = self.seqs[:self.maxSize]
-
-    def close(self):
-        # Remove files if they exist
-        # They won't be present if the cache is empty
-        if exists(self.fasta):
-            remove(self.fasta)
-        if exists(self.db):
-            remove(self.db)
+def _convert(s):
+    field, t, v = s.split(':')
+    if t == 'i':
+        v = int(v)
+    elif t == 'f':
+        v = float(v)
+    return v
