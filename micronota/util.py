@@ -23,6 +23,8 @@ from unittest import TestCase
 from sqlite3 import connect
 from inspect import stack
 
+from skbio import read, write
+
 
 def _overwrite(path, overwrite=False, append=False):
     if exists(path):
@@ -50,6 +52,12 @@ def _get_named_data_path(fname):
     # remove file suffix and prefix of "test_"
     name = splitext(basename(caller_fp))[0][5:]
     return join(d, 'data', name, fname)
+
+
+def convert(in_fmt, out_fmt, in_f, out_f):
+    '''convert between file formats'''
+    for obj in read(in_f, format=in_fmt):
+        write(obj, format=out_fmt, into=out_f)
 
 
 class _DBTest(TestCase):
