@@ -1,4 +1,4 @@
 sphinx==1.3.3
 click>=6.0
 coveralls
-burrito
+dumpling>=0.1.2
