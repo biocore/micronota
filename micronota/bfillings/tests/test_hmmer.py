@@ -6,100 +6,72 @@
 # The full license is in the file COPYING.txt, distributed with this software.
 # ----------------------------------------------------------------------------
 
-from tempfile import mkstemp
-from os import getcwd, remove, close
-from unittest import TestCase, main
-from functools import partial
+from tempfile import mkdtemp
+from filecmp import cmp
 from os.path import join
+from shutil import rmtree, copy
+from collections import namedtuple
+from subprocess import CalledProcessError
+from unittest import TestCase, main
 
 from skbio.util import get_data_path
-from burrito.util import ApplicationError
 
-from micronota.bfillings.hmmer import (HMMScan, hmmscan_fasta,
-                                       hmmpress_hmm)
+from micronota.bfillings.hmmer import run_hmmscan, run_hmmpress
+from micronota.util import _get_named_data_path
 
 
-class HMMERTests(TestCase):
-
+class HmmerTests(TestCase):
     def setUp(self):
-        self.get_hmmer_path = partial(
-            get_data_path, subfolder=join('data', 'hmmer'))
-        self.hmm_fp = self.get_hmmer_path('Pfam_B_1.hmm')
-        self.positive_fps = list(map(self.get_hmmer_path,
-                                     ['Pfam_B_1.fasta']))
-        self.negative_fps = list(map(get_data_path, [
-            'empty',
-            'whitespace_only']))
-        self.temp_fd, self.temp_fp = mkstemp()
+        self.tmp_dir = mkdtemp()
+        self.hmm_fp = _get_named_data_path('Pfam_B_1.hmm')
+        self.negative_fps = [get_data_path(i)
+                             for i in ['empty', 'whitespace_only']]
 
     def tearDown(self):
-        close(self.temp_fd)
-        remove(self.temp_fp)
+        rmtree(self.tmp_dir)
 
 
-class HMMScanTests(HMMERTests):
-    def test_base_command(self):
-        c = HMMScan()
-        self.assertEqual(
-            c.BaseCommand,
-            'cd "%s/"; %s' % (getcwd(), c._command))
+class HMMScanTests(HmmerTests):
+    def setUp(self):
+        super().setUp()
+        suffices = ['hmmscan']
+        Files = namedtuple('Files', suffices)
+        Case = namedtuple('Case', ['query', 'obs', 'exp'])
+        self.cases = []
+        for f in ['Pfam_B_1.faa']:
+            fns = ['{}.{}'.format(f, s) for s in suffices]
+            obs_files = Files(*[join(self.tmp_dir, fn) for fn in fns])
+            exp_files = Files(*[_get_named_data_path(fn) for fn in fns])
+            self.cases.append(
+                Case(_get_named_data_path(f), obs_files, exp_files))
 
-        params = {'--cpu': 2}
-        for i in params:
-            if params[i] is None:
-                c.Parameters[i].on()
-                cmd = 'cd "{d}/"; {cmd} {option}'.format(
-                    d=getcwd(), cmd=c._command, option=i)
-            else:
-                c.Parameters[i].on(params[i])
-                cmd = 'cd "{d}/"; {cmd} {option} {value}'.format(
-                    d=getcwd(), cmd=c._command,
-                    option=i, value=params[i])
-
-            self.assertEqual(c.BaseCommand, cmd)
-            c.Parameters[i].off()
-
-    def test_hmmscan_fasta_wrong_input(self):
+    def test_run_hmmscan_wrong_input(self):
         for fp in self.negative_fps:
-            with self.assertRaisesRegex(
-                    ApplicationError,
-                    r'Error: Sequence file .* is empty or misformatted'):
-                hmmscan_fasta(self.hmm_fp, fp, 'foo')
+            with self.assertRaises(CalledProcessError):
+                run_hmmscan(self.hmm_fp, fp, join(self.tmp_dir, 'foo'))
 
-    def test_hmmscan_fasta(self):
-        params = {'--noali': None}
-        for f in self.positive_fps:
-            res = hmmscan_fasta(self.hmm_fp, f, self.temp_fp, 0.1, 1, params)
-            res['StdOut'].close()
-            res['StdErr'].close()
-            obs = res['--tblout']
-            out_fp = '.'.join([f, 'tblout'])
-            with open(out_fp) as exp:
+    def test_run_hmmscan_fasta(self):
+        for case in self.cases:
+            run_hmmscan(self.hmm_fp, case.query, case.obs.hmmscan)
+            with open(case.obs.hmmscan) as obs, open(case.exp.hmmscan) as exp:
                 # skip comment lines as some contain running time info
                 self.assertListEqual(
                     [i for i in exp.readlines() if not i.startswith('#')],
                     [j for j in obs.readlines() if not j.startswith('#')])
-            obs.close()
 
 
-class HMMPressTests(HMMERTests):
-    def test_compress_hmm(self):
-        # .i1i file is different from run to run. skip it.
+class HmmpressTests(HmmerTests):
+    def test_run_hmmpress(self):
+        # .i1i, ilm and i1p files are different from run to run. skip them.
         suffix = 'h3f'
-        with open('.'.join([self.hmm_fp, suffix]), 'rb') as f:
-            exp = f.read()
+        fp = copy(self.hmm_fp, self.tmp_dir)
+        run_hmmpress(fp)
+        fps = ['{}.{}'.format(i, suffix) for i in [fp, self.hmm_fp]]
+        self.assertTrue(cmp(*fps, shallow=False))
+        # test not overwriting
+        with self.assertRaises(CalledProcessError):
+            run_hmmpress(fp)
 
-        res = hmmpress_hmm(self.hmm_fp, True)
-        res['StdOut'].close()
-        res['StdErr'].close()
-
-        with open('.'.join([self.hmm_fp, suffix]), 'rb') as f:
-            self.assertEqual(f.read(), exp)
-
-        with self.assertRaisesRegex(
-                ApplicationError,
-                r'Error: Looks like .* is already pressed'):
-            hmmpress_hmm(self.hmm_fp)
 
 if __name__ == "__main__":
     main()

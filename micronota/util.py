@@ -5,8 +5,6 @@ Utility functionality
 .. currentmodule:: micronota.util
 
 This module (:mod:`micronota.util`) provides various utility functionality,
-including config config, unit-testing convenience function.
-
 '''
 
 # ----------------------------------------------------------------------------
@@ -26,17 +24,17 @@ from sqlite3 import connect
 from inspect import stack
 
 
-def _overwrite(fp, overwrite=False, append=False):
-    if exists(fp):
+def _overwrite(path, overwrite=False, append=False):
+    if exists(path):
         if overwrite:
-            if isdir(fp):
-                shutil.rmtree(fp)
+            if isdir(path):
+                shutil.rmtree(path)
             else:
-                remove(fp)
+                remove(path)
         elif append:
             return
         else:
-            raise FileExistsError('The file path %s exists.' % fp)
+            raise FileExistsError('The file path {} already exists.'.format(path))
 
 
 def _download(src, dest, **kwargs):

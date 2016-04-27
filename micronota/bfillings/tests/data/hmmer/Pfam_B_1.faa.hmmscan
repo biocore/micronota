@@ -25,7 +25,7 @@ Pfam-B_1             PB000001   F6QKQ6_ORNAN/1-109   -              1e-13   38.0
 # Pipeline mode:   SCAN
 # Query file:      Pfam_B_1.fasta
 # Target file:     Pfam_B_1.hmm
-# Option settings: hmmscan --tblout Pfam_B_1.fasta.tblout --incE 0.01 Pfam_B_1.hmm Pfam_B_1.fasta 
-# Current dir:     /home/mortonjt/Documents/micronota/micronota/bfillings/tests/data/hmmer
-# Date:            Tue Oct 20 14:22:47 2015
+# Option settings: hmmscan --tblout Pfam_B_1.faa.hmmscan Pfam_B_1.hmm Pfam_B_1.fasta 
+# Current dir:     /Users/zech/Dropbox/git/micronota/micronota/bfillings/tests/data/hmmer
+# Date:            Tue Apr 26 21:14:11 2016
 # [ok]

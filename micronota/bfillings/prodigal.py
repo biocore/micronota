@@ -1,7 +1,11 @@
 r'''
 Prodigal
 ========
+This wraps Prodigal for CDS prediction.
 
+
+Notes
+-----
 It does not handle genes with introns or deal with frame shift.
 It is not well tested on viral gene prediction.
 
@@ -51,12 +55,6 @@ params = [
     OptionParam('-n', help='Bypass Shine-Dalgarno trainer and force a full motif scan.')]
 
 
-def _identify_fp(self, fp, params=None) -> dict:
-    '''Predict genes for the input sequence with Prodigal.'''
-    res = self.run(fp, params)
-    return self.parse_result(res)
-
-
 def run(out_dir, **kwargs):
     '''Run prodigal for gene prediction.
 
@@ -102,7 +100,7 @@ def run(out_dir, **kwargs):
         if p.is_off():
             p.on(join(out_dir, 'prodigal.{}'.format(suffices[flag])))
 
-    logger.info('Running {}'.format(prodigal.command))
+    logger.info('Running CDS prediction {}'.format(prodigal.command))
     prodigal(stdout=join(out_dir, 'prodigal.log'))
     return prodigal
 

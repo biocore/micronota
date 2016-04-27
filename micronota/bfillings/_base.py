@@ -14,6 +14,16 @@ from inspect import signature
 from pandas import DataFrame
 from skbio import Sequence
 
+from dumpling import OptionParam, ArgmntParam
+
+
+_scan_params = [
+    OptionParam('--tblout', name='out', help='save parseable table of hits to file'),
+    # set default to 1 instead of all available cores.
+    OptionParam('--cpu', name='cpus', value=1, help='number of parallel CPU workers to use for multithreads'),
+    ArgmntParam(name='db', help='HMM/CM database file'),
+    ArgmntParam(name='query', help='input sequence to scan')]
+
 
 class SubclassImplementError(Exception):
     '''Raised when a subclass do not follow the enforcement.'''
