@@ -215,10 +215,9 @@ def _parse_records(fh):
 
     Parameters
     ----------
-    fh : a file handle to the file that should be parsed
-    program : a string indicating which program of infernal was used since they
-    store some information (with the same caption) at different positions
-
+    fh : file handle 
+         A file handle to the file that should be parsed
+    
     Returns
     -------
     A collection of IntervalMetadata objects
