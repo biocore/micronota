@@ -119,7 +119,15 @@ is the exact opposite for CMsearch.)
 
 Format Support
 --------------
-**Has Sniffer: No**
+**Has Sniffer: Yes**
+
++------+------+---------------------------------------------------------------+
+|Reader|Writer|                          Object Class                         |
++======+======+===============================================================+
+|Yes   |Yes   |:mod:`skbio.metadata.IntervalMetadata` objects                 |
++------+------+---------------------------------------------------------------+
+|Yes   |No    |generator of :mod:`skbio.metadata.IntervalMetadata` objects    |
++------+------+---------------------------------------------------------------+
 
 
 Reference
