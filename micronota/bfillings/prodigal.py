@@ -55,7 +55,7 @@ params = [
     OptionParam('-n', help='Bypass Shine-Dalgarno trainer and force a full motif scan.')]
 
 
-def run(query, out_dir, **kwargs):
+def run(query, out_dir, cpus=1, **kwargs):
     '''Run prodigal for gene prediction.
 
     Notes
@@ -73,6 +73,9 @@ def run(query, out_dir, **kwargs):
         input file path of sequence
     out_dir : str
         output dir
+    cpus : int
+        Prodigal does not have a param to set up how many CPU cores. This is a fake parameter
+        to make it conform to the same API with other apps for the sake of convenience.
     kwargs : dict
         keyword arguments for Prodigal.
 

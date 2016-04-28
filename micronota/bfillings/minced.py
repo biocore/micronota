@@ -34,7 +34,7 @@ params = [
     ArgmntParam(name='out', help='output file')]
 
 
-def run(query, out_dir, gff=True, **kwargs):
+def run(query, out_dir, cpus=1, gff=True, **kwargs):
     '''Predict CRISPRs for the input file.
 
     Notes
@@ -56,6 +56,9 @@ def run(query, out_dir, gff=True, **kwargs):
         input file path of nucleotide sequence
     out_dir : str
         output dir
+    cpus : int
+        Minced does not have a param to set up how many CPU cores. This is a fake parameter
+        to make it conform to the same API with other apps for the sake of convenience.
     gff : bool
         output in gff3 format
     kwargs : dict

@@ -38,13 +38,14 @@ blast_params = [
 
     OptionParam('--band', help=''),
     OptionParam('--index-chunks', '-c',
-                help='The number of chunks for processing the seed index.'),
+                help='The number of chunks for processing the seed index. Default is 4. '
+                'You can set this to 1 to increase speed (but also increase memory usage.'),
 
     OptionParam('--sensitive',
                 help=('Trigger the sensitive alignment mode with a 16x9 seed'
                       'shape config.')),
     OptionParam('--tmpdir', '-t',
-                help='Directory to be used for temporary storage.'),
+                help='Directory to be used for temporary storage. Default is /dev/shm for fast IO.'),
 
     OptionParam('--db', '-d', help='Path to DIAMOND database file'),
     OptionParam('--daa', '-a',
@@ -106,7 +107,8 @@ def run_blast(query, daa, aligner='blastp', **kwargs):
 
 
 def run_view(daa, out, fmt='sam', **kwargs):
-    '''
+    '''Convert Diamond daa file to a human readable output.
+
     Parameters
     ----------
     daa : str
