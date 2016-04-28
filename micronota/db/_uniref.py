@@ -90,7 +90,7 @@ import gzip
 from skbio import read, Sequence
 
 from ..util import _overwrite, _download
-from ..bfillings.diamond import make_db
+from ..bfillings.diamond import run_makedb
 
 
 _status = ['Swiss-Prot', 'TrEMBL']
@@ -219,7 +219,7 @@ def sort_uniref(db_fp, uniref_fp, out_d, resolution, force=False):
     for fp in fps:
         # if the fasta file is not empty
         if stat(fp).st_size > 0:
-            make_db(fp)
+            run_makedb(fp)
 
 
 def create_metadata(in_fps, db_fp, force=False):

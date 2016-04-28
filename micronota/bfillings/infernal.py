@@ -7,6 +7,7 @@
 # ----------------------------------------------------------------------------
 
 from logging import getLogger
+from os.path import join, splitext, basename
 
 from dumpling import Dumpling, OptionParam, ArgmntParam, Parameters
 
@@ -38,7 +39,7 @@ def run_cmpress(cm, force=False):
     return cmpress
 
 
-def run_cmscan(db, query, out, **kwargs):
+def run(db, query, out_dir, **kwargs):
     '''Scan a fasta file against a covariance model database.
 
     Parameters
@@ -47,19 +48,18 @@ def run_cmscan(db, query, out, **kwargs):
         The file path to CM database.
     query : str
         Input fasta file.
-    out : str
-        Output file path of target hits table.
+    out_dir : str
+        dir to store output file path of target hits table.
     kwargs : dict
-        Other command line parameters for cmscan. key is the option
-        (e.g. "-T") and value is the value for the option (e.g. "50").
-        If the option is a flag, set the value to None.
+        keyword arguments. command line parameters for cmscan.
 
     Returns
     -------
     `Dumpling`
     '''
     logger = getLogger(__name__)
-
+    prefix = splitext(basename(query))[0]
+    out = join(out_dir, '{}.tblout'.format(prefix))
     cmscan = Dumpling('cmscan', params=Parameters(*cmscan_params))
     cmscan.update(query=query, db=db, out=out, **kwargs)
     logger.info('Running {}'.format(cmscan.command))

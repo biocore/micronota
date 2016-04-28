@@ -27,7 +27,7 @@ class RunTests(TestCase):
         self.tmp_dir = mkdtemp()
         self.negative_fps = [get_data_path(i) for i in
                              ['empty', 'whitespace_only']]
-        Case = namedtuple('Case', ['input', 'kwargs', 'outdir'])
+        Case = namedtuple('Case', ['query', 'kwargs', 'outdir'])
         self.cases = [Case(i, j, k) for i, j, k in
                       zip([_get_named_data_path(i) for i in
                            # modified from NC_018498.gbk
@@ -46,13 +46,13 @@ class RunTests(TestCase):
             with self.assertRaisesRegex(
                     CalledProcessError,
                     'returned non-zero exit status'):
-                run(self.tmp_dir, input=fp)
+                run(fp, self.tmp_dir)
 
     def test_run(self):
         for case in self.cases:
             exp_d = _get_named_data_path(case.outdir)
             obs_d = join(self.tmp_dir, case.outdir)
-            run(obs_d, input=case.input, **case.kwargs)
+            run(case.query, obs_d, **case.kwargs)
             for f in listdir(exp_d):
                 self.assertTrue(
                     cmp(join(obs_d, f), join(exp_d, f), shallow=False))

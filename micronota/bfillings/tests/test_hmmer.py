@@ -16,7 +16,7 @@ from unittest import TestCase, main
 
 from skbio.util import get_data_path
 
-from micronota.bfillings.hmmer import run_hmmscan, run_hmmpress
+from micronota.bfillings.hmmer import run, run_hmmpress
 from micronota.util import _get_named_data_path
 
 
@@ -34,7 +34,7 @@ class HmmerTests(TestCase):
 class HMMScanTests(HmmerTests):
     def setUp(self):
         super().setUp()
-        suffices = ['hmmscan']
+        suffices = ['tblout']
         Files = namedtuple('Files', suffices)
         Case = namedtuple('Case', ['query', 'obs', 'exp'])
         self.cases = []
@@ -45,15 +45,15 @@ class HMMScanTests(HmmerTests):
             self.cases.append(
                 Case(_get_named_data_path(f), obs_files, exp_files))
 
-    def test_run_hmmscan_wrong_input(self):
+    def test_run_wrong_input(self):
         for fp in self.negative_fps:
             with self.assertRaises(CalledProcessError):
-                run_hmmscan(self.hmm_fp, fp, join(self.tmp_dir, 'foo'))
+                run(self.hmm_fp, fp, self.tmp_dir)
 
-    def test_run_hmmscan_fasta(self):
+    def test_run(self):
         for case in self.cases:
-            run_hmmscan(self.hmm_fp, case.query, case.obs.hmmscan)
-            with open(case.obs.hmmscan) as obs, open(case.exp.hmmscan) as exp:
+            res = run(self.hmm_fp, case.query, self.tmp_dir)
+            with open(res.params['out'].value) as obs, open(case.exp.tblout) as exp:
                 # skip comment lines as some contain running time info
                 self.assertListEqual(
                     [i for i in exp.readlines() if not i.startswith('#')],

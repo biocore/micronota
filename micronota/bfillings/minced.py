@@ -7,7 +7,7 @@
 # ----------------------------------------------------------------------------
 
 from logging import getLogger
-from os.path import exists
+from os.path import exists, join, basename, splitext
 from subprocess import CalledProcessError
 
 from dumpling import check_range, Dumpling, ArgmntParam, OptionParam, Parameters
@@ -34,7 +34,7 @@ params = [
     ArgmntParam(name='out', help='output file')]
 
 
-def run(query, out, gff=True, **kwargs):
+def run(query, out_dir, gff=True, **kwargs):
     '''Predict CRISPRs for the input file.
 
     Notes
@@ -54,12 +54,10 @@ def run(query, out, gff=True, **kwargs):
     ----------
     query : str
         input file path of nucleotide sequence
-    out : str
-        output file path
+    out_dir : str
+        output dir
     gff : bool
         output in gff3 format
-    prefix : str
-        prefix of output file name
     kwargs : dict
         keyword arguments. Other command line parameters for MinCED. key is the option
         (e.g. "-searchWL") and value is the value for the option (e.g. "6").
@@ -71,6 +69,8 @@ def run(query, out, gff=True, **kwargs):
     logger = getLogger(__name__)
     minced = Dumpling('minced', params=Parameters(*params),
                       version='0.2.0', url='https://github.com/ctSkennerton/minced')
+    prefix = splitext(basename(query))[0]
+    out = join(out_dir, '{}.gff'.format(prefix))
     minced.update(query=query, out=out, gff=gff, **kwargs)
     logger.info('Running {}'.format(minced.command))
     p = minced()

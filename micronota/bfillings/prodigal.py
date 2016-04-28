@@ -35,7 +35,7 @@ from ..parsers.embl import _parse_records
 
 
 params = [
-    OptionParam('-i', 'input', help='FASTA/Genbank input file (default reads from stdin).'),
+    OptionParam('-i', 'query', help='FASTA/Genbank input file (default reads from stdin).'),
     OptionParam('-a', help='File to store protein translations.'),
     OptionParam('-d', help='File to store nuc sequence of predicted gene.'),
     OptionParam('-s', help='Write all potential genes (with scores) to the selected file.'),
@@ -55,7 +55,7 @@ params = [
     OptionParam('-n', help='Bypass Shine-Dalgarno trainer and force a full motif scan.')]
 
 
-def run(out_dir, **kwargs):
+def run(query, out_dir, **kwargs):
     '''Run prodigal for gene prediction.
 
     Notes
@@ -69,6 +69,8 @@ def run(out_dir, **kwargs):
 
     Parameters
     ----------
+    query : str
+        input file path of sequence
     out_dir : str
         output dir
     kwargs : dict
@@ -85,7 +87,7 @@ def run(out_dir, **kwargs):
     prodigal = Dumpling('prodigal', params=Parameters(*params),
                         version='v2.6.3', url='https://github.com/hyattpd/Prodigal')
     # set default output to gff and run mode to draft genome
-    prodigal.update(fmt='gff', mode='single')
+    prodigal.update(query=query, fmt='gff', mode='single')
     # update with kwargs
     prodigal.update(**kwargs)
 

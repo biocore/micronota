@@ -103,7 +103,7 @@ def identify_features(seq, out_dir, cpus, force, config):
         db = config.features[tool]
         if db is not None:
             db_path = config.db[db]
-            dumpling = pred(seq, d, db=db_path, cpus=cpus, **params)
+            dumpling = pred(db_path, seq, d, cpus=cpus, **params)
         else:
             dumpling = pred(seq, d, cpus=cpus, **params)
 

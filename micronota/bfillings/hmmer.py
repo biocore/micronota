@@ -7,6 +7,7 @@
 # ----------------------------------------------------------------------------
 
 from logging import getLogger
+from os.path import join, splitext, basename
 
 from dumpling import Dumpling, OptionParam, ArgmntParam, Parameters
 
@@ -31,7 +32,7 @@ def run_hmmpress(hmm, force=False):
     return hmmpress
 
 
-def run_hmmscan(db, query, out, **kwargs):
+def run(db, query, out_dir, **kwargs):
     '''Scan a fasta file against a covariance model database.
 
     Parameters
@@ -40,8 +41,8 @@ def run_hmmscan(db, query, out, **kwargs):
         The file path to HMM database.
     query : str
         Input fasta file.
-    out : str
-        Output file path of target hits table.
+    out_dir : str
+        dir to store output file path of target hits table.
     kwargs : dict
         Other command line parameters for hmmscan. key is the option
         (e.g. "-T") and value is the value for the option (e.g. "50").
@@ -52,7 +53,8 @@ def run_hmmscan(db, query, out, **kwargs):
     `Dumpling`
     '''
     logger = getLogger(__name__)
-
+    prefix = splitext(basename(query))[0]
+    out = join(out_dir, '{}.tblout'.format(prefix))
     hmmscan = Dumpling('hmmscan', params=Parameters(*_scan_params))
     hmmscan.update(query=query, db=db, out=out, **kwargs)
     logger.info('Running {}'.format(hmmscan.command))
