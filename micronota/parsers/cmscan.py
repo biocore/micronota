@@ -372,29 +372,29 @@ def _IntervalMetadata_to_cmscan(obj, fh):
         It is not identical, since ordering is arbitrary here. Furthermore,
         field width might vary. """
     # write data
-    for hit, interval in obj.features.items():
-        if len(interval) <= 0:
+    for hit, intervals in obj.features.items():
+        if len(intervals) <= 0:
             raise CmscanFormatError(
              "No intervals found to be printed!")
         lineData = ''
-        for i in interval:
+        for interval in intervals:
             for key in _orderedKeys:
                 if key == 'SEQUENCE_START_POSITION':
                     if hit['STRAND'] == '+':
-                        value = str(interval[i][0])
+                        value = str(interval[0])
                     else:
-                        value = str(interval[i][1])
+                        value = str(interval[1])
                 elif key == 'SEQUENCE_END_POSITION':
                     if hit['STRAND'] == '+':
-                        value = str(interval[i][1])
+                        value = str(interval[1])
                     else:
-                        value = str(interval[i][0])
+                        value = str(interval[0])
                 else:
                     value = hit[key]
                 lineData = lineData + _print_field(_COLUMNS[key], value)
                 if _COLUMNS[key]['position']+1 != len(_COLUMNS):
                     lineData = lineData + " "
-        fh.write(lineData + "\n")
+            fh.write(lineData + "\n")
 
 
 def _print_field(column, text, width=-1):
@@ -422,7 +422,7 @@ def _print_field(column, text, width=-1):
     if width < 0:
         width = column['width']
     space = ' ' * (width-len(text))
-    if field['textalignment'] == 'l':
+    if column['textalignment'] == 'l':
         return "%s%s" % (text, space)
     else:
         return "%s%s" % (space, text)
