@@ -381,38 +381,46 @@ def _IntervalMetadata_to_cmscan(obj, fh):
         for key in _orderedKeys:
             if key == 'SEQUENCE_START_POSITION':
                 if hit['STRAND'] == '+':
-                    value = interval[0][0].__str__()
+                    value = str(interval[0][0])
                 else:
-                    value = interval[0][1].__str__()
+                    value = str(interval[0][1])
             elif key == 'SEQUENCE_END_POSITION':
                 if hit['STRAND'] == '+':
-                    value = interval[0][1].__str__()
+                    value = str(interval[0][1])
                 else:
-                    value = interval[0][0].__str__()
+                    value = str(interval[0][0])
             else:
                 value = hit[key]
-            lineData = lineData + _printField(_COLUMNS[key], value)
+            lineData = lineData + _print_field(_COLUMNS[key], value)
             if _COLUMNS[key]['position']+1 != len(_COLUMNS):
                 lineData = lineData + " "
         fh.write(lineData + "\n")
 
 
-def _printField(field, text, width=-1):
+def _print_field(column, text, width=-1):
     """ Helper function to print a string in a column of specific width either
     aligned to the left or the right.
 
     Parameters
     ----------
-    field : a 3-tuple (int width, string header, alignment='l'|'r')
-    text : the text that should be printed
-    width : override width provided in field
+    column : dict
+            A dictionary holding information about the column to be printed,
+            c.f. the _COLUMN attribute. The dict must hold at least the keys 
+            'width' and 'textalignment', where width is the column
+            width in terms of number of characters, and alignment must be either
+            the character "l" or "r" to indicate left or right text alignment 
+            within the column 
+    text :  string
+            the text to be printed
+    width : int
+            manually override the width value of the 'column' dictionary
 
     Return
     ------
     A string with leading (r) or trailing (l) spaces and the text if not longer
     than specified width. Otherwise text will be truncated to width."""
     if width < 0:
-        width = field['width']
+        width = column['width']
     space = ' ' * (width-len(text))
     if field['textalignment'] == 'l':
         return "%s%s" % (text, space)
