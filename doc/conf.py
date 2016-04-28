@@ -28,11 +28,6 @@ import micronota
 
 # If your documentation needs a minimal Sphinx version, state it here.
 # needs_sphinx = '1.3.3'
-# sphinx builtin version check does not work well. do it myself:
-sphinx_version = '1.3.3'
-import sphinx
-if sphinx.__version__ != sphinx_version:
-    raise RuntimeError("Sphinx %s required" % sphinx_version)
 
 # Add any Sphinx extension module names here, as strings. They can be
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
@@ -47,6 +42,7 @@ extensions = [
     'sphinx.ext.viewcode',
     'sphinx.ext.napoleon',
 ]
+
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
@@ -121,7 +117,7 @@ napoleon_include_special_with_doc = True
 napoleon_use_admonition_for_examples = False
 napoleon_use_admonition_for_notes = False
 napoleon_use_admonition_for_references = False
-napoleon_use_ivar = False
+napoleon_use_ivar = True
 napoleon_use_param = True
 napoleon_use_rtype = True
 
@@ -133,21 +129,9 @@ autosummary_generate = True
 
 # -- Options for HTML output ----------------------------------------------
 
-# These are from sphinx_rtd_theme pypi webpage:
-# on_rtd is whether we are on readthedocs.org, this line of code grabbed from docs.readthedocs.org
-on_rtd = os.environ.get('READTHEDOCS', None) == 'True'
-
-if not on_rtd:  # only import and set the theme if we're building docs locally
-    import sphinx_rtd_theme
-    html_theme = 'sphinx_rtd_theme'
-    html_theme_path = [sphinx_rtd_theme.get_html_theme_path()]
-
-# otherwise, readthedocs.org uses their theme by default, so no need to specify it
-
-
 # The theme to use for HTML and HTML Help pages.  See the documentation for
 # a list of builtin themes.
-# html_theme = 'default'
+html_theme = 'alabaster'
 
 # Theme options are theme-specific and customize the look and feel of a theme
 # further.  For a list of options available for each theme, see the

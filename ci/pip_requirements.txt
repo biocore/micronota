@@ -1,4 +1,4 @@
-sphinx==1.3.3
+sphinx
 click>=6.0
 coveralls
-dumpling>=0.1.2
+git+git://github.com/rnaer/dumpling.git
