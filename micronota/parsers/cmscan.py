@@ -42,14 +42,14 @@ is the exact opposite for CMsearch.)
 1. target name
    The name of the target sequence or profile.
 2. accession
-   The accession of the target sequence or profile, or ’-’ if none.
+   The accession of the target sequence or profile, or '-' if none.
 3. query name
    The name of the query sequence or profile.
 4. accession
-   The accession of the query sequence or profile, or ’-’ if none.
+   The accession of the query sequence or profile, or '-' if none.
 5. mdl (model)
-   Which type of model was used to compute the final score. Either ’cm’ or
-   ’hmm’. A CM is used to compute the final hit scores unless the model has
+   Which type of model was used to compute the final score. Either 'cm' or
+   'hmm'. A CM is used to compute the final hit scores unless the model has
    zero basepairs or the --hmmonly option is used, in which case a HMM will be
    used.
 6. mdl from (model coord)
@@ -65,20 +65,20 @@ is the exact opposite for CMsearch.)
    The end of the alignment of this hit with respect to the sequence, numbered
    1..L for a sequence of L residues.
 10. strand
-   The strand on which the hit occurs on the sequence. ’+’ if the hit is on the
-   top (Watson) strand, ’-’ if the hit is on the bottom (Crick) strand. If on
-   the top strand, the “seq from” value will be less than or equal to the
-   “seq to” value, else it will be greater than or equal to it.
+   The strand on which the hit occurs on the sequence. '+' if the hit is on the
+   top (Watson) strand, '-' if the hit is on the bottom (Crick) strand. If on
+   the top strand, the "seq from" value will be less than or equal to the
+   "seq to" value, else it will be greater than or equal to it.
 11. trunc
    Indicates if this is predicted to be a truncated CM hit or not. This will be
-   “no” if it is a CM hit that is not predicted to be truncated by the end of
-   the sequence, “5’ ” or “3’ ” if the hit is predicted to have one or more 5’
-   or 3’ residues missing due to a artificial truncation of the sequence, or
-   “5’&3”’ if the hit is predicted to have one or more 5’ residues missing and
-   one or more 3’ residues missing. If the hit is an HMM hit, this will always
-   be ’-’.
+   "no" if it is a CM hit that is not predicted to be truncated by the end of
+   the sequence, "5' " or "3' " if the hit is predicted to have one or more 5'
+   or 3' residues missing due to a artificial truncation of the sequence, or
+   "5'&3'" if the hit is predicted to have one or more 5' residues missing and
+   one or more 3' residues missing. If the hit is an HMM hit, this will always
+   be '-'.
 12. pass
-   Indicates what “pass” of the pipeline the hit was detected on. This is
+   Indicates what "pass" of the pipeline the hit was detected on. This is
    probably only useful for testing and debugging. Non-truncated hits are found
    on the first pass, truncated hits are found on successive passes.
 13. gc
@@ -93,12 +93,12 @@ is the exact opposite for CMsearch.)
    false positives).
 15. score
    The score (in bits) for this target/query comparison. It includes the
-   biased-composition correction (the “null3” model for CM hits, or the “null2”
+   biased-composition correction (the "null3" model for CM hits, or the "null2"
    model for HMM hits).
 16. E-value
    The expectation value (statistical significance) of the target. This is a
    per query E-value; i.e. calculated as the expected number of false positives
-   achieving this comparison’s score for a single query against the search
+   achieving this comparison's score for a single query against the search
    space Z. For cmsearch Z is defined as the total number of nucleotides in the
    target dataset multiplied by 2 because both strands are searched. For cmscan
    Z is the total number of nucleotides in the query sequence multiplied by 2
@@ -106,15 +106,15 @@ is the exact opposite for CMsearch.)
    the target database. If you search with multiple queries and if you want to
    control the overall false positive rate of that search rather than the false
    positive rate per query, you will want to multiply this per-query E-value by
-   how many queries you’re doing.
+   how many queries you're doing.
 17. inc
-   Indicates whether or not this hit achieves the inclusion threshold: ’!’ if
-   it does, ’?’ if it does not (and rather only achieves the reporting
+   Indicates whether or not this hit achieves the inclusion threshold: '!' if
+   it does, '?' if it does not (and rather only achieves the reporting
    threshold). By default, the inclusion threshold is an E-value of 0.01 and
    the reporting threshold is an E-value of 10.0, but these can be changed with
    command line options as described in the manual pages.
 18. description of target
-   The remainder of the line is the target’s description line, as free text.
+   The remainder of the line is the target's description line, as free text.
 
 
 Format Support
