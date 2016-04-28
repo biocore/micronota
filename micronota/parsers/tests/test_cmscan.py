@@ -113,56 +113,47 @@ class CmscanIOTests(TestCase):
 
 class ReaderTests(CmscanIOTests):
     def test_cmscan_to_metadata(self):
-        t = TestCase()
 #       positive controls: will the information from a file parsed to what
 #       we expect
-        assertTrue(self.seq1.__eq__(_cmscan_to_metadata(
-                                                        self.file_valid,
-                                                        rec_num=1)))
-        assertTrue(self.seq2.__eq__(_cmscan_to_metadata(
-                                                        self.file_valid,
-                                                        rec_num=2)))
+        assertTrue(self.seq1 == _cmscan_to_metadata(self.file_valid, rec_num=1))
+        assertTrue(self.seq2 == _cmscan_to_metadata(self.file_valid, rec_num=2))
 
 #       negative control: we are parsing the wrong information from the file,
 #       check if it is really unequal
-        assertTrue(not self.seq1.__eq__(_cmscan_to_metadata(
-                                                            self.file_valid,
-                                                            rec_num=2)))
+        assertTrue(not self.seq1 == _cmscan_to_metadata(self.file_valid,
+                                                        rec_num=2))
 
 #       test if parser raises error about an unknown character as strand
 #       identifier
-        t.assertRaisesRegex(CmscanFormatError,
-                            "Unknown strand character",
-                            _cmscan_to_metadata,
-                            self.file_invalidOrientation,
-                            rec_num=1)
+        self.assertRaisesRegex(CmscanFormatError,
+                               "Unknown strand character",
+                               _cmscan_to_metadata,
+                               self.file_invalidOrientation,
+                               rec_num=1)
 
 #       test if parser complains about non digit characters in positional
 #       arguments
-        t.assertRaisesRegex(CmscanFormatError,
-                            "must be an integer value for the start position "
-                            "of the hit. Here, it is",
-                            _cmscan_to_metadata,
-                            self.file_charInPos,
-                            rec_num=1)
+        self.assertRaisesRegex(CmscanFormatError,
+                               "must be an integer value for the start position"
+                               " of the hit. Here, it is",
+                               _cmscan_to_metadata,
+                               self.file_charInPos,
+                               rec_num=1)
 
 #       test if parser checks for wrong start and stop positions of the hit
 #       in the query sequence
-        t.assertRaisesRegex(CmscanFormatError,
-                            "It might be, that this hit is in fact on the "
-                            "reverse strand. Please check strand orientation "
-                            "and positions",
-                            _cmscan_to_metadata,
-                            self.file_startStopSwop,
-                            rec_num=1)
+        self.assertRaisesRegex(CmscanFormatError,
+                               "It might be, that this hit is in fact on the "
+                               "reverse strand. Please check strand orientation"
+                               " and positions",
+                               _cmscan_to_metadata,
+                               self.file_startStopSwop,
+                               rec_num=1)
 
     def test_cmscan_to_generator(self):
-        assertTrue(list(_cmscan_to_generator(self.file_valid))[0].__eq__(
-            self.seq1))
-        assertTrue(list(_cmscan_to_generator(self.file_valid))[1].__eq__(
-            self.seq2))
-        assertTrue(not list(_cmscan_to_generator(self.file_valid))[0].__eq__(
-            self.seq2))
+        assertTrue(list(_cmscan_to_generator(self.file_valid))[0] == self.seq1)
+        assertTrue(list(_cmscan_to_generator(self.file_valid))[1] == self.seq2)
+        assertTrue(not list(_cmscan_to_generator(self.file_valid))[0] == self.seq2)
 
 
 class SnifferTests(TestCase):
