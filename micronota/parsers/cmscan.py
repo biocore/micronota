@@ -371,6 +371,14 @@ def _IntervalMetadata_to_cmscan(obj, fh):
     """ Prints IntervalMetadata object in a format similar to CMscan --tblout.
         It is not identical, since ordering is arbitrary here. Furthermore,
         field width might vary. """
+    
+    pos = {
+           ('SEQUENCE_START_POSITION', '+'): lambda interval: str(interval[0]),
+           ('SEQUENCE_START_POSITION', '-'): lambda interval: str(interval[1]),
+           ('SEQUENCE_END_POSITION', '+'): lambda interval: str(interval[1]),
+           ('SEQUENCE_END_POSITION', '-'): lambda interval: str(interval[0]),
+          }           
+    
     # write data
     for hit, intervals in obj.features.items():
         if len(intervals) <= 0:
@@ -379,16 +387,8 @@ def _IntervalMetadata_to_cmscan(obj, fh):
         lineData = ''
         for interval in intervals:
             for key in _orderedKeys:
-                if key == 'SEQUENCE_START_POSITION':
-                    if hit['STRAND'] == '+':
-                        value = str(interval[0])
-                    else:
-                        value = str(interval[1])
-                elif key == 'SEQUENCE_END_POSITION':
-                    if hit['STRAND'] == '+':
-                        value = str(interval[1])
-                    else:
-                        value = str(interval[0])
+                if (key, hit['STRAND']) in pos:
+                    value = pos[(key,hit['STRAND'])](interval)
                 else:
                     value = hit[key]
                 lineData = lineData + _print_field(_COLUMNS[key], value)
