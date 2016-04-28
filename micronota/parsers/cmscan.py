@@ -373,27 +373,27 @@ def _IntervalMetadata_to_cmscan(obj, fh):
         field width might vary. """
     # write data
     for hit, interval in obj.features.items():
-        if len(interval) != 1:
+        if len(interval) <= 0:
             raise CmscanFormatError(
-             "The cmscan format allows only one interval per IntervalMetadata "
-             "object. Cannot continue writing output.")
+             "No intervals found to be printed!")
         lineData = ''
-        for key in _orderedKeys:
-            if key == 'SEQUENCE_START_POSITION':
-                if hit['STRAND'] == '+':
-                    value = str(interval[0][0])
+        for i in interval:
+            for key in _orderedKeys:
+                if key == 'SEQUENCE_START_POSITION':
+                    if hit['STRAND'] == '+':
+                        value = str(interval[i][0])
+                    else:
+                        value = str(interval[i][1])
+                elif key == 'SEQUENCE_END_POSITION':
+                    if hit['STRAND'] == '+':
+                        value = str(interval[i][1])
+                    else:
+                        value = str(interval[i][0])
                 else:
-                    value = str(interval[0][1])
-            elif key == 'SEQUENCE_END_POSITION':
-                if hit['STRAND'] == '+':
-                    value = str(interval[0][1])
-                else:
-                    value = str(interval[0][0])
-            else:
-                value = hit[key]
-            lineData = lineData + _print_field(_COLUMNS[key], value)
-            if _COLUMNS[key]['position']+1 != len(_COLUMNS):
-                lineData = lineData + " "
+                    value = hit[key]
+                lineData = lineData + _print_field(_COLUMNS[key], value)
+                if _COLUMNS[key]['position']+1 != len(_COLUMNS):
+                    lineData = lineData + " "
         fh.write(lineData + "\n")
 
 
