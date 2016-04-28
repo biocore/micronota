@@ -230,8 +230,8 @@ def _parse_records(fh):
             attributes = {}
             fields = line.split()  # split at multiple occurrences of spaces
 
-#           checking data for start end end position of the hit in the query
-#           sequence.
+            # checking data for start end end position of the hit in the query
+            # sequence.
             hitStart = -1
             if fields[_COLUMNS['SEQUENCE_START_POSITION']['position']].isdigit():
                 hitStart = int(
@@ -297,10 +297,10 @@ def _parse_records(fh):
                      "Valid characters are '+' for the forward strand and "
                      "'-' for the reverse strand."))
 
-#           since Infernal want the user to be aware of differences between
-#           CMsearch and CMscan the information about model and query are at
-#           different columns. Here, we contradict this design and store the
-#           information always at the same key
+            # since Infernal want the user to be aware of differences between
+            # CMsearch and CMscan the information about model and query are at
+            # different columns. Here, we contradict this design and store the
+            # information always at the same key
             if program is 'CMSEARCH':
                 attributes['SEQUENCE_NAME'] = fields[0]
                 attributes['SEQUENCE_ACCESSION'] = fields[1]
@@ -315,7 +315,7 @@ def _parse_records(fh):
                 raise CmscanFormatError("Argument 'program' must be either "
                                         "'CMSEARCH' or 'CMSCAN'!")
 
-#           iterate through all keys that have not already be handled above
+            # iterate through all keys that have not already be handled above
             for key in _orderedKeys:
                 if key in ['SEQUENCE_START_POSITION',
                            'SEQUENCE_END_POSITION',
@@ -326,19 +326,19 @@ def _parse_records(fh):
                     continue
                 attributes[key] = fields[_COLUMNS[key]['position']]
 
-#           cmscan works on multiple sequence in one FASTA file. We want to
-#           yield a separate object for each sequence, thus we create a new
-#           one whenever the ID changes
+            # cmscan works on multiple sequence in one FASTA file. We want to
+            # yield a separate object for each sequence, thus we create a new
+            # one whenever the ID changes
             if (currentsequence != attributes['SEQUENCE_NAME'] and
                     currentsequence is not False):
                 yield annotations
                 annotations = {}
 
-#           a metadata interval is made out of 'frozen dictionary' aka
-#           Features object, where the its hashable value constitutes the
-#           key and the value is a list of tuples, aka intervals
+            # a metadata interval is made out of 'frozen dictionary' aka
+            # Features object, where the its hashable value constitutes the
+            # key and the value is a list of tuples, aka intervals
             annotations[Feature(attributes)] = [(hitStart, hitEnd)]
-#           store current sequence id for the next iteration
+            # store current sequence id for the next iteration
             currentsequence = attributes['SEQUENCE_NAME']
 
     yield annotations
@@ -371,7 +371,7 @@ def _IntervalMetadata_to_cmscan(obj, fh):
     """ Prints IntervalMetadata object in a format similar to CMscan --tblout.
         It is not identical, since ordering is arbitrary here. Furthermore,
         field width might vary. """
-#   write data
+    # write data
     for hit, interval in obj.features.items():
         if len(interval) != 1:
             raise CmscanFormatError(
