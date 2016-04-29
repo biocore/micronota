@@ -13,10 +13,11 @@ FILENAME "save parseable table of hits to file". (Alignment between query
 sequence and family model are **not** included.) This python module is for
 parsing the tbloutput format.
 
+Examples
+--------
 This example lists the first hits between the chromosome of E.Coli and Rfam 12
 using CMscan:
 
-.. code-block:: none
 #target name           accession query name                   accession mdl mdl from   mdl to seq from   seq to strand trunc pass   gc  bias  score   E-value inc description of target
 #--------------------- --------- ---------------------------- --------- --- -------- -------- -------- -------- ------ ----- ---- ---- ----- ------ --------- --- ---------------------
 LSU_rRNA_bacteria      RF02541   gi|15829254|ref|NC_002695.1| -          cm        1     2925  4977823  4980727      +    no    1 0.53  45.4 2889.8         0 !   -
@@ -146,27 +147,11 @@ from skbio.io.format._base import _get_nth_sequence as _get_nth_record
 cmscan = create_format('cmscan')
 
 # column headers
-_COLUMNS = {
-   'MODEL_NAME':              {'position':  0, 'width': 22, 'textalignment': 'l', 'caption': 'target name'},
-   'MODEL_ACCESSION':         {'position':  1, 'width':  9, 'textalignment': 'l', 'caption': 'accession'},
-   'SEQUENCE_NAME':           {'position':  2, 'width': 28, 'textalignment': 'l', 'caption': 'query name'},
-   'SEQUENCE_ACCESSION':      {'position':  3, 'width':  9, 'textalignment': 'l', 'caption': 'accession'},
-   'TYPE_OF_MODEL':           {'position':  4, 'width':  3, 'textalignment': 'r', 'caption': 'mdl'},
-   'MODEL_START_POSITION':    {'position':  5, 'width':  8, 'textalignment': 'r', 'caption': 'mdl from'},
-   'MODEL_END_POSITION':      {'position':  6, 'width':  8, 'textalignment': 'r', 'caption': 'mdl to'},
-   'SEQUENCE_START_POSITION': {'position':  7, 'width':  8, 'textalignment': 'r', 'caption': 'seq from'},
-   'SEQUENCE_END_POSITION':   {'position':  8, 'width':  8, 'textalignment': 'r', 'caption': 'seq to'},
-   'STRAND':                  {'position':  9, 'width':  6, 'textalignment': 'r', 'caption': 'strand'},
-   'TRUNCATED':               {'position': 10, 'width':  5, 'textalignment': 'r', 'caption': 'trunc'},
-   'PASS':                    {'position': 11, 'width':  4, 'textalignment': 'r', 'caption': 'pass'},
-   'GC_CONTENT':              {'position': 12, 'width':  4, 'textalignment': 'r', 'caption': 'gc'},
-   'BIAS':                    {'position': 13, 'width':  5, 'textalignment': 'r', 'caption': 'bias'},
-   'BITSCORE':                {'position': 14, 'width':  6, 'textalignment': 'r', 'caption': 'score'},
-   'EVALUE':                  {'position': 15, 'width':  9, 'textalignment': 'r', 'caption': 'E-value'},
-   'INC':                     {'position': 16, 'width':  3, 'textalignment': 'l', 'caption': 'inc'},
-   'DESCRIPTION':             {'position': 17, 'width': 21, 'textalignment': 'l', 'caption': 'description of target'}
-}
-_orderedKeys = sorted(_COLUMNS, key=lambda x: _COLUMNS[x]['position'])
+_COLUMNS = ['MODEL_NAME', 'MODEL_ACCESSION', 'SEQUENCE_NAME',
+            'SEQUENCE_ACCESSION', 'TYPE_OF_MODEL', 'MODEL_START_POSITION',
+            'MODEL_END_POSITION', 'SEQUENCE_START_POSITION',
+            'SEQUENCE_END_POSITION', 'STRAND', 'TRUNCATED', 'PASS',
+            'GC_CONTENT', 'BIAS', 'BITSCORE', 'EVALUE', 'INC', 'DESCRIPTION']
 
 
 class CmscanFormatError(FileFormatError):
@@ -215,9 +200,9 @@ def _parse_records(fh):
 
     Parameters
     ----------
-    fh : file handle 
+    fh : file handle
          A file handle to the file that should be parsed
-    
+
     Returns
     -------
     A collection of IntervalMetadata objects
@@ -233,35 +218,31 @@ def _parse_records(fh):
             # checking data for start end end position of the hit in the query
             # sequence.
             hitStart = -1
-            if fields[_COLUMNS['SEQUENCE_START_POSITION']['position']].isdigit():
-                hitStart = int(
-                   fields[_COLUMNS['SEQUENCE_START_POSITION']['position']]
-                )
+            if fields[_COLUMNS.index('SEQUENCE_START_POSITION')].isdigit():
+                hitStart = int(fields[_COLUMNS.index('SEQUENCE_START_POSITION')])
             else:
                 raise CmscanFormatError("%s %i %s '%s'." % (
                        "Column",
-                       _COLUMNS['SEQUENCE_START_POSITION']['position'],
+                       _COLUMNS.index('SEQUENCE_START_POSITION'),
                        "must be an integer value for the start position of the"
                        " hit. Here, it is",
-                       fields[_COLUMNS['SEQUENCE_START_POSITION']['position']])
-                      )
+                       fields[_COLUMNS.index('SEQUENCE_START_POSITION')]
+                      ))
 
             hitEnd = -1
-            if fields[_COLUMNS['SEQUENCE_END_POSITION']['position']].isdigit():
-                hitEnd = int(
-                   fields[_COLUMNS['SEQUENCE_END_POSITION']['position']]
-                )
+            if fields[_COLUMNS.index('SEQUENCE_END_POSITION')].isdigit():
+                hitEnd = int(fields[_COLUMNS.index('SEQUENCE_END_POSITION')])
             else:
                 raise CmscanFormatError("%s %i %s '%s'." % (
                         "Column",
-                        _COLUMNS['SEQUENCE_END_POSITION']['position'],
+                        _COLUMNS.index('SEQUENCE_END_POSITION'),
                         "must be an integer value for the end position of the "
                         "hit. Here, it is",
-                        fields[_COLUMNS['SEQUENCE_END_POSITION']['position']],
+                        fields[_COLUMNS.index('SEQUENCE_END_POSITION')],
                         ".")
                       )
 
-            hitOrientation = fields[_COLUMNS['STRAND']['position']]
+            hitOrientation = fields[_COLUMNS.index('STRAND')]
             if hitOrientation == "+":
                 if hitStart > hitEnd:
                     raise CmscanFormatError('%s %i %s %i %s' % (
@@ -293,7 +274,7 @@ def _parse_records(fh):
                     "%s '%s' %s %i. %s" %
                     ("Unknown strand character",
                      hitOrientation, "in column",
-                     _COLUMNS['STRAND']['position'],
+                     _COLUMNS.index('STRAND'),
                      "Valid characters are '+' for the forward strand and "
                      "'-' for the reverse strand."))
 
@@ -316,7 +297,7 @@ def _parse_records(fh):
                                         "'CMSEARCH' or 'CMSCAN'!")
 
             # iterate through all keys that have not already be handled above
-            for key in _orderedKeys:
+            for key in _COLUMNS:
                 if key in ['SEQUENCE_START_POSITION',
                            'SEQUENCE_END_POSITION',
                            'SEQUENCE_NAME',
@@ -324,7 +305,7 @@ def _parse_records(fh):
                            'MODEL_NAME',
                            'MODEL_ACCESSION']:
                     continue
-                attributes[key] = fields[_COLUMNS[key]['position']]
+                attributes[key] = fields[_COLUMNS.index(key)]
 
             # cmscan works on multiple sequence in one FASTA file. We want to
             # yield a separate object for each sequence, thus we create a new
@@ -342,87 +323,3 @@ def _parse_records(fh):
             currentsequence = attributes['SEQUENCE_NAME']
 
     yield annotations
-
-
-def _writeheader(fh):
-    """ Print a header for cmscan hits. It is similar to 'CMscan --tblout' but
-        not identical, since we do not check for longest occurring names, but
-        use fixed field width. """
-
-    # write file header
-    lineCaption = '#'
-    lineDelimeter = '#'
-    for key in _orderedKeys:
-        length = _COLUMNS[key]['width']
-        if _COLUMNS[key]['position'] == 0:
-            length = length-1
-        lineCaption = lineCaption + _printField(
-               _COLUMNS[key], _COLUMNS[key]['caption'], length)
-        lineDelimeter = lineDelimeter + ('-' * length)
-        if _COLUMNS[key]['position']+1 != len(_COLUMNS):
-            lineCaption = lineCaption + " "
-            lineDelimeter = lineDelimeter + " "
-    fh.write(lineCaption + "\n")
-    fh.write(lineDelimeter + "\n")
-
-
-@cmscan.writer(IntervalMetadata)
-def _IntervalMetadata_to_cmscan(obj, fh):
-    """ Prints IntervalMetadata object in a format similar to CMscan --tblout.
-        It is not identical, since ordering is arbitrary here. Furthermore,
-        field width might vary. """
-    
-    pos = {
-           ('SEQUENCE_START_POSITION', '+'): lambda interval: str(interval[0]),
-           ('SEQUENCE_START_POSITION', '-'): lambda interval: str(interval[1]),
-           ('SEQUENCE_END_POSITION', '+'): lambda interval: str(interval[1]),
-           ('SEQUENCE_END_POSITION', '-'): lambda interval: str(interval[0]),
-          }           
-    
-    # write data
-    for hit, intervals in obj.features.items():
-        if len(intervals) <= 0:
-            raise CmscanFormatError(
-             "No intervals found to be printed!")
-        lineData = ''
-        for interval in intervals:
-            for key in _orderedKeys:
-                if (key, hit['STRAND']) in pos:
-                    value = pos[(key,hit['STRAND'])](interval)
-                else:
-                    value = hit[key]
-                lineData = lineData + _print_field(_COLUMNS[key], value)
-                if _COLUMNS[key]['position']+1 != len(_COLUMNS):
-                    lineData = lineData + " "
-            fh.write(lineData + "\n")
-
-
-def _print_field(column, text, width=-1):
-    """ Helper function to print a string in a column of specific width either
-    aligned to the left or the right.
-
-    Parameters
-    ----------
-    column : dict
-            A dictionary holding information about the column to be printed,
-            c.f. the _COLUMN attribute. The dict must hold at least the keys 
-            'width' and 'textalignment', where width is the column
-            width in terms of number of characters, and alignment must be either
-            the character "l" or "r" to indicate left or right text alignment 
-            within the column 
-    text :  string
-            the text to be printed
-    width : int
-            manually override the width value of the 'column' dictionary
-
-    Return
-    ------
-    A string with leading (r) or trailing (l) spaces and the text if not longer
-    than specified width. Otherwise text will be truncated to width."""
-    if width < 0:
-        width = column['width']
-    space = ' ' * (width-len(text))
-    if column['textalignment'] == 'l':
-        return "%s%s" % (text, space)
-    else:
-        return "%s%s" % (space, text)
