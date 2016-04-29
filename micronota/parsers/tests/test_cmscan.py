@@ -113,26 +113,26 @@ class CmscanIOTests(TestCase):
 
 class ReaderTests(CmscanIOTests):
     def test_cmscan_to_metadata(self):
-#       positive controls: will the information from a file parsed to what
-#       we expect
+        # positive controls: will the information from a file parsed to what
+        # we expect
         assertTrue(self.seq1 == _cmscan_to_metadata(self.file_valid, rec_num=1))
         assertTrue(self.seq2 == _cmscan_to_metadata(self.file_valid, rec_num=2))
 
-#       negative control: we are parsing the wrong information from the file,
-#       check if it is really unequal
+        # negative control: we are parsing the wrong information from the file,
+        # check if it is really unequal
         assertTrue(not self.seq1 == _cmscan_to_metadata(self.file_valid,
                                                         rec_num=2))
 
-#       test if parser raises error about an unknown character as strand
-#       identifier
+        # test if parser raises error about an unknown character as strand
+        # identifier
         self.assertRaisesRegex(CmscanFormatError,
                                "Unknown strand character",
                                _cmscan_to_metadata,
                                self.file_invalidOrientation,
                                rec_num=1)
 
-#       test if parser complains about non digit characters in positional
-#       arguments
+        # test if parser complains about non digit characters in positional
+        # arguments
         self.assertRaisesRegex(CmscanFormatError,
                                "must be an integer value for the start position"
                                " of the hit. Here, it is",
@@ -140,8 +140,8 @@ class ReaderTests(CmscanIOTests):
                                self.file_charInPos,
                                rec_num=1)
 
-#       test if parser checks for wrong start and stop positions of the hit
-#       in the query sequence
+        # test if parser checks for wrong start and stop positions of the hit
+        # in the query sequence
         self.assertRaisesRegex(CmscanFormatError,
                                "It might be, that this hit is in fact on the "
                                "reverse strand. Please check strand orientation"
