@@ -8,15 +8,19 @@
 
 import click
 
+from ..util import convert
+
 
 @click.command()
-@click.option('-i', '--input_fp', type=click.File('r'),
+@click.option('-i', '--in_fmt',
               required=True,
-              help='Input file path.')
-@click.option('-o', '--output_fp', type=click.File('w'),
+              help='Input file format.')
+@click.option('-o', '--out_fmt',
               required=True,
               help='Output file path.')
+@click.argument('input', type=click.File('r'), nargs=1)
+@click.argument('output', type=click.File('w'), nargs=1)
 @click.pass_context
-def cli(ctx, input_fp, output_fp):
+def cli(ctx, in_fmt, out_fmt, in_f, out_f):
     '''Format conversion.'''
-    pass
+    convert(in_fmt, out_fmt, in_f, out_f)

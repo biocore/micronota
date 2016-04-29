@@ -5,8 +5,6 @@ Utility functionality
 .. currentmodule:: micronota.util
 
 This module (:mod:`micronota.util`) provides various utility functionality,
-including config config, unit-testing convenience function.
-
 '''
 
 # ----------------------------------------------------------------------------
@@ -25,18 +23,20 @@ from unittest import TestCase
 from sqlite3 import connect
 from inspect import stack
 
+from skbio import read, write
 
-def _overwrite(fp, overwrite=False, append=False):
-    if exists(fp):
+
+def _overwrite(path, overwrite=False, append=False):
+    if exists(path):
         if overwrite:
-            if isdir(fp):
-                shutil.rmtree(fp)
+            if isdir(path):
+                shutil.rmtree(path)
             else:
-                remove(fp)
+                remove(path)
         elif append:
             return
         else:
-            raise FileExistsError('The file path %s exists.' % fp)
+            raise FileExistsError('The file path {} already exists.'.format(path))
 
 
 def _download(src, dest, **kwargs):
@@ -52,6 +52,12 @@ def _get_named_data_path(fname):
     # remove file suffix and prefix of "test_"
     name = splitext(basename(caller_fp))[0][5:]
     return join(d, 'data', name, fname)
+
+
+def convert(in_fmt, out_fmt, in_f, out_f):
+    '''convert between file formats'''
+    for obj in read(in_f, format=in_fmt):
+        write(obj, format=out_fmt, into=out_f)
 
 
 class _DBTest(TestCase):

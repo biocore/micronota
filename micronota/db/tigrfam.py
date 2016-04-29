@@ -130,7 +130,7 @@ from tempfile import mkdtemp
 from sqlite3 import connect
 from logging import getLogger
 
-from ..bfillings.hmmer import hmmpress_hmm
+from ..bfillings.hmmer import run_hmmpress
 
 from ..util import _overwrite, _download
 
@@ -181,7 +181,7 @@ def prepare_db(out_d, downloaded, prefix='tigrfam_v15.0', force=False,
         shutil.copyfileobj(i_f, o_f)
 
     # don't forget to compress the hmm file
-    hmmpress_hmm(hmm_fp)
+    run_hmmpress(hmm_fp)
 
 
 def prepare_metadata(in_d, out_fp, overwrite=True):
