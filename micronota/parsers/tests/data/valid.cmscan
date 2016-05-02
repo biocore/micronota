@@ -1,0 +1,16 @@
+#target name           accession query name                   accession mdl mdl from   mdl to seq from   seq to strand trunc pass   gc  bias  score   E-value inc description of target
+#--------------------- --------- ---------------------------- --------- --- -------- -------- -------- -------- ------ ----- ---- ---- ----- ------ --------- --- ---------------------
+LSU_rRNA_bacteria      RF02541   gi|15829254|ref|NC_002695.1| -          cm        1     2925  4977823  4980727      +    no    1 0.53  45.4 2889.8         0 !   -
+SSU_rRNA_microsporidia RF02542   gi|15829254|ref|NC_002695.1| -          cm        1     1312  4831659  4833190      +    no    1 0.55  14.5  733.3  5.8e-220 !   -
+IS061                  RF00115   gi|secondSeq|                -          cm        1      180  1915281  1915102      -    no    1 0.44   0.0  232.1   1.5e-42 !   -
+SIB_RNA                RF00113   gi|secondSeq|                -          cm        1      147  3794337  3794487      +    no    1 0.40   0.0  136.7     4e-27 !   -
+#
+# Program:         cmscan
+# Version:         1.1.1 (July 2014)
+# Pipeline mode:   SCAN
+# Query file:      NC_002695.fasta
+# Target file:     Rfam.cm
+# Option settings: cmscan --tblout scan.tab --notrunc --toponly --cpu 1 Rfam.cm NC_002695.fasta 
+# Current dir:     /home/sjanssen/Desktop/KnightLab/Micronata/Infernal
+# Date:            Tue Apr 12 14:54:49 2016
+# [ok]
