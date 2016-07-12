@@ -1,0 +1,7 @@
+<config>
+    <coding_gene>
+    <tools>Prodigal</tools>
+    <url>http://prodigal.ornl.gov/</url>
+    <filepath>microronota/bfillings/prodigal.py</filepath>
+    </coding_gene>
+</config>
