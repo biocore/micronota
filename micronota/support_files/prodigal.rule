@@ -1,0 +1,21 @@
+from os.path import join
+
+config_ = config['prodigal']
+out_path = join(config['output_dir'], 'prodigal', '{seq}')
+
+rule gene:
+    '''Predict CDS with Prodigal.'''
+    input:
+        '{seq}.fna'
+    output:
+        gff = '%s.gff' % out_path,
+        faa = '%s.faa' % out_path,
+        fna = '%s.fna' % out_path
+    log:
+        '%s.log' % out_path
+    priority: config_['priority']
+    shell:
+        'prodigal {params} -f gff -g {gcode}'
+        ' -i {{input[0]}} -o {{output.gff}} -a {{output.faa}} -d {{output.fna}}'.format(
+            params=config_['params'],
+            gcode=config['genetic_code'])
