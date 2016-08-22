@@ -15,9 +15,9 @@ from ..workflow import annotate
 @click.option('-i', '--input_fp', type=click.Path(exists=True, dir_okay=False),
               required=True,
               help='Input file path.')
-@click.option('--in_fmt', type=click.Choice(['fasta', 'genbank']),
+@click.option('--in_fmt', type=click.Choice(['fasta', 'genbank', 'gff3']),
               default='fasta',
-              help='The format of input file.')
+              help='The format of input file. If it is gff3 format, it must contain seq in it.')
 @click.option('-o', '--output_dir', type=click.Path(file_okay=False),
               required=True,
               help='Output directory path.')
@@ -26,10 +26,6 @@ from ..workflow import annotate
               help='Output format for the annotated sequences.')
 @click.option('--cpus', type=int, default=1,
               help='Number of CPUs to use.')
-@click.option('--kingdom',
-              type=click.Choice(['Bacteria', 'Archaea', 'Viruses']),
-              default='Bacteria',
-              help='Kingdom of the input sequence organism.')
 @click.option('--force', is_flag=True,
               help='Force overwrite if the output directory exists')
 @click.pass_context
@@ -37,5 +33,4 @@ def cli(ctx, input_fp, in_fmt, output_dir, out_fmt,
         cpus, kingdom, force):
     '''Annotate prokaryotic genomes.'''
     annotate(input_fp, in_fmt, output_dir, out_fmt,
-             cpus, kingdom, force,
-             ctx.parent.config, cache=True)
+             cpus, force, ctx.parent.config)

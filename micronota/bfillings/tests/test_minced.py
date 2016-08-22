@@ -7,92 +7,50 @@
 # ----------------------------------------------------------------------------
 
 from tempfile import mkdtemp
-from os import getcwd
+from filecmp import cmp
 from shutil import rmtree
-from os.path import join
+from os.path import splitext
 from unittest import TestCase, main
-from functools import partial
-from skbio.util import get_data_path
-from burrito.util import ApplicationError
+from subprocess import CalledProcessError
 
-from micronota.bfillings.minced import MinCED, predict_crispr
+from skbio.util import get_data_path
+
+from micronota.bfillings.minced import run
+from micronota.util import _get_named_data_path
 
 
 class MinCEDTests(TestCase):
     def setUp(self):
-        self.temp_dir = mkdtemp()
-        self.get_minced_path = partial(
-            get_data_path, subfolder=join('data', 'minced'))
+        self.tmp_dir = mkdtemp()
 
-        # taken from MinCED test files
-        self.positive_fps = list(map(self.get_minced_path,
-                                 ['Aquifex_aeolicus_VF5.fna',
-                                  'Aquifex_aeolicus_VF5.fna',
-                                  'Aquifex_aeolicus_VF5.fna']))
-        # 'empty' file raises JAVA (minced) error
-        self.negative_fps = list(map(get_data_path, [
-            'whitespace_only',
-            'empty']))
-        self.positive_params = [
-            {'-searchWL': '8'},
-            {'-searchWL': '8', '-minNR': '3'},
-            {}]
-        self.positive_flags = [
-            {'gff': True, 'gffFull': False, 'spacers': False},
-            {'gffFull': True, 'gff': False, 'spacers': False},
-            {'gff': True, 'spacers': True, 'gffFull': False}]
-        self.positive_prefix = 'Aquifex_aeolicus_VF5'
+        self.negative_fps = [get_data_path(i)
+                             for i in ['empty', 'whitespace_only']]
 
-    def test_base_command(self):
-        c = MinCED()
-        self.assertEqual(
-            c.BaseCommand,
-            'cd "%s/"; %s' % (getcwd(), c._command))
-
-    def test_predict_crispr_wrong_input(self):
+    def test_run_wrong_input(self):
         for fp in self.negative_fps:
-            with self.assertRaisesRegex(
-                    ApplicationError,
-                    r'Error constructing CommandLineAppResult.'):
-                predict_crispr(fp, self.temp_dir, 'foo')
+            # 'empty' file raises JAVA (minced) error
+            with self.assertRaises(CalledProcessError):
+                run(fp, self.tmp_dir)
 
-    def test_predict_crispr(self):
-        for fp, params, flags in zip(self.positive_fps, self.positive_params,
-                                     self.positive_flags):
-            prefix = self.positive_prefix
-            res = predict_crispr(fp, self.temp_dir,
-                                 prefix,
-                                 gff=flags['gff'],
-                                 gffFull=flags['gffFull'],
-                                 spac=flags['spacers'], params=params)
-            self.assertEqual(res['ExitStatus'], 0)
-            if flags['gff']:
-                suffix = 'gff'
-            elif flags['gffFull']:
-                suffix = 'gffFull'
-            else:
-                suffix = 'crisprs'
-            fp = self.get_minced_path('.'.join([prefix, suffix]))
-            with open(fp) as f:
-                self.assertEqual(
-                     # skip comment lines as some contain runtime info
-                     [i for i in f.readlines()
-                      if not i.startswith('Time')],
-                     [j for j in res['output'].readlines()
-                      if not j.startswith('Time')])
-            # SPACERS flag produces an *additional* OUT_spacers.fa file
-            # other flags produce OUT.FLAG outputs
-            if flags['spacers']:
-                suffix = 'spacers.fa'
-                fp = self.get_minced_path('_'.join([prefix, suffix]))
-                with open(fp) as f:
-                    self.assertEqual(f.read(), res['spacers'].read())
-            res['StdOut'].close()
-            res['StdErr'].close()
+    def test_run(self):
+        # taken from MinCED test files
+        fn = 'Aquifex_aeolicus_VF5.fna'
+        query = _get_named_data_path(fn)
+        exp = splitext(query)[0]
+        params = [
+            {'-searchWL': '8', 'gff': True, 'gffFull': False, 'spacers': False},
+            {'-searchWL': '8', '-minNR': '3', 'gffFull': True, 'gff': False, 'spacers': False},
+            {'gff': True, 'spacers': True, 'gffFull': False}]
+
+        exp_fps = ['.gff', '.gffFull', '.gff']
+        for param, s in zip(params, exp_fps):
+            res = run(query, self.tmp_dir, **param)
+            self.assertTrue(
+                cmp(res.params['out'].value, exp + s))
 
     def tearDown(self):
-        # remove the tempdir and contents
-        rmtree(self.temp_dir)
+        rmtree(self.tmp_dir)
+
 
 if __name__ == '__main__':
     main()
