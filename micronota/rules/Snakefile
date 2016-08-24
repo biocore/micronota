@@ -1,0 +1,41 @@
+from os.path import join, dirname
+
+# useful snakemake cmd:
+# -n (dry run) and -p (print commands) and -F which will force snakemake to rerun rules
+# snakemake -n -p --rulegraph
+# -l
+
+# workdir: '/tmp'
+
+# rule all:
+#     input:
+#         join(config['output_dir'], '{seq}.gff')
+
+# rule report:
+#     input:
+#         '{seq}.gff'
+#     output:
+#         "{seq}.html"
+#     run:
+#         from snakemake.utils import report
+#         shell('touch {output[0]}')
+
+for tool in config['tools']:
+    include: '%s.rule' % tool
+
+def grab_output(wildcards):
+    f = []
+    for tool in config['tools']:
+        p = join(config['output_dir'], tool, wildcards.seq + '.gff')
+        f.append(p)
+    return f
+
+rule integrate:
+    input:
+        grab_output
+    output:
+        join(config['output_dir'], '{seq,[^/]+}.gff')
+    shell:
+        'touch {output[0]}'
+
+# ruleorder: ncRNA > tRNA > CRISPR

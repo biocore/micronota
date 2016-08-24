@@ -1,6 +1,6 @@
 from os.path import join
 
-config_ = config['prodigal']
+config_ = config['tools']['prodigal']
 out_path = join(config['output_dir'], 'prodigal', '{seq}')
 
 rule gene:
@@ -13,7 +13,8 @@ rule gene:
         fna = '%s.fna' % out_path
     log:
         '%s.log' % out_path
-    priority: config_['priority']
+    priority:
+        config_['priority']
     shell:
         'prodigal {params} -f gff -g {gcode}'
         ' -i {{input[0]}} -o {{output.gff}} -a {{output.faa}} -d {{output.fna}}'.format(

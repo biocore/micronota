@@ -1,0 +1,70 @@
+from os.path import join
+
+config_ = config['tools']['diamond']
+faa = join(config['output_dir'], 'prodigal', '{seq}.faa')
+out_path = join(config['output_dir'], 'diamond')
+gff = join(out_path, '{seq}.gff')
+daa_90 = join(out_path, '{seq}_uniref90.daa')
+sam_90 = join(out_path, '{seq}_uniref90.sam')
+unmatched_90 = join(out_path, '{seq}_uniref90_unmatched.faa')
+daa_50 = join(out_path, '{seq}_uniref50.daa')
+sam_50 = join(out_path, '{seq}_uniref50.sam')
+
+rule protein:
+    '''Annotate the proteins with Diamond cascading search against UniRef50/90.'''
+    input:
+        gff
+
+rule protein_parse:
+    input:
+        sam_50, sam_90
+    output:
+        gff
+    run:
+        ''
+
+rule diamond_blastp_uniref90:
+    '''Homologous search UniRef90 with Diamond blastp.'''
+    input:
+        db = join(config_['db'], 'uniref90.dmnd'),
+        faa = faa
+    output:
+        daa = daa_90
+    threads:
+        config_['threads']
+    shell:
+        'diamond blastp  {params} --threads {{threads}}'
+        ' --db {{input.db}} -q {{input.faa}} -a {{output.daa}}'.format(
+            params=config_['params'])
+
+rule diamond_view:
+    '''Convert Diamond daa file to SAM file.'''
+    input:
+        daa = '{fn}.daa'
+    output:
+        sam = '{fn}.sam'
+    shell:
+        'diamond view --outfmt sam --out {output.sam} --daa {input.daa}'
+
+rule unmatched_uniref90:
+    input:
+        faa = faa,
+        sam = sam_90
+    output:
+        unmatched = unmatched_90
+    run:
+        from . import micronota
+
+rule diamond_blastp_uniref50:
+    '''Homologous search UniRef50 with Diamond blastp.'''
+    input:
+        db = join(config_['db'], 'uniref50.dmnd'),
+        faa = unmatched_90
+    output:
+        daa = daa_50
+    threads:
+        config_['threads']
+    shell:
+        'diamond blastp  {params} --threads {{threads}}'
+        ' --db {{input.db}} -q {{input.faa}} -a {{output.daa}}'.format(
+            params=config_['params'])

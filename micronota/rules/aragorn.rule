@@ -1,0 +1,22 @@
+from os.path import join
+
+config_ = config['tools']['aragorn']
+out_path = join(config['output_dir'], 'aragorn', '{seq,[^/]+}')
+
+rule tRNA:
+    input:
+        '%s.txt' % out_path
+    output:
+        '%s.gff' % out_path
+    run:
+        shell('touch {output[0]}')
+
+rule _aragorn:
+    '''Predict tRNA with Aragorn.'''
+    input:
+        fna = '{seq}.fna'
+    output:
+        '%s.txt' % out_path
+    shell:
+        'aragorn -l -gc{gcode} -o {{output[0]}} {{input.fna}}'.format(
+            gcode=config['genetic_code'])

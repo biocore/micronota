@@ -1,0 +1,28 @@
+from os.path import join
+
+config_ = config['tools']['cmscan']
+out_path = join(config['output_dir'], 'cmscan', '{seq}')
+
+rule ncRNA:
+    input:
+        '%s.txt' % out_path
+    output:
+        '%s.gff' % out_path
+    run:
+        shell('touch {output[0]}')
+
+rule cmscan:
+    '''Predict ncRNA with Infernal cmscan.'''
+    input:
+        db = config_['db'],
+        fna = '{seq}.fna'
+    output:
+        '%s.txt' % out_path
+    threads:
+        config_['threads']
+    log:
+        '%s.log' % out_path
+    priority:
+        config_['priority']
+    shell:
+        'cmscan {params} --cpu {{threads}} --tblout {{output[0]}} {{input.db}} {{input.fna}}'.format(params=config_['params'])
