@@ -1,19 +1,19 @@
 from os.path import join
 
-config_ = config['tools']['cmscan']
-out_path = join(config['output_dir'], 'cmscan', '{seq}')
+tool_config = config['tools']['cmscan']
+tool_out = join(config['output_dir'], 'cmscan', '{seq}')
 
 rule hmmscan:
     input:
-        db = config_['db'],
+        db = tool_config['db'],
         fna = '{seq}.fna'
     output:
-        '%s.txt' % out_path
+        '%s.txt' % tool_out
     threads:
-        config_['threads']
+        tool_config['threads']
     log:
-        '%s.log' % out_path
+        '%s.log' % tool_out
     priority:
-        config_['priority']
+        tool_config['priority']
     shell:
-        'cmscan {params} --cpu {{threads}} --tblout {{output[0]}} {{input.db}} {{input.fna}}'.format(params=config_['params'])
+        'cmscan {params} --cpu {{threads}} --tblout {{output[0]}} {{input.db}} {{input.fna}}'.format(params=tool_config['params'])

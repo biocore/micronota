@@ -1,15 +1,14 @@
-from os.path import join
-
-config_ = config['tools']['minced']
-out_path = join(config['output_dir'], 'minced', '{seq,[^/]+}')
-
 rule CRISPR:
     '''Predict CRISPR with minced.'''
     input:
-        fna = '{seq,[^/]+}.fna'
+        fna = INPUT
     output:
-        '%s.gff' % out_path
+        '%s.gff' % tool_out
+    params:
+        tool_config['params']
     log:
-        '%s.log' % out_path
+        '%s.log' % tool_out
+    priority:
+        tool_config['priority']
     shell:
-        'minced {params} -gff {{input.fna}} {{output[0]}}'.format(params=config_['params'])
+        'minced {params} -gff {input.fna} {output[0]} &> {log}'

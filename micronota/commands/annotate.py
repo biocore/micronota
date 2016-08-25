@@ -28,9 +28,11 @@ from ..workflow import annotate
               help='Number of CPUs to use.')
 @click.option('--force', is_flag=True,
               help='Force overwrite if the output directory exists')
+@click.option('-d', '--dry_run', is_flag=True,
+              help='Do not execute anything.')
 @click.pass_context
 def cli(ctx, input_fp, in_fmt, output_dir, out_fmt,
-        cpus, kingdom, force):
+        cpus, force, dry_run):
     '''Annotate prokaryotic genomes.'''
     annotate(input_fp, in_fmt, output_dir, out_fmt,
-             cpus, force, ctx.parent.config)
+             cpus, force, dry_run, ctx.parent)

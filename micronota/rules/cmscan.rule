@@ -1,28 +1,24 @@
-from os.path import join
-
-config_ = config['tools']['cmscan']
-out_path = join(config['output_dir'], 'cmscan', '{seq}')
-
 rule ncRNA:
+    '''Predict ncRNA with Infernal cmscan.'''
     input:
-        '%s.txt' % out_path
+        '%s.txt' % tool_out
     output:
-        '%s.gff' % out_path
+        '%s.gff' % tool_out
     run:
         shell('touch {output[0]}')
 
-rule cmscan:
-    '''Predict ncRNA with Infernal cmscan.'''
+rule _cmscan:
+    '''Run cmscan.'''
     input:
-        db = config_['db'],
-        fna = '{seq}.fna'
+        db = tool_config['db'],
+        fna = INPUT
     output:
-        '%s.txt' % out_path
+        '%s.txt' % tool_out
     threads:
-        config_['threads']
+        tool_config['threads']
     log:
-        '%s.log' % out_path
+        '%s.log' % tool_out
     priority:
-        config_['priority']
-    shell:
-        'cmscan {params} --cpu {{threads}} --tblout {{output[0]}} {{input.db}} {{input.fna}}'.format(params=config_['params'])
+        tool_config['priority']
+    run:
+        shell('cmscan {params} --cpu {{threads}} --tblout {{output[0]}} {{input.db}} {{input.fna}}'.format(params=tool_config['params']))
