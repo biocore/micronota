@@ -1,19 +1,19 @@
-from os.path import join, dirname
+from os.path import join, basename, abspath
 
-wildcard = '{seq,[^/]+}'
+# set work dir to output dir so simultaneous runs doesn't interfere with each other.
+workdir: config['output_dir']
+
+fn = basename(config['seq'])
 
 def grab_output(wildcards):
     f = []
     for tool in config['tools']:
-        p = join(config['output_dir'], tool, wildcards.seq + '.gff')
+        p = join(tool, fn + '.gff')
         f.append(p)
     return f
 
-# input nucleotide seq file in wildcard format
-INPUT = join(dirname(config['seq']), wildcard)
-
 for tool in config['tools']:
-    tool_out = join(config['output_dir'], tool, wildcard)
+    tool_output = join(tool, fn)
     tool_config = config['tools'][tool]
     include: '%s.rule' % tool
 
@@ -22,7 +22,7 @@ for tool in config['tools']:
 # snakemake -n -p --rulegraph
 # -l
 
-# workdir: '/tmp'
+
 
 # rule all:
 #     input:
@@ -42,7 +42,7 @@ rule integrate:
     input:
         grab_output
     output:
-        join(config['output_dir'], wildcard + '.gff')
+        fn + '.gff'
     shell:
         'touch {output[0]}'
 
