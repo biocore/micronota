@@ -1,22 +1,22 @@
 rule tRNA:
     '''Predict tRNA with Aragorn.'''
     input:
-        '%s.txt' % tool_out
+        '%s.txt' % tool_output
     output:
-        '%s.gff' % tool_out
+        '%s.gff' % tool_output
     run:
         shell('touch {output[0]}')
 
 rule _aragorn:
     '''Run Aragorn.'''
     input:
-        fna = INPUT
+        fna = config['seq']
     output:
-        '%s.txt' % tool_out
+        '%s.txt' % tool_output
     params:
         tool_config['params']
     log:
-        '%s.log' % tool_out
+        '%s.log' % tool_output
     priority:
         tool_config['priority']
     shell:

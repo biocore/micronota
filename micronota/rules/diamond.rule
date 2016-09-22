@@ -1,41 +1,50 @@
 from os.path import join
 
-tool_config = config['tools']['diamond']
-faa = join(config['output_dir'], 'prodigal', '{seq}.faa')
-tool_out = join(config['output_dir'], 'diamond')
-gff = join(tool_out, '{seq}.gff')
-daa_90 = join(tool_out, '{seq}_uniref90.daa')
-sam_90 = join(tool_out, '{seq}_uniref90.sam')
-unmatched_90 = join(tool_out, '{seq}_uniref90_unmatched.faa')
-daa_50 = join(tool_out, '{seq}_uniref50.daa')
-sam_50 = join(tool_out, '{seq}_uniref50.sam')
+
+_faa = join(config['output_dir'], 'prodigal', fn + '.faa')
+_gff = '%s.gff' % tool_output
+_daa_90 = '%s_uniref90.daa' % tool_output
+_sam_90 = '%s_uniref90.sam' % tool_output
+_unmatched_90 = '%s_uniref90_unmatched.faa' % tool_output
+_daa_50 = '%s_uniref50.daa' % tool_output
+_sam_50 = '%s_uniref50.sam' % tool_output
+
 
 rule protein:
     '''Annotate the proteins with Diamond cascading search against UniRef50/90.'''
     input:
-        gff
-
-rule protein_parse:
-    input:
-        sam_50, sam_90
+        _sam_50, _sam_90
     output:
-        gff
+        _gff
     run:
+        shell('touch {output[0]}')
+
+rule diamond_uniref90_index:
+    input:
         ''
+    output:
+        ''
+    shell:
+        'diamond makedb --in uniref100.fasta.gz --db uniref100'
 
 rule diamond_blastp_uniref90:
     '''Homologous search UniRef90 with Diamond blastp.'''
     input:
         db = join(tool_config['db'], 'uniref90.dmnd'),
-        faa = faa
+        faa = _faa
     output:
-        daa = daa_90
+        daa = _daa_90
+    params:
+        tool_config['params']
     threads:
         tool_config['threads']
+    log:
+        '%s.log' % _daa_90
+    priority:
+        tool_config['priority']
     shell:
-        'diamond blastp  {params} --threads {{threads}}'
-        ' --db {{input.db}} -q {{input.faa}} -a {{output.daa}}'.format(
-            params=tool_config['params'])
+        'diamond blastp {params} --threads {threads}'
+        ' --db {input.db} -q {input.faa} -a {output.daa} &> {log}'
 
 rule diamond_view:
     '''Convert Diamond daa file to SAM file.'''
@@ -48,23 +57,26 @@ rule diamond_view:
 
 rule unmatched_uniref90:
     input:
-        faa = faa,
-        sam = sam_90
+        faa = _faa,
+        sam = _sam_90
     output:
-        unmatched = unmatched_90
+        _unmatched_90
     run:
-        from . import micronota
+        shell('touch {output[0]}')
 
 rule diamond_blastp_uniref50:
     '''Homologous search UniRef50 with Diamond blastp.'''
     input:
         db = join(tool_config['db'], 'uniref50.dmnd'),
-        faa = unmatched_90
+        faa = _unmatched_90
     output:
-        daa = daa_50
+        daa = _daa_50
+    params:
+        tool_config['params']
     threads:
         tool_config['threads']
+    log:
+        '%s.log' % _daa_50
     shell:
-        'diamond blastp  {params} --threads {{threads}}'
-        ' --db {{input.db}} -q {{input.faa}} -a {{output.daa}}'.format(
-            params=tool_config['params'])
+        'diamond blastp {params} --threads {threads}'
+        ' --db {input.db} -q {input.faa} -a {output.daa} &> {log}'

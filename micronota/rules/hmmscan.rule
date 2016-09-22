@@ -1,19 +1,25 @@
-from os.path import join
+rule HMM:
+    '''Predict ncRNA with Infernal cmscan.'''
+    input:
+        '%s.txt' % tool_output
+    output:
+        '%s.gff' % tool_output
+    shell:
+        'touch {output[0]}'
 
-tool_config = config['tools']['cmscan']
-tool_out = join(config['output_dir'], 'cmscan', '{seq}')
-
-rule hmmscan:
+rule _hmmscan:
     input:
         db = tool_config['db'],
         fna = '{seq}.fna'
     output:
-        '%s.txt' % tool_out
+        '%s.txt' % tool_output
+    params:
+        tool_config['params']
     threads:
         tool_config['threads']
     log:
-        '%s.log' % tool_out
+        '%s.log' % tool_output
     priority:
         tool_config['priority']
     shell:
-        'cmscan {params} --cpu {{threads}} --tblout {{output[0]}} {{input.db}} {{input.fna}}'.format(params=tool_config['params'])
+        'hmmscan {params} --cpu {threads} --tblout {output[0]} {input.db} {input.fna}'

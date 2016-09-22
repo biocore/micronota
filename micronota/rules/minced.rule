@@ -1,13 +1,13 @@
 rule CRISPR:
     '''Predict CRISPR with minced.'''
     input:
-        fna = INPUT
+        fna = config['seq']
     output:
-        '%s.gff' % tool_out
+        '%s.gff' % tool_output
     params:
         tool_config['params']
     log:
-        '%s.log' % tool_out
+        '%s.log' % tool_output
     priority:
         tool_config['priority']
     shell:
