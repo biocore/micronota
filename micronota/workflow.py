@@ -5,16 +5,16 @@
 #
 # The full license is in the file COPYING.txt, distributed with this software.
 # ----------------------------------------------------------------------------
-import os
-from os.path import splitext, basename, join
+
+from pkg_resources import resource_filename
+from os.path import basename, abspath
 from logging import getLogger
 from subprocess import run
 
-from .util import _overwrite, convert
-from . import _RULES_PATH, _CONFIG_PATH
+from snakemake import snakemake
 
 
-def annotate(in_fp, in_fmt, out_dir, out_fmt,
+def annotate(in_fp, in_fmt, out_dir, out_fmt, gcode,
              cpus, force, dry_run, config):
     '''Annotate the sequences in the input file.
 
@@ -35,19 +35,31 @@ def annotate(in_fp, in_fmt, out_dir, out_fmt,
     config : ``micronota.config.Configuration``
         Container for configuration options.
     '''
-    snakefile = join(_RULES_PATH, 'Snakefile')
-    configfile = join(_CONFIG_PATH, 'config.yaml')
-    cmd = ['snakemake', '-p']
+    logger = getLogger(__name__)
+    logger.info('Running annotation pipeline')
+
+    snakefile = resource_filename(__name__, 'rules/Snakefile')
+    configfile = resource_filename(__name__, 'support_files/config.yaml')
+
+    cmd = ['snakemake', '-p', '--keep-target-files']
     if force:
         cmd.append('-F')
     if dry_run:
         cmd.append('-n')
-    out = join(out_dir, basename(in_fp) + '.gff')
+    out = basename(in_fp) + '.gff'
     # this needs to be put at the end
-    cmd.append('--snakefile {} {} --configfile {} --config output_dir={} threads={} seq="{}"'.format(
-        snakefile, out, configfile, out_dir, cpus, in_fp))
-    print(' '.join(cmd))
-    proc = run(' '.join(cmd), shell=True)
+    cmd.extend(['--snakefile', snakefile,
+                '--cores', str(cpus),
+                # set work dir to output dir so simultaneous runs
+                # doesn't interfere with each other.
+                workdir: config['output_dir']
+
+                '--configfile', configfile,
+                out,
+                '--config',
+                'output_dir=%s' % out_dir, 'seq=%s' % abspath(in_fp)])
+    proc = run(cmd)
+    return proc
 
 
 def parse_annotation(out_fp, in_fp, feature_res, annotate_res):
