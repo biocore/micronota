@@ -1,7 +1,7 @@
 from os.path import join
 
 
-_faa = join(config['output_dir'], 'prodigal', fn + '.faa')
+_faa = join('prodigal', fn + '.faa')
 _gff = '%s.gff' % tool_output
 _daa_90 = '%s_uniref90.daa' % tool_output
 _sam_90 = '%s_uniref90.sam' % tool_output
@@ -19,13 +19,13 @@ rule protein:
     run:
         shell('touch {output[0]}')
 
-rule diamond_uniref90_index:
-    input:
-        ''
-    output:
-        ''
-    shell:
-        'diamond makedb --in uniref100.fasta.gz --db uniref100'
+# rule diamond_uniref90_index:
+#     input:
+#         ''
+#     output:
+#         tool_config['db']
+#     shell:
+#         'diamond makedb --in uniref90.fasta.gz --db uniref90'
 
 rule diamond_blastp_uniref90:
     '''Homologous search UniRef90 with Diamond blastp.'''
@@ -56,6 +56,7 @@ rule diamond_view:
         'diamond view --outfmt sam --out {output.sam} --daa {input.daa}'
 
 rule unmatched_uniref90:
+    '''Filter out the proteins that don't hit UniRef90'''
     input:
         faa = _faa,
         sam = _sam_90

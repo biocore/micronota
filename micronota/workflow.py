@@ -41,25 +41,20 @@ def annotate(in_fp, in_fmt, out_dir, out_fmt, gcode,
     snakefile = resource_filename(__name__, 'rules/Snakefile')
     configfile = resource_filename(__name__, 'support_files/config.yaml')
 
-    cmd = ['snakemake', '-p', '--keep-target-files']
-    if force:
-        cmd.append('-F')
-    if dry_run:
-        cmd.append('-n')
     out = basename(in_fp) + '.gff'
-    # this needs to be put at the end
-    cmd.extend(['--snakefile', snakefile,
-                '--cores', str(cpus),
-                # set work dir to output dir so simultaneous runs
-                # doesn't interfere with each other.
-                workdir: config['output_dir']
-
-                '--configfile', configfile,
-                out,
-                '--config',
-                'output_dir=%s' % out_dir, 'seq=%s' % abspath(in_fp)])
-    proc = run(cmd)
-    return proc
+    snakemake(
+        snakefile,
+        targets=[out],
+        cores=cpus,
+        # set work dir to output dir so simultaneous runs
+        # doesn't interfere with each other.
+        workdir=out_dir,
+        printshellcmds=True,
+        dryrun=dry_run,
+        forcetargets=force,
+        config={'seq': abspath(in_fp)},
+        configfile=configfile,
+        keep_target_files=True)
 
 
 def parse_annotation(out_fp, in_fp, feature_res, annotate_res):
