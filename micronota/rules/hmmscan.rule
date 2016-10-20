@@ -1,18 +1,10 @@
-rule HMM:
-    '''Predict ncRNA with Infernal cmscan.'''
-    input:
-        '%s.txt' % tool_output
-    output:
-        '%s.gff' % tool_output
-    shell:
-        'touch {output[0]}'
-
-rule _hmmscan:
+rule hmmscan:
     input:
         db = tool_config['db'],
         fna = '{seq}.fna'
     output:
         '%s.txt' % tool_output
+        '%s.ok' % tool_output
     params:
         tool_config['params']
     threads:
@@ -21,5 +13,8 @@ rule _hmmscan:
         '%s.log' % tool_output
     priority:
         tool_config['priority']
+    message:
+        '--- RUNNING hmmscan ...'
     shell:
-        'hmmscan {params} --cpu {threads} --tblout {output[0]} {input.db} {input.fna}'
+        'hmmscan {params} --cpu {threads} --tblout {output[0]} {input.db} {input.fna} &> {log} && '
+        'touch {output[1]}'

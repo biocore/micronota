@@ -1,19 +1,11 @@
-rule ncRNA:
-    '''Predict ncRNA with Infernal cmscan.'''
-    input:
-        '%s.txt' % tool_output
-    output:
-        '%s.gff' % tool_output
-    shell:
-        'touch {output[0]}'
-
-rule _cmscan:
+rule cmscan:
     '''Run cmscan.'''
     input:
         db = tool_config['db'],
         fna = config['seq']
     output:
-        '%s.txt' % tool_output
+        '%s.txt' % tool_output,
+        '%s.ok' % tool_output
     threads:
         tool_config['threads']
     params:
@@ -22,5 +14,8 @@ rule _cmscan:
         '%s.log' % tool_output
     priority:
         tool_config['priority']
+    message:
+        '--- RUNNING cmscan ...'
     shell:
-        'cmscan {params} --cpu {threads} --tblout {output[0]} {input.db} {input.fna} &> {log}'
+        'cmscan {params} --cpu {threads} --tblout {output[0]} {input.db} {input.fna} &> {log} && '
+        'touch {output[1]}'

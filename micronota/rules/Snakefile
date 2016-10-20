@@ -1,7 +1,5 @@
 from os.path import join, basename, abspath
-
-# set work dir to output dir so simultaneous runs doesn't interfere with each other.
-workdir: config['output_dir']
+from functools import partial
 
 fn = basename(config['seq'])
 
@@ -12,21 +10,17 @@ def grab_output(wildcards):
         f.append(p)
     return f
 
+tool_outputs = []
 for tool in config['tools']:
     tool_output = join(tool, fn)
+    tool_outputs.append(tool_output + '.gff')
     tool_config = config['tools'][tool]
     include: '%s.rule' % tool
 
-# useful snakemake cmd:
-# -n (dry run) and -p (print commands) and -F which will force snakemake to rerun rules
-# snakemake -n -p --rulegraph
-# -l
 
-
-
-# rule all:
-#     input:
-#         join(config['output_dir'], '{seq}.gff')
+rule all:
+    input:
+        '{seq}.gff'
 
 # rule report:
 #     input:
@@ -40,10 +34,11 @@ for tool in config['tools']:
 
 rule integrate:
     input:
-        grab_output
+        tool_outputs
     output:
         fn + '.gff'
     shell:
         'touch {output[0]}'
+
 
 # ruleorder: ncRNA > tRNA > CRISPR
