@@ -1,26 +1,26 @@
 from os.path import join, basename, abspath
 from functools import partial
 
-fn = basename(config['seq'])
 
 def grab_output(wildcards):
     f = []
     for tool in config['tools']:
-        p = join(tool, fn + '.gff')
+        p = join(tool, config['seq'] + '.gff')
         f.append(p)
     return f
 
+
 tool_outputs = []
 for tool in config['tools']:
-    tool_output = join(tool, fn)
-    tool_outputs.append(tool_output + '.gff')
+    tool_output = join(tool, config['seq'])
+    tool_outputs.append('%s.ok' % tool_output)
     tool_config = config['tools'][tool]
     include: '%s.rule' % tool
 
 
 rule all:
     input:
-        '{seq}.gff'
+        tool_outputs
 
 # rule report:
 #     input:
@@ -31,14 +31,6 @@ rule all:
 #         from snakemake.utils import report
 #         shell('touch {output[0]}')
 
-
-rule integrate:
-    input:
-        tool_outputs
-    output:
-        fn + '.gff'
-    shell:
-        'touch {output[0]}'
 
 
 # ruleorder: ncRNA > tRNA > CRISPR

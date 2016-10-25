@@ -12,18 +12,17 @@ from logging import getLogger
 from subprocess import run
 
 from snakemake import snakemake
+from skbio.io import read, write
 
 
-def annotate(in_fp, in_fmt, out_dir, out_fmt, gcode,
+def annotate(in_fp, out_dir, out_fmt, gcode,
              cpus, force, dry_run, config):
     '''Annotate the sequences in the input file.
 
     Parameters
     ----------
     in_fp : str
-        Input file path
-    in_fmt : str
-        Input file format.
+        Input seq file name
     out_dir : str
         Output file directory.
     out_fmt : str
@@ -41,10 +40,11 @@ def annotate(in_fp, in_fmt, out_dir, out_fmt, gcode,
     snakefile = resource_filename(__name__, 'rules/Snakefile')
     configfile = resource_filename(__name__, 'support_files/config.yaml')
 
-    out = basename(in_fp) + '.gff'
-    snakemake(
+    # out = in_fp + '.gff'
+
+    success = snakemake(
         snakefile,
-        targets=[out],
+        # targets=[out],
         cores=cpus,
         # set work dir to output dir so simultaneous runs
         # doesn't interfere with each other.
@@ -52,10 +52,43 @@ def annotate(in_fp, in_fmt, out_dir, out_fmt, gcode,
         printshellcmds=True,
         dryrun=dry_run,
         forcetargets=force,
-        config={'seq': abspath(in_fp)},
+        config={'seq': in_fp},
         configfile=configfile,
         keep_target_files=True)
 
+    return success
 
-def parse_annotation(out_fp, in_fp, feature_res, annotate_res):
-    '''Parse all the annotations and write to disk.'''
+
+def validate_seq(in_fp, in_fmt, min_len, out_fp):
+    '''Validate input seq file.
+
+    1. filter out short seq;
+    2. validate seq IDs (no duplicates)
+    3. convert to fasta format
+    '''
+    ids = set()
+    with open(out_fp, 'w') as out:
+        for seq in read(in_fp, format=in_fmt):
+            if len(seq) < min_len:
+                continue
+            ident = seq.metadata['id']
+            if ident in ids:
+                raise ValueError(
+                    'Duplicate seq IDs in your input file: {}'.format(ident))
+            else:
+                ids.add(ident)
+            write(seq, format='fasta', into=out)
+
+
+
+def integrate(out_fp, seq_fp, *kwargs):
+    '''integrate all the annotations and write to disk.
+
+    seq_fp : str
+        input seq file path.
+    out_fp : str
+        annotated output file path.
+    kwargs : dict
+        keys are the formats and valuse are the files to parse.
+    '''
+
