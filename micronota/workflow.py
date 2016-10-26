@@ -15,7 +15,7 @@ from snakemake import snakemake
 from skbio.io import read, write
 
 
-def annotate(in_fp, out_dir, out_fmt, gcode,
+def annotate(in_fp, out_dir, gcode,
              cpus, force, dry_run, config):
     '''Annotate the sequences in the input file.
 
@@ -25,8 +25,6 @@ def annotate(in_fp, out_dir, out_fmt, gcode,
         Input seq file name
     out_dir : str
         Output file directory.
-    out_fmt : str
-        Output file format.
     cpus : int
         Number of cpus to use.
     force : boolean
@@ -40,11 +38,8 @@ def annotate(in_fp, out_dir, out_fmt, gcode,
     snakefile = resource_filename(__name__, 'rules/Snakefile')
     configfile = resource_filename(__name__, 'support_files/config.yaml')
 
-    # out = in_fp + '.gff'
-
     success = snakemake(
         snakefile,
-        # targets=[out],
         cores=cpus,
         # set work dir to output dir so simultaneous runs
         # doesn't interfere with each other.
@@ -52,7 +47,7 @@ def annotate(in_fp, out_dir, out_fmt, gcode,
         printshellcmds=True,
         dryrun=dry_run,
         forcetargets=force,
-        config={'seq': in_fp},
+        config={'seq': in_fp, 'genetic_code': gcode},
         configfile=configfile,
         keep_target_files=True)
 
@@ -65,6 +60,17 @@ def validate_seq(in_fp, in_fmt, min_len, out_fp):
     1. filter out short seq;
     2. validate seq IDs (no duplicates)
     3. convert to fasta format
+
+    Parameters
+    ----------
+    in_fp : str
+        input seq file path
+    in_fmt : str
+        the format of seq file
+    min_len : int
+        cutoff of seq len to filter
+    out_fp : str
+        output seq file path
     '''
     ids = set()
     with open(out_fp, 'w') as out:
@@ -78,7 +84,6 @@ def validate_seq(in_fp, in_fmt, min_len, out_fp):
             else:
                 ids.add(ident)
             write(seq, format='fasta', into=out)
-
 
 
 def integrate(out_fp, seq_fp, *kwargs):
