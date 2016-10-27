@@ -6,13 +6,16 @@
 # The full license is in the file COPYING.txt, distributed with this software.
 # ----------------------------------------------------------------------------
 
+import os
 from pkg_resources import resource_filename
-from os.path import basename, abspath
+from os.path import basename, join, isdir
 from logging import getLogger
-from subprocess import run
+from importlib import import_module
 
 from snakemake import snakemake
 from skbio.io import read, write
+
+from . import parsers
 
 
 def annotate(in_fp, out_dir, gcode,
@@ -86,14 +89,29 @@ def validate_seq(in_fp, in_fmt, min_len, out_fp):
             write(seq, format='fasta', into=out)
 
 
-def integrate(out_fp, seq_fp, *kwargs):
+def integrate(out_dir, seq_fn, out_fmt='genbank'):
     '''integrate all the annotations and write to disk.
 
-    seq_fp : str
+    seq_fn : str
         input seq file path.
-    out_fp : str
+    out_dir : str
         annotated output file path.
-    kwargs : dict
-        keys are the formats and valuse are the files to parse.
+    out_fmt : str
+        output format
     '''
+    imd = {}
+    seqs = []
+    for seq in read(join(out_dir, seq_fn), format='fasta'):
+        imd[seq.metadata['id']] = seq.interval_metadata
+        seqs.append(seq)
 
+    for d in os.listdir(out_dir):
+        if d.startswith('.') or not isdir(join(out_dir, d)):
+            continue
+        submodule = import_module('.%s' % d, parsers.__name__)
+        f = getattr(submodule, 'parse')
+        f(imd, out_dir, seq_fn)
+
+    with open(join(out_dir, '%s.gbk' % seq_fn), 'w') as out:
+        for seq in seqs:
+            write(seq, into=out, format='genbank')

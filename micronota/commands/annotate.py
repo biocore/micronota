@@ -11,7 +11,7 @@ import os
 
 import click
 
-from ..workflow import annotate, validate_seq
+from ..workflow import annotate, validate_seq, integrate
 
 
 @click.command()
@@ -29,7 +29,7 @@ from ..workflow import annotate, validate_seq
 @click.option('--out_fmt', type=click.Choice(['gff3', 'genbank']),
               default='genbank',
               help='Output format for the annotated sequences.')
-@click.option('--gcode', type=int, default=1,
+@click.option('--gcode', type=int, default=11,
               help='Genetic code to predict ORFs.')
 @click.option('--cpus', type=int, default=1,
               help='Number of CPUs to use.')
@@ -43,9 +43,13 @@ def cli(ctx, input_fp, in_fmt, min_len, output_dir, out_fmt, gcode,
     '''Annotate prokaryotic genomes.'''
     os.makedirs(output_dir, exist_ok=True)
 
-    seq_fp = basename(input_fp)
+    seq_fn = basename(input_fp)
 
-    validate_seq(input_fp, in_fmt, min_len, seq_fp)
+    validate_seq(input_fp, in_fmt, min_len, seq_fn)
 
-    annotate(seq_fp, output_dir, out_fmt, gcode,
-             cpus, force, dry_run, ctx.parent)
+    done = annotate(seq_fn, output_dir, gcode,
+                    cpus, force, dry_run, ctx.parent)
+
+    if done:
+        # if snakemake finishes successfully
+        integrate(output_dir, seq_fn, out_fmt)
