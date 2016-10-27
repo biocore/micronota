@@ -58,7 +58,10 @@ setup(name='micronota',
       url='http://microbio.me/micronota',
       test_suite='nose.collector',
       packages=find_packages(),
-      package_data={'micronota': ['support_files/*']},
+      package_data={'micronota': [
+          'data/*',
+          'support_files/*',
+          'rules/Snakefile', 'rules/*.rule']},
       install_requires=[
           'click >= 6',
           'scikit-bio >= 0.4.0',

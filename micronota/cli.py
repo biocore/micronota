@@ -71,19 +71,12 @@ class ComplexCLI(AliasedGroup):
 
 
 @click.group(cls=ComplexCLI, context_settings=_CONTEXT_SETTINGS)
-@click.option('--cfg', default=None,
-              type=click.Path(exists=True, dir_okay=False),
-              help='Config file.')
-@click.option('--param', default=None,
-              type=click.Path(exists=True, dir_okay=False),
-              help=('Parameter file to change the default behavior '
-                    'of wrapped tools.'))
 @click.option('--log', default=None,
               type=click.Path(exists=True, dir_okay=False),
               help='Logging config file.')
 @click.version_option()   # add --version option
 @click.pass_context
-def cmd(ctx, cfg, param, log):
+def cmd(ctx, log):
     '''Annotation pipeline for Bacterial and Archaeal (meta)genomes.
 
     It predicts features (ncRNA, coding genes, etc.) on the input sequences
@@ -95,4 +88,3 @@ def cmd(ctx, cfg, param, log):
     For more info, please check out https://github.com/biocore/micronota.
     '''
     # load the config.
-    ctx.config = Configuration(misc_fp=cfg, param_fp=param, log_fp=log)
