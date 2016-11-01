@@ -45,10 +45,9 @@ def cli(ctx, input_fp, in_fmt, min_len, output_dir, out_fmt, gcode,
 
     seq_fn = basename(input_fp)
 
-    validate_seq(input_fp, in_fmt, min_len, seq_fn)
+    validate_seq(input_fp, in_fmt, min_len, join(output_dir, seq_fn))
 
-    done = annotate(seq_fn, output_dir, gcode,
-                    cpus, force, dry_run, ctx.parent)
+    done = annotate(seq_fn, output_dir, gcode, cpus, force, dry_run)
 
     if done:
         # if snakemake finishes successfully

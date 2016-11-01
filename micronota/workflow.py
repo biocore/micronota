@@ -10,6 +10,8 @@ import os
 from pkg_resources import resource_filename
 from os.path import basename, join, isdir
 from logging import getLogger
+from logging.config import fileConfig
+import logging
 from importlib import import_module
 
 from snakemake import snakemake
@@ -18,8 +20,7 @@ from skbio.io import read, write
 from . import parsers
 
 
-def annotate(in_fp, out_dir, gcode,
-             cpus, force, dry_run, config):
+def annotate(in_fp, out_dir, gcode, cpus, force, dry_run):
     '''Annotate the sequences in the input file.
 
     Parameters
@@ -32,8 +33,6 @@ def annotate(in_fp, out_dir, gcode,
         Number of cpus to use.
     force : boolean
         Force to overwrite.
-    config : ``micronota.config.Configuration``
-        Container for configuration options.
     '''
     logger = getLogger(__name__)
     logger.info('Running annotation pipeline')

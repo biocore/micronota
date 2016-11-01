@@ -1,0 +1,29 @@
+# settings of wrapped tools
+tools:
+    # prodigal:
+    #     # params: '-p meta'
+    #     params: '-p single'
+    #     priority: 90
+    #     threads: 1
+    # cmscan:
+    #     params: ''
+    #     priority: 50
+    #     threads: 1
+    #     db: '/Users/zech/Dropbox/git/micronota/micronota/data/RF00169.cm'
+    minced:
+        params: ''
+        priority: 50
+        threads: 1
+    # aragorn:
+    #     params: '-l'
+    #     priority: 50
+    #     threads: 1
+    # diamond:
+    #     params: '--index-chunks 1 --query-cover 80 -k 3'
+    #     priority: 50
+    #     threads: 1
+    #     db: '/Users/zech/Dropbox/git/micronota/micronota/data'
+    # hmmscan:
+    #     params: ''
+    #     priority: 60
+    #     threads: 1

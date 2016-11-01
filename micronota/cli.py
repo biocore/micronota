@@ -6,10 +6,11 @@
 # The full license is in the file COPYING.txt, distributed with this software.
 # ----------------------------------------------------------------------------
 
-import click
+from logging.config import fileConfig
 from os import listdir
 from os.path import abspath, join, dirname, splitext
 
+import click
 from .config import Configuration
 
 _CONTEXT_SETTINGS = dict(
@@ -87,4 +88,8 @@ def cmd(ctx, log):
 
     For more info, please check out https://github.com/biocore/micronota.
     '''
-    # load the config.
+    if log is None:
+        # load the config.
+        log = '/Users/zech/Dropbox/git/micronota/micronota/support_files/log.cfg'
+
+    fileConfig(log)
