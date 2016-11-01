@@ -10,8 +10,6 @@ import os
 from pkg_resources import resource_filename
 from os.path import basename, join, isdir
 from logging import getLogger
-from logging.config import fileConfig
-import logging
 from importlib import import_module
 
 from snakemake import snakemake
@@ -36,9 +34,8 @@ def annotate(in_fp, out_dir, gcode, cpus, force, dry_run):
     '''
     logger = getLogger(__name__)
     logger.info('Running annotation pipeline')
-
     snakefile = resource_filename(__name__, 'rules/Snakefile')
-    configfile = resource_filename(__name__, 'support_files/config.yaml')
+    configfile = resource_filename(__name__, 'rules/config.yaml')
 
     success = snakemake(
         snakefile,
@@ -51,7 +48,8 @@ def annotate(in_fp, out_dir, gcode, cpus, force, dry_run):
         forcetargets=force,
         config={'seq': in_fp, 'genetic_code': gcode},
         configfile=configfile,
-        keep_target_files=True)
+        keep_target_files=True,
+        keep_logger=True)
 
     return success
 

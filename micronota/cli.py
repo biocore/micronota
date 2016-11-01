@@ -9,9 +9,10 @@
 from logging.config import fileConfig
 from os import listdir
 from os.path import abspath, join, dirname, splitext
+from pkg_resources import resource_filename
 
 import click
-from .config import Configuration
+
 
 _CONTEXT_SETTINGS = dict(
     # allow case insensitivity for the (sub)commands and their options
@@ -90,6 +91,6 @@ def cmd(ctx, log):
     '''
     if log is None:
         # load the config.
-        log = '/Users/zech/Dropbox/git/micronota/micronota/support_files/log.cfg'
+        log = resource_filename(__name__, 'log.cfg')
 
     fileConfig(log)

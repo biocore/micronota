@@ -60,8 +60,8 @@ setup(name='micronota',
       packages=find_packages(),
       package_data={'micronota': [
           'data/*',
-          'support_files/*',
-          'rules/Snakefile', 'rules/*.rule']},
+          'log.cfg',
+          'rules/*']},
       install_requires=[
           'click >= 6',
           'scikit-bio >= 0.4.0',
