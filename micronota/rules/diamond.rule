@@ -1,8 +1,8 @@
 from os.path import join
 
 
-_faa = join('prodigal', fn + '.faa')
-_gff = '%s.gff' % tool_output
+_faa = join('prodigal', config['seq'] + '.faa')
+_ok = '%s.ok' % tool_output
 _daa_90 = '%s_uniref90.daa' % tool_output
 _sam_90 = '%s_uniref90.sam' % tool_output
 _unmatched_90 = '%s_uniref90_unmatched.faa' % tool_output
@@ -15,7 +15,7 @@ rule protein:
     input:
         _sam_50, _sam_90
     output:
-        _gff
+        _ok
     run:
         shell('touch {output[0]}')
 
@@ -42,6 +42,8 @@ rule diamond_blastp_uniref90:
         '%s.log' % _daa_90
     priority:
         tool_config['priority']
+    message:
+        '--- RUNNING diamond against UniRef90 ...'
     shell:
         'diamond blastp {params} --threads {threads}'
         ' --db {input.db} -q {input.faa} -a {output.daa} &> {log}'
@@ -78,6 +80,8 @@ rule diamond_blastp_uniref50:
         tool_config['threads']
     log:
         '%s.log' % _daa_50
+    message:
+        '--- RUNNING diamond against UniRef50 ...'
     shell:
         'diamond blastp {params} --threads {threads}'
         ' --db {input.db} -q {input.faa} -a {output.daa} &> {log}'
