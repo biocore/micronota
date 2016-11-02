@@ -6,11 +6,14 @@
 # The full license is in the file COPYING.txt, distributed with this software.
 # ----------------------------------------------------------------------------
 
-import click
+from logging.config import fileConfig
+from logging import getLogger
 from os import listdir
 from os.path import abspath, join, dirname, splitext
+from pkg_resources import resource_filename
 
-from .config import Configuration
+import click
+
 
 _CONTEXT_SETTINGS = dict(
     # allow case insensitivity for the (sub)commands and their options
@@ -71,19 +74,13 @@ class ComplexCLI(AliasedGroup):
 
 
 @click.group(cls=ComplexCLI, context_settings=_CONTEXT_SETTINGS)
-@click.option('--cfg', default=None,
-              type=click.Path(exists=True, dir_okay=False),
-              help='Config file.')
-@click.option('--param', default=None,
-              type=click.Path(exists=True, dir_okay=False),
-              help=('Parameter file to change the default behavior '
-                    'of wrapped tools.'))
 @click.option('--log', default=None,
               type=click.Path(exists=True, dir_okay=False),
               help='Logging config file.')
+@click.option('-v', '--verbose', count=True, help='Verbosity')
 @click.version_option()   # add --version option
 @click.pass_context
-def cmd(ctx, cfg, param, log):
+def cmd(ctx, log, verbose):
     '''Annotation pipeline for Bacterial and Archaeal (meta)genomes.
 
     It predicts features (ncRNA, coding genes, etc.) on the input sequences
@@ -94,5 +91,14 @@ def cmd(ctx, cfg, param, log):
 
     For more info, please check out https://github.com/biocore/micronota.
     '''
-    # load the config.
-    ctx.config = Configuration(misc_fp=cfg, param_fp=param, log_fp=log)
+    if log is None:
+        # load the config.
+        log = resource_filename(__name__, 'log.cfg')
+    # setting False allows snakemake logger to print log.
+    fileConfig(log, disable_existing_loggers=False)
+    levels = ['CRITICAL', 'ERROR', 'WARNING', 'INFO', 'DEBUG']
+    n = len(levels)
+    if verbose >= n:
+        verbose = n - 1
+    logger = getLogger()
+    logger.setLevel(levels[verbose])

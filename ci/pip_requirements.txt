@@ -1,4 +1,1 @@
-sphinx
-click>=6.0
 coveralls
-git+git://github.com/rnaer/dumpling.git
