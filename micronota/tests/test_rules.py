@@ -8,7 +8,7 @@
 
 from unittest import TestCase, skipIf, main
 from pkg_resources import resource_filename
-from shutil import which
+from shutil import which, rmtree
 from os.path import join
 from os import mkdir
 from tempfile import TemporaryDirectory, mkdtemp
@@ -17,17 +17,16 @@ from snakemake.logging import logger, setup_logger
 from snakemake import snakemake
 
 
-# this is required to set snakemake logging to files correctly
-setup_logger(printshellcmds=True)
-logger.logger.removeHandler(logger.logger.handlers[1])
-
-
 class TestRules(TestCase):
     def setUp(self):
         self.seq_fn = 'test.fna'
         self.snakefile = resource_filename('micronota', 'rules/Snakefile')
         self.config = {'seq': 'test.fna', 'genetic_code': 11}
         self.tmpd = mkdtemp()
+
+        # this is required to set snakemake logging to files correctly
+        setup_logger(printshellcmds=True)
+        logger.logger.removeHandler(logger.logger.handlers[1])
 
     def _run_snakemake(self, config):
         open(join(self.tmpd, self.seq_fn), 'w').close()
@@ -125,6 +124,10 @@ class TestRules(TestCase):
                    db=config['db'],
                    o='diamond/%s' % self.seq_fn, i=unmatched))
         self.assertIn(exp, log)
+
+    def tearDown(self):
+        logger.cleanup()
+        rmtree(self.tmpd)
 
 
 if __name__ == '__main__':

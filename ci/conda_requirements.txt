@@ -1,6 +1,7 @@
 nose
 pep8
 flake8
+snakemake
 infernal
 hmmer
 prodigal

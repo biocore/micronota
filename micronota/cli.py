@@ -7,6 +7,7 @@
 # ----------------------------------------------------------------------------
 
 from logging.config import fileConfig
+from logging import getLogger
 from os import listdir
 from os.path import abspath, join, dirname, splitext
 from pkg_resources import resource_filename
@@ -76,9 +77,10 @@ class ComplexCLI(AliasedGroup):
 @click.option('--log', default=None,
               type=click.Path(exists=True, dir_okay=False),
               help='Logging config file.')
+@click.option('-v', '--verbose', count=True, help='Verbosity')
 @click.version_option()   # add --version option
 @click.pass_context
-def cmd(ctx, log):
+def cmd(ctx, log, verbose):
     '''Annotation pipeline for Bacterial and Archaeal (meta)genomes.
 
     It predicts features (ncRNA, coding genes, etc.) on the input sequences
@@ -92,5 +94,10 @@ def cmd(ctx, log):
     if log is None:
         # load the config.
         log = resource_filename(__name__, 'log.cfg')
-
     fileConfig(log)
+    levels = ['CRITICAL', 'ERROR', 'WARNING', 'INFO', 'DEBUG']
+    n = len(levels)
+    if verbose >= n:
+        verbose = n - 1
+    logger = getLogger()
+    logger.setLevel(levels[verbose])
