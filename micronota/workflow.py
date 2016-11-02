@@ -38,7 +38,6 @@ def annotate(in_fp, out_dir, gcode, cpus, force, dry_run):
     logger.info('Running annotation pipeline')
     snakefile = resource_filename(__name__, 'rules/Snakefile')
     configfile = resource_filename(__name__, 'rules/config.yaml')
-
     success = snakemake(
         snakefile,
         cores=cpus,
@@ -74,9 +73,7 @@ def validate_seq(in_fp, in_fmt, min_len, out_fp):
     out_fp : str
         output seq file path
     '''
-    logger = getLogger(__name__)
     logger.info('Filtering and validating input sequences')
-
     ids = set()
     with open(out_fp, 'w') as out:
         for seq in read(in_fp, format=in_fmt):
@@ -102,7 +99,6 @@ def integrate(out_dir, seq_fn, out_fmt='genbank'):
         output format
     '''
     logger.info('Integrating annotation for output')
-
     imd = {}
     seqs = []
     for seq in read(join(out_dir, seq_fn), format='fasta'):
