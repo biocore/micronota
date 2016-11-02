@@ -17,6 +17,11 @@ from snakemake.logging import logger, setup_logger
 from snakemake import snakemake
 
 
+# this is required to set snakemake logging to files correctly
+setup_logger(printshellcmds=True)
+logger.logger.removeHandler(logger.logger.handlers[1])
+
+
 class TestRules(TestCase):
     def setUp(self):
         self.seq_fn = 'test.fna'
@@ -123,8 +128,4 @@ class TestRules(TestCase):
 
 
 if __name__ == '__main__':
-    # this is required to set snakemake logging to files correctly
-    setup_logger(printshellcmds=True)
-    logger.logger.removeHandler(logger.logger.handlers[1])
-
     main()
