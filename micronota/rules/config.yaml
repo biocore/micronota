@@ -1,10 +1,10 @@
 # settings of wrapped tools
 tools:
-    # prodigal:
-    #     # params: '-p meta'
-    #     params: '-p single'
-    #     priority: 90
-    #     threads: 1
+    prodigal:
+        # params: '-p meta'
+        params: '-p single'
+        priority: 90
+        threads: 1
     # cmscan:
     #     params: ''
     #     priority: 50
