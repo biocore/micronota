@@ -7,8 +7,12 @@
 # ----------------------------------------------------------------------------
 
 from os.path import join
+from logging import getLogger
 
 from skbio.io import read
+
+
+logger = getLogger(__name__)
 
 
 def parse(interval_metadata, out_dir, seq_fn):
@@ -26,5 +30,6 @@ def parse(interval_metadata, out_dir, seq_fn):
         tool to parse the annotaton.
 
     '''
+    logger.debug('Parsing prodigal prediction')
     fp = join(out_dir, 'prodigal', '%s.gff' % seq_fn)
     list(read(fp, format='gff3', interval_metadata_dict=interval_metadata))

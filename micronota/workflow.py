@@ -18,6 +18,9 @@ from skbio.io import read, write
 from . import parsers
 
 
+logger = getLogger(__name__)
+
+
 def annotate(in_fp, out_dir, gcode, cpus, force, dry_run):
     '''Annotate the sequences in the input file.
 
@@ -32,7 +35,6 @@ def annotate(in_fp, out_dir, gcode, cpus, force, dry_run):
     force : boolean
         Force to overwrite.
     '''
-    logger = getLogger(__name__)
     logger.info('Running annotation pipeline')
     snakefile = resource_filename(__name__, 'rules/Snakefile')
     configfile = resource_filename(__name__, 'rules/config.yaml')
@@ -99,7 +101,6 @@ def integrate(out_dir, seq_fn, out_fmt='genbank'):
     out_fmt : str
         output format
     '''
-    logger = getLogger(__name__)
     logger.info('Integrating annotation for output')
 
     imd = {}
