@@ -31,7 +31,7 @@ class TestRules(TestCase):
 
     def _run_snakemake(self, config):
         open(join(self.tmpd, self.seq_fn), 'w').close()
-        success = snakemake(
+        snakemake(
             self.snakefile,
             cores=8,
             workdir=self.tmpd,

@@ -9,7 +9,6 @@
 from os.path import join
 
 from skbio.io import read
-from skbio.metadata import IntervalMetadata
 
 
 def parse(interval_metadata, out_dir, seq_fn):
@@ -28,4 +27,4 @@ def parse(interval_metadata, out_dir, seq_fn):
 
     '''
     fp = join(out_dir, 'minced', '%s.gff' % seq_fn)
-    list(read(fp, format='gff3', interval_metadata=interval_metadata))
+    list(read(fp, format='gff3', interval_metadata_dict=interval_metadata))
