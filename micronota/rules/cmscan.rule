@@ -4,14 +4,14 @@ rule cmscan:
         db = tool_config['db'],
         fna = config['seq']
     output:
-        '%s.txt' % tool_output,
-        '%s.ok' % tool_output
+        'cmscan.txt',
+        'cmscan.ok'
+    log:
+        'cmscan.log'
     threads:
         tool_config['threads']
     params:
         tool_config['params']
-    log:
-        '%s.log' % tool_output
     priority:
         tool_config['priority']
     message:

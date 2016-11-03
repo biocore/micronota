@@ -110,7 +110,7 @@ def integrate(out_dir, seq_fn, out_fmt='genbank'):
             continue
         submodule = import_module('.%s' % d, parsers.__name__)
         f = getattr(submodule, 'parse')
-        f(imd, out_dir, seq_fn)
+        f(imd, out_dir)
 
     with open(join(out_dir, '%s.gbk' % seq_fn), 'w') as out:
         for seq in seqs:

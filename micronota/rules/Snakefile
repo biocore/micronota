@@ -12,7 +12,7 @@ def grab_output(wildcards):
 tool_outputs = []
 for tool in config['tools']:
     tool_output = join(tool, config['seq'])
-    tool_outputs.append('%s.ok' % tool_output)
+    tool_outputs.append('%s.ok' % tool)
     tool_config = config['tools'][tool]
     include: '%s.rule' % tool
 

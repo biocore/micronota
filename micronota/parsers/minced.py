@@ -15,7 +15,7 @@ from skbio.io import read
 logger = getLogger(__name__)
 
 
-def parse(interval_metadata, out_dir, seq_fn):
+def parse(interval_metadata, out_dir):
     '''Parse the annotation and add it to interval metadata.
 
     Parameters
@@ -31,5 +31,5 @@ def parse(interval_metadata, out_dir, seq_fn):
 
     '''
     logger.debug('Parsing minced prediction')
-    fp = join(out_dir, 'minced', '%s.gff' % seq_fn)
+    fp = join(out_dir, 'minced.gff')
     list(read(fp, format='gff3', interval_metadata_dict=interval_metadata))

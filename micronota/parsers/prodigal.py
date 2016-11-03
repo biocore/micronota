@@ -15,7 +15,7 @@ from skbio.io import read
 logger = getLogger(__name__)
 
 
-def parse(interval_metadata, out_dir, seq_fn):
+def parse(interval_metadata, out_dir):
     '''Parse the annotation and add it to interval metadata.
 
     Parameters
@@ -24,12 +24,7 @@ def parse(interval_metadata, out_dir, seq_fn):
         key is seq id and value is the interval metadata for the seq.
     out_dir : str
         the output dir
-    seq_fn : str
-        input seq file name. With `out_dir` and `seq_fn`, you should
-        be able to create the file name output from this prediction
-        tool to parse the annotaton.
-
     '''
     logger.debug('Parsing prodigal prediction')
-    fp = join(out_dir, 'prodigal', '%s.gff' % seq_fn)
+    fp = join(out_dir, 'prodigal.gff')
     list(read(fp, format='gff3', interval_metadata_dict=interval_metadata))

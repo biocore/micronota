@@ -3,14 +3,14 @@ rule prodigal:
     input:
         config['seq']
     output:
-        gff = '%s.gff' % tool_output,
-        faa = '%s.faa' % tool_output,
-        fna = '%s.fna' % tool_output,
-        ok  = '%s.ok' % tool_output
+        gff = 'prodigal.gff',
+        faa = 'prodigal.faa',
+        fna = 'prodigal.fna',
+        ok  = 'prodigal.ok'
+    log:
+        'prodigal.log'
     params:
         tool_config['params']
-    log:
-        '%s.log' % tool_output
     priority:
         tool_config['priority']
     message:

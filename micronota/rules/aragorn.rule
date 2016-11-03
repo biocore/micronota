@@ -3,12 +3,12 @@ rule aragorn:
     input:
         fna = config['seq']
     output:
-        '%s.txt' % tool_output,
-        '%s.ok' % tool_output
+        'aragorn.txt',
+        'aragorn.ok'
+    log:
+        'aragorn.log'
     params:
         tool_config['params']
-    log:
-        '%s.log' % tool_output
     priority:
         tool_config['priority']
     message:
