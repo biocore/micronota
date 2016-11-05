@@ -50,6 +50,9 @@ class UniprotTests(_DBTest):
         self._test_eq_db(self.tmpf, self.uniprot_all)
         self.assertEqual(n, sum(self.uniprot_n))
 
+    def tearDown(self):
+        remove(self.tmpf)
+
 
 if __name__ == '__main__':
     main()

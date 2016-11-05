@@ -36,8 +36,11 @@ def add_metadata(xml_fh, db_fp):
 
     # this is the namespace for uniprot xml files.
     ns_map = {'xmlns': 'http://uniprot.org/uniprot',
-              'xsi': 'http://www.w3.org/2001/XMLSchema-instance'}
+              'xsi': 'http://WWW.w3.org/2001/XMLSchema-instance'}
     entry_tag = '{{{ns}}}{tag}'.format(ns=ns_map['xmlns'], tag='entry')
+    paths = {'ec': './/xmlns:ecNumber',  # E.C. number
+             'go': './xmlns:dbReference[@type="GO"]',  # GO
+             'tigrfam': './xmlns:dbReference[@type="TIGRFAMs"]'}
 
     with connect(db_fp) as conn:
         c = conn.cursor()
@@ -45,50 +48,70 @@ def add_metadata(xml_fh, db_fp):
         # alias for ROWID or _ROWID_ or OID.
         # You can't ignore this column because ROWID can't server
         # as foreign key.
-        c.execute('''CREATE TABLE IF NOT EXISTS uniprot (
-                        id           INTEGER PRIMARY KEY,
-                        primary_accn TEXT  UNIQUE,
-                        name         TEXT  NOT NULL);''')
-        uniprot_insert = '''INSERT INTO uniprot (id, primary_accn, name)
-                            VALUES (?,?,?);'''
-
-        c.execute('''CREATE TABLE IF NOT EXISTS ec (
-                        id         INTEGER PRIMARY KEY,
-                        ec_number  TEXT  UNIQUE,
-                        name       TEXT  );''')
-        ec_insert = '''INSERT OR IGNORE INTO ec (id, ec_number, name)
-                       VALUES (?,?,?);'''
-
-        c.execute('''CREATE TABLE IF NOT EXISTS uniprot_ec (
-            id      INTEGER PRIMARY KEY,
-            uniprot INTEGER,
-            ec      INTEGER,
-            FOREIGN KEY (uniprot) REFERENCES uniprot(id),
-            FOREIGN KEY (ec) REFERENCES ec(id) );''')
-        uniprot_ec_insert = '''INSERT INTO uniprot_ec (id, uniprot, ec)
-                               VALUES (?,?,?);'''
-
+        c.execute('CREATE TABLE IF NOT EXISTS uniprot ('
+                  ' id   INTEGER PRIMARY KEY,'
+                  ' accn TEXT  UNIQUE,'
+                  ' name TEXT  NOT NULL);')
+        insert = ('INSERT OR IGNORE INTO uniprot (id, accn, name)'
+                  ' VALUES (?,?,?);')
 
         for n, entry in enumerate(_parse_xml(xml_fh, entry_tag), 1):
-            # get the primary accession number
-            accn = _process_entry(entry, ns_map, './xmlns:accession')
-            # get the protein name
-            name = _process_entry(entry, ns_map, './/xmlns:fullName')
+            try:
+                # get the primary accession number
+                accn = entry.find('./xmlns:accession', ns_map).text
+                # get the protein product name
+                name = entry.find('.//xmlns:fullName', ns_map).text
+            except AttributeError:
+                raise Exception(
+                    'failed to get accession and name '
+                    'for record %d' % n) from e
             # customize with more informative error msg
             try:
-                c.execute(uniprot_insert, (None, accn, name))
+                c.execute(insert, (None, accn, name))
             except IntegrityError as e:
                 raise Exception(
-                    'failed trying to insert {}'.format((accn, name))) from e
+                    'failed to insert {}'.format((accn, name))) from e
             uniprot_id = c.lastrowid
-            # find all E.C. numbers
-            for ec_number in entry.findall('.//xmlns:ecNumber', ns_map):
-                c.execute(ec_insert, (None, ec_number.text, None))
-                ec_id = c.lastrowid
-                c.execute(uniprot_ec_insert, (None, uniprot_id, ec_id))
+
+            for other_db, path in paths.items():
+                ct, it, clt, ilt = _cross_ref_table(other_db)
+                c.execute(ct)
+                c.execute(clt)
+                for elem in entry.findall(path, ns_map):
+                    if other_db == 'ec':
+                        other_accn = elem.text
+                    else:
+                        other_accn = elem.attrib['id']
+                    c.execute(it, (None, other_accn, None))
+                    row_id = c.lastrowid
+                    c.execute(ilt, (uniprot_id, row_id))
 
         conn.commit()
     return n
+
+
+def _cross_ref_table(name):
+    '''sqlite3 statement to create table for cross ref database.
+
+    name: other database name
+    '''
+    create = ('CREATE TABLE IF NOT EXISTS {} ('
+              ' id   INTEGER PRIMARY KEY,'
+              ' accn TEXT  UNIQUE,'
+              ' name TEXT);').format(name)
+    insert = ('INSERT OR IGNORE INTO {} (id, accn, name)'
+              ' VALUES (?,?,?);').format(name)
+    # junction table from uniprot to other annotation databases
+    create_link_table = ('CREATE TABLE IF NOT EXISTS uniprot_{0} ('
+                         ' uniprot INTEGER,'
+                         ' {0}     INTEGER,'
+                         ' PRIMARY KEY (uniprot, {0}),'
+                         ' FOREIGN KEY (uniprot) REFERENCES uniprot(id),'
+                         ' FOREIGN KEY ({0}) REFERENCES {0}(id));').format(
+                             name)
+    insert_link_table = ('INSERT OR IGNORE INTO uniprot_{0} (uniprot, {0})'
+                         ' VALUES (?,?);').format(name)
+    return create, insert, create_link_table, insert_link_table
 
 
 def _parse_xml(xml_fh, tag):
