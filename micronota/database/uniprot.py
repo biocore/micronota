@@ -41,7 +41,7 @@ def add_metadata(xml_fh, db_fp):
     paths = {'ec': './/xmlns:ecNumber',  # E.C. number
              'go': './xmlns:dbReference[@type="GO"]',  # GO
              'tigrfam': './xmlns:dbReference[@type="TIGRFAMs"]'}
-
+    inserts = {}
     with connect(db_fp) as conn:
         c = conn.cursor()
         # The INTEGER PRIMARY KEY column created is simply an
@@ -55,6 +55,11 @@ def add_metadata(xml_fh, db_fp):
         insert = ('INSERT OR IGNORE INTO uniprot (id, accn, name)'
                   ' VALUES (?,?,?);')
 
+        for other_db in paths:
+            ct, it, clt, ilt = _cross_ref_table(other_db)
+            c.execute(ct)
+            c.execute(clt)
+            inserts[other_db] = [it, ilt]
         for n, entry in enumerate(_parse_xml(xml_fh, entry_tag), 1):
             try:
                 # get the primary accession number
@@ -71,19 +76,19 @@ def add_metadata(xml_fh, db_fp):
             except IntegrityError as e:
                 raise Exception(
                     'failed to insert {}'.format((accn, name))) from e
-            uniprot_id = c.lastrowid
-
+            uniprot_id = c.execute(
+                'SELECT id FROM uniprot WHERE accn = ?;',
+                (accn, )).fetchone()[0]
             for other_db, path in paths.items():
-                ct, it, clt, ilt = _cross_ref_table(other_db)
-                c.execute(ct)
-                c.execute(clt)
+                it, ilt = inserts[other_db]
+                select = 'SELECT id FROM %s WHERE accn = ?;' % other_db
                 for elem in entry.findall(path, ns_map):
                     if other_db == 'ec':
                         other_accn = elem.text
                     else:
                         other_accn = elem.attrib['id']
                     c.execute(it, (None, other_accn, None))
-                    row_id = c.lastrowid
+                    row_id = c.execute(select, (other_accn, )).fetchone()[0]
                     c.execute(ilt, (uniprot_id, row_id))
 
         conn.commit()
@@ -103,13 +108,13 @@ def _cross_ref_table(name):
               ' VALUES (?,?,?);').format(name)
     # junction table from uniprot to other annotation databases
     create_link_table = ('CREATE TABLE IF NOT EXISTS uniprot_{0} ('
-                         ' uniprot INTEGER,'
-                         ' {0}     INTEGER,'
-                         ' PRIMARY KEY (uniprot, {0}),'
-                         ' FOREIGN KEY (uniprot) REFERENCES uniprot(id),'
-                         ' FOREIGN KEY ({0}) REFERENCES {0}(id));').format(
+                         ' uniprot_id INTEGER,'
+                         ' {0}_id     INTEGER,'
+                         ' PRIMARY KEY (uniprot_id, {0}_id),'
+                         ' FOREIGN KEY (uniprot_id) REFERENCES uniprot(id),'
+                         ' FOREIGN KEY ({0}_id) REFERENCES {0}(id));').format(
                              name)
-    insert_link_table = ('INSERT OR IGNORE INTO uniprot_{0} (uniprot, {0})'
+    insert_link_table = ('INSERT OR IGNORE INTO uniprot_{0} (uniprot_id, {0}_id)'
                          ' VALUES (?,?);').format(name)
     return create, insert, create_link_table, insert_link_table
 

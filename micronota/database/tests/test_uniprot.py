@@ -50,6 +50,17 @@ class UniprotTests(_DBTest):
         self._test_eq_db(self.tmpf, self.uniprot_all)
         self.assertEqual(n, sum(self.uniprot_n))
 
+    # def test_a(self):
+    #     with gzip.open('/Users/zech/database/uniprot_2016_10/uniprot_sprot.xml.gz') as fh:
+    #         n = add_metadata(fh, '/Users/zech/database/uniprot_2016_10/uniprot_sprot.sqlite')
+
+    # def test_b(self):
+    #     with gzip.open(self.uniprot_xml[1]) as fh:
+    #         n = add_metadata(fh, '/tmp/c.sqlite')
+
+    # def test_c(self):
+    #     self._test_eq_db('/tmp/c.sqlite', '/tmp/c.sqlite.bak')
+
     def tearDown(self):
         remove(self.tmpf)
 
