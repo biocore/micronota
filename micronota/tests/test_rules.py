@@ -49,8 +49,8 @@ class TestRules(TestCase):
                                  'priority': 50,
                                  'threads': 1}}
         log = self._run_snakemake(self.config)
-        exp = ('aragorn -l -gc11 -o aragorn/{0}.txt {0} &> aragorn/{0}.log && '
-               'touch aragorn/{0}.ok').format(self.seq_fn)
+        exp = ('aragorn -l -gc11 -o aragorn.txt {0} &> aragorn.log && '
+               'touch aragorn.ok').format(self.seq_fn)
         self.assertIn(exp, log)
 
     @skipIf(which("minced") is None, 'minced not installed.')
@@ -60,8 +60,8 @@ class TestRules(TestCase):
                                  'priority': 50,
                                  'threads': 1}}
         log = self._run_snakemake(self.config)
-        exp = ('minced  -gff {0} minced/{0}.gff &> minced/{0}.log && '
-               'touch minced/{0}.ok').format(self.seq_fn)
+        exp = ('minced  -gff {0} minced.gff &> minced.log && '
+               'touch minced.ok').format(self.seq_fn)
         self.assertIn(exp, log)
 
     @skipIf(which("prodigal") is None, 'Prodigal not installed.')
@@ -71,10 +71,10 @@ class TestRules(TestCase):
                                  'priority': 90,
                                  'threads': 1}}
         log = self._run_snakemake(self.config)
-        exp = ('prodigal -p meta -f gff -g 11 -i {0} -o prodigal/{0}.gff'
-               ' -a prodigal/{0}.faa -d prodigal/{0}.fna &>'
-               ' prodigal/{0}.log && '
-               'touch prodigal/{0}.ok').format(self.seq_fn)
+        exp = ('prodigal -p meta -f gff -g 11 -i {0} -o prodigal.gff'
+               ' -a prodigal.faa -d prodigal.fna &>'
+               ' prodigal.log && '
+               'touch prodigal.ok').format(self.seq_fn)
         self.assertIn(exp, log)
 
     @skipIf(which("cmscan") is None, 'Infernal not installed.')
@@ -88,8 +88,8 @@ class TestRules(TestCase):
                                      'threads': 2,
                                      'db': db}}
             log = self._run_snakemake(self.config)
-        exp = ('cmscan  --cpu {n} --tblout cmscan/{o}.txt {db} {o} &>'
-               ' cmscan/{o}.log && touch cmscan/{o}.ok').format(
+        exp = ('cmscan  --cpu {n} --tblout cmscan.txt {db} {o} &>'
+               ' cmscan.log && touch cmscan.ok').format(
                    o=self.seq_fn, db=db, n=2)
         self.assertIn(exp, log)
 

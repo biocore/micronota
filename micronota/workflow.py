@@ -105,10 +105,11 @@ def integrate(out_dir, seq_fn, out_fmt='genbank'):
         imd[seq.metadata['id']] = seq.interval_metadata
         seqs.append(seq)
 
-    for d in os.listdir(out_dir):
-        if d.startswith('.') or not isdir(join(out_dir, d)):
+    for f in os.listdir(out_dir):
+        if not f.endswith('.ok'):
             continue
-        submodule = import_module('.%s' % d, parsers.__name__)
+        tool = f.rsplit('.', 1)[0]
+        submodule = import_module('.%s' % tool, parsers.__name__)
         f = getattr(submodule, 'parse')
         f(imd, out_dir)
 

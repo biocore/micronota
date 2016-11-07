@@ -9,17 +9,18 @@ def grab_output(wildcards):
     return f
 
 
-tool_outputs = []
+outputs = []
 for tool in config['tools']:
-    tool_output = join(tool, config['seq'])
-    tool_outputs.append('%s.ok' % tool)
+    outputs.append('%s.ok' % tool)
     tool_config = config['tools'][tool]
     include: '%s.rule' % tool
 
 
+outputs.append('rest.faa')
+
 rule all:
     input:
-        tool_outputs
+        outputs
 
 # rule report:
 #     input:
