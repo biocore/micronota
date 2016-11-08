@@ -15,6 +15,9 @@ for tool in config['tools']:
     tool_config = config['tools'][tool]
     include: '%s.rule' % tool
 
+for rule in config['protein']:
+    rule_config = config['protein'][rule]
+    include: '%s.rule' % rule
 
 outputs.append('rest.faa')
 
