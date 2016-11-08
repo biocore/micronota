@@ -1,10 +1,13 @@
-pip
 nose
 pep8
 flake8
+snakemake
 infernal
 hmmer
 prodigal
-diamond>=0.7.12
-scikit-bio=0.4.2dev
+diamond=0.8.22
+aragorn
+scikit-bio>=0.5
 minced
+sphinx
+click>=6.0

@@ -1,0 +1,22 @@
+rule prodigal:
+    '''Predict CDS with Prodigal.'''
+    input:
+        config['seq']
+    output:
+        gff = 'prodigal.gff',
+        faa = 'prodigal.faa',
+        fna = 'prodigal.fna',
+        ok  = 'prodigal.ok'
+    log:
+        'prodigal.log'
+    params:
+        tool_config['params']
+    priority:
+        tool_config['priority']
+    message:
+        '--- RUNNING Prodigal ...'
+    shell:
+        'prodigal {params} -f gff -g %d -i {input[0]} -o {output.gff}'
+        ' -a {output.faa} -d {output.fna} &> {log} && '
+        'touch {output.ok}'% config['genetic_code']
+

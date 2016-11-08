@@ -1,0 +1,19 @@
+rule aragorn:
+    '''Predict tRNA with Aragorn.'''
+    input:
+        fna = config['seq']
+    output:
+        'aragorn.txt',
+        'aragorn.ok'
+    log:
+        'aragorn.log'
+    params:
+        tool_config['params']
+    priority:
+        tool_config['priority']
+    message:
+        '--- RUNNING Aragorn ...'
+    shell:
+        'aragorn {params} -gc%r -o {output[0]} {input.fna} &> {log} && '
+        'touch {output[1]}' % config['genetic_code']
+

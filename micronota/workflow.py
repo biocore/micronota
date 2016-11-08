@@ -6,158 +6,117 @@
 # The full license is in the file COPYING.txt, distributed with this software.
 # ----------------------------------------------------------------------------
 
-from os.path import splitext, basename, join
-from os import makedirs
-from importlib import import_module
+import os
+from pkg_resources import resource_filename
+from os.path import join
 from logging import getLogger
+from importlib import import_module
 
-from . import bfillings
-from .util import _overwrite, convert
+from snakemake import snakemake
+from skbio.io import read, write
+
+from . import parsers
 
 
-def annotate(in_fp, in_fmt, out_dir, out_fmt,
-             cpus, force, config):
+logger = getLogger(__name__)
+
+
+def annotate(in_fp, out_dir, gcode, cpus, force, dry_run, config):
     '''Annotate the sequences in the input file.
 
     Parameters
     ----------
     in_fp : str
-        Input file path
-    in_fmt : str
-        Input file format.
+        Input seq file name
     out_dir : str
         Output file directory.
-    out_fmt : str
-        Output file format.
     cpus : int
         Number of cpus to use.
     force : boolean
         Force to overwrite.
-    config : ``micronota.config.Configuration``
-        Container for configuration options.
+    dry_run : boolean
+    config : config file for snakemake
     '''
-    _overwrite(out_dir, overwrite=force)
-    makedirs(out_dir, exist_ok=force)
+    logger.info('Running annotation pipeline')
+    snakefile = resource_filename(__name__, 'rules/Snakefile')
+    if config is None:
+        config = resource_filename(__name__, 'rules/config.yaml')
 
-    prefix = splitext(basename(in_fp))[0]
-    fn = '{p}.{f}'.format(p=prefix, f=out_fmt)
-    out_fp = join(out_dir, fn)
-    if in_fmt != 'fasta':
-        fna = join(out_dir, '{p}.fna'.format(prefix))
-        convert(in_fmt, 'fasta', in_fp, fna)
-        in_fp = fna
+    success = snakemake(
+        snakefile,
+        cores=cpus,
+        # set work dir to output dir so simultaneous runs
+        # doesn't interfere with each other.
+        workdir=out_dir,
+        printshellcmds=True,
+        dryrun=dry_run,
+        forcetargets=force,
+        config={'seq': in_fp, 'genetic_code': gcode},
+        configfile=config,
+        keep_target_files=True,
+        keep_logger=True)
 
-    feature_res = identify_features(in_fp, out_dir, cpus, force, config)
-
-    pro_fp = None
-    if 'prodigal' in feature_res:
-        pro_fp = feature_res['prodigal'].params['-a']
-
-    if pro_fp is not None:
-        annotate_res = annotate_cds(pro_fp, out_dir, cpus, force, config)
-
-    parse_annotation(out_fp, in_fp, feature_res, annotate_res)
-
-
-def parse_annotation(out_fp, in_fp, feature_res, annotate_res):
-    '''Parse all the annotations and write to disk.'''
+    return success
 
 
-def identify_features(seq, out_dir, cpus, force, config):
-    '''Identify all the features for the input sequence.
+def validate_seq(in_fp, in_fmt, min_len, out_fp):
+    '''Validate input seq file.
 
-    It runs through all the tasks specified in sequential order.
+    1. filter out short seq;
+    2. validate seq IDs (no duplicates)
+    3. convert to fasta format
 
     Parameters
     ----------
-    seq : str
-        Input sequence file path.
-    out_dir : str
-        Output directory.
-    cpus : int
-        number of cpu cores
-    config : ``micronota.config.Configuration``
-        Container for configuration options.
-
-    Returns
-    -------
-    dict
+    in_fp : str
+        input seq file path
+    in_fmt : str
+        the format of seq file
+    min_len : int
+        cutoff of seq len to filter
+    out_fp : str
+        output seq file path
     '''
-    logger = getLogger(__name__)
-    logger.info('Running feature identification ...')
-
-    res = {}
-
-    for tool in config.features:
-        submodule = import_module('.%s' % tool, bfillings.__name__)
-        pred = getattr(submodule, 'run')
-
-        params = {}
-        if tool in config.param:
-            params = config.param[tool]
-
-        d = join(out_dir, tool)
-        _overwrite(d, overwrite=force)
-        makedirs(d, exist_ok=force)
-
-        db = config.features[tool]
-        if db is not None:
-            db_path = config.db[db]
-            dumpling = pred(db_path, seq, d, cpus=cpus, **params)
-        else:
-            dumpling = pred(seq, d, cpus=cpus, **params)
-
-        res[tool] = dumpling
-    return res
+    logger.info('Filtering and validating input sequences')
+    ids = set()
+    with open(out_fp, 'w') as out:
+        for seq in read(in_fp, format=in_fmt):
+            if len(seq) < min_len:
+                continue
+            ident = seq.metadata['id']
+            if ident in ids:
+                raise ValueError(
+                    'Duplicate seq IDs in your input file: {}'.format(ident))
+            else:
+                ids.add(ident)
+            write(seq, format='fasta', into=out)
 
 
-def annotate_cds(pro_fp, out_dir, cpus, force, config):
-    '''Annotate coding domain sequences (CDS).
+def integrate(out_dir, seq_fn, out_fmt='genbank'):
+    '''integrate all the structural annotations and write to disk.
 
-    Parameters
-    ----------
-    pro_fp : str
-        input file path of protein seq
+    seq_fn : str
+        input seq file path.
     out_dir : str
-        Output directory.
-    config : ``micronota.config.Configuration``
-        Container for configuration options.
-    cpus : int
-        Number of CPUs to use.
-
-    Returns
-    -------
-    dict
+        annotated output file path.
+    out_fmt : str
+        output format
     '''
-    logger = getLogger(__name__)
-    logger.info('Running CDS annotation ...')
+    logger.info('Integrating annotation for output')
+    imd = {}
+    seqs = []
+    for seq in read(join(out_dir, seq_fn), format='fasta'):
+        imd[seq.metadata['id']] = seq.interval_metadata
+        seqs.append(seq)
 
-    for tool in config.cds:
-        submodule = import_module('.%s' % tool, bfillings.__name__)
-        pred = getattr(submodule, 'run')
+    for f in os.listdir(out_dir):
+        if not f.endswith('.ok'):
+            continue
+        tool = f.rsplit('.', 1)[0]
+        submodule = import_module('.%s' % tool, parsers.__name__)
+        f = getattr(submodule, 'parse')
+        f(imd, out_dir)
 
-        d = join(out_dir, tool)
-        _overwrite(d, overwrite=force)
-        makedirs(d, exist_ok=True)
-
-        db = config.cds[tool]
-        db_path = config.db[db]
-        pred(db_path, d)
-
-
-def _get_uniref_db(kingdom):
-    dbs = ['Swiss-Prot_Bacteria',
-           'Swiss-Prot_Archaea',
-           'Swiss-Prot_Viruses',
-           'Swiss-Prot_Eukaryota',
-           'Swiss-Prot_other',
-           'TrEMBL_Bacteria',
-           'TrEMBL_Archaea',
-           'TrEMBL_Viruses',
-           'TrEMBL_Eukaryota',
-           'TrEMBL_other',
-           '_other']
-    order = {'bacteria': range(11),
-             'archaea': [1, 0, 2, 3, 4, 6, 5, 7, 8, 9, 10],
-             'viruses': [2, 0, 1, 3, 4, 7, 5, 6, 8, 9, 10]}
-    return [dbs[i] for i in order[kingdom.lower()]]
+    with open(join(out_dir, '%s.gbk' % seq_fn), 'w') as out:
+        for seq in seqs:
+            write(seq, into=out, format='genbank')

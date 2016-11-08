@@ -63,12 +63,12 @@ def convert(in_fmt, out_fmt, in_f, out_f):
 class _DBTest(TestCase):
     def _test_eq_db(self, db1, db2):
         '''Test if two database files have the same contents.'''
-        with connect(db1) as o, connect(self.exp_db_fp) as e:
+        with connect(db1) as o, connect(db2) as e:
+            co = o.cursor()
+            ce = e.cursor()
             # compare each table
-            for table, in o.execute(
+            for table, in e.execute(
                     "SELECT name FROM sqlite_master WHERE type='table'"):
-                co = o.cursor()
-                co.execute('SELECT * from %s' % table)
-                ce = e.cursor()
-                ce.execute('SELECT * from %s' % table)
-                self.assertCountEqual(co.fetchall(), ce.fetchall())
+                co.execute('SELECT * FROM %s' % table)
+                ce.execute('SELECT * FROM %s' % table)
+                self.assertEqual(co.fetchall(), ce.fetchall())

@@ -1,0 +1,30 @@
+from micronota.parsers.cds import parsers, HITS, _filter_proteins
+
+
+rule hmmscan:
+    input:
+        db = rule_config['db'],
+        faa = rule_config['input']
+    output:
+        'hmmscan_tigrfam.txt'
+    params:
+        tool_config['params']
+    threads:
+        tool_config['threads']
+    log:
+        '.log'
+    priority:
+        tool_config['priority']
+    message:
+        '--- RUNNING hmmscan ...'
+    shell:
+        'hmmscan {params} --cpu {threads} --tblout {output[0]} {input.db} {input.fna} &> {log} && '
+
+rule unmatched_tigrfam:
+    input:
+        rule_config['input']
+        'hmmscan_tigrfam.txt'
+    output:
+        faa = rule_config['output']
+    run:
+        HITS.update(

@@ -1,0 +1,39 @@
+from os.path import join
+
+
+def grab_output(wildcards):
+    f = []
+    for tool in config['tools']:
+        p = join(tool, config['seq'] + '.gff')
+        f.append(p)
+    return f
+
+
+outputs = []
+for tool in config['tools']:
+    outputs.append('%s.ok' % tool)
+    tool_config = config['tools'][tool]
+    include: '%s.rule' % tool
+
+for rule in config['protein']:
+    rule_config = config['protein'][rule]
+    include: '%s.rule' % rule
+
+outputs.append('rest.faa')
+
+rule all:
+    input:
+        outputs
+
+# rule report:
+#     input:
+#         '{seq}.gff'
+#     output:
+#         "{seq}.html"
+#     run:
+#         from snakemake.utils import report
+#         shell('touch {output[0]}')
+
+
+
+# ruleorder: ncRNA > tRNA > CRISPR

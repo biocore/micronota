@@ -1,0 +1,43 @@
+# settings of wrapped tools
+tools:
+    prodigal:
+        # params: '-p meta'
+        params: '-p single'
+        priority: 90
+        threads: 1
+    cmscan:
+        params: ''
+        priority: 50
+        threads: 1
+        db: '~/database/rfam/rfam.cm'
+    minced:
+        params: ''
+        priority: 50
+        threads: 1
+    aragorn:
+        params: '-l'
+        priority: 50
+        threads: 1
+# homologous search for proteins
+protein:
+    diamond_uniref90:
+        params: '--index-chunks 1 --query-cover 80 -k 3'
+        priority: 50
+        threads: 1
+        db: '~/database/uniref/uniref90.dmnd'
+        input: 'prodigal.faa'
+        output: 'diamond_uniref90.faa'
+    diamond_uniref50:
+        params: '--index-chunks 1 --query-cover 80 -k 3'
+        priority: 50
+        threads: 1
+        db: '~/database/uniref/uniref50.dmnd'
+        input: 'diamond_uniref90.faa'
+        output: 'rest.faa'
+    # hmmscan_tigrfam:
+    #     params: ''
+    #     priority: 60
+    #     threads: 1
+    #     db: '~/database/tigrfam/tigrfam.hmm'
+    #     input: ''
+    #     output: ''

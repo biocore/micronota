@@ -1,0 +1,21 @@
+rule cmscan:
+    '''Run cmscan.'''
+    input:
+        db = tool_config['db'],
+        fna = config['seq']
+    output:
+        'cmscan.txt',
+        'cmscan.ok'
+    log:
+        'cmscan.log'
+    threads:
+        tool_config['threads']
+    params:
+        tool_config['params']
+    priority:
+        tool_config['priority']
+    message:
+        '--- RUNNING cmscan ...'
+    shell:
+        'cmscan {params} --cpu {threads} --tblout {output[0]} {input.db} {input.fna} &> {log} && '
+        'touch {output[1]}'

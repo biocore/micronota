@@ -1,1 +1,0 @@
-.. automodule:: micronota.bfillings
