@@ -9,9 +9,24 @@
 from logging import getLogger
 
 import pandas as pd
+from skbio import read, write, Protein
 
 
 logger = getLogger(__name__)
+
+
+# This global variable stores the query seq id as key and the hit seq
+# id as value. It is global because it needs to be accessible in both
+# python code and snakemake files
+HITS = {}
+
+
+def _filter_proteins(in_fp, out_fp):
+    with open(out_fp, 'w') as out:
+        for seq in read(in_fp, format='fasta', constructor=Protein):
+            seq_id = seq.metadata['id']
+            if seq_id not in HITS:
+                write(seq, format='fasta', into=out)
 
 
 def parse_diamond_uniref(fn, pident=90):

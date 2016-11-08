@@ -37,9 +37,11 @@ from ..workflow import annotate, validate_seq, integrate
               help='Force overwrite if the output directory exists')
 @click.option('-d', '--dry_run', is_flag=True,
               help='Do not execute anything.')
+@click.option('--config', type=click.Path(exists=True, dir_okay=False),
+              help='Config file for annotation workflow.')
 @click.pass_context
 def cli(ctx, input_fp, in_fmt, min_len, output_dir, out_fmt, gcode,
-        cpus, force, dry_run):
+        cpus, force, dry_run, config):
     '''Annotate prokaryotic genomes.'''
     os.makedirs(output_dir, exist_ok=True)
 
@@ -47,7 +49,7 @@ def cli(ctx, input_fp, in_fmt, min_len, output_dir, out_fmt, gcode,
 
     validate_seq(input_fp, in_fmt, min_len, join(output_dir, seq_fn))
 
-    done = annotate(seq_fn, output_dir, gcode, cpus, force, dry_run)
+    done = annotate(seq_fn, output_dir, gcode, cpus, force, dry_run, config)
 
     if done:
         # if snakemake finishes successfully

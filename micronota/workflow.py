@@ -14,7 +14,6 @@ from importlib import import_module
 
 from snakemake import snakemake
 from skbio.io import read, write
-from skbio import Protein
 
 from . import parsers
 
@@ -22,7 +21,7 @@ from . import parsers
 logger = getLogger(__name__)
 
 
-def annotate(in_fp, out_dir, gcode, cpus, force, dry_run):
+def annotate(in_fp, out_dir, gcode, cpus, force, dry_run, config):
     '''Annotate the sequences in the input file.
 
     Parameters
@@ -35,10 +34,14 @@ def annotate(in_fp, out_dir, gcode, cpus, force, dry_run):
         Number of cpus to use.
     force : boolean
         Force to overwrite.
+    dry_run : boolean
+    config : config file for snakemake
     '''
     logger.info('Running annotation pipeline')
     snakefile = resource_filename(__name__, 'rules/Snakefile')
-    configfile = resource_filename(__name__, 'rules/config.yaml')
+    if config is None:
+        config = resource_filename(__name__, 'rules/config.yaml')
+
     success = snakemake(
         snakefile,
         cores=cpus,
@@ -49,7 +52,7 @@ def annotate(in_fp, out_dir, gcode, cpus, force, dry_run):
         dryrun=dry_run,
         forcetargets=force,
         config={'seq': in_fp, 'genetic_code': gcode},
-        configfile=configfile,
+        configfile=config,
         keep_target_files=True,
         keep_logger=True)
 
@@ -117,17 +120,3 @@ def integrate(out_dir, seq_fn, out_fmt='genbank'):
     with open(join(out_dir, '%s.gbk' % seq_fn), 'w') as out:
         for seq in seqs:
             write(seq, into=out, format='genbank')
-
-
-# This global variable stores the query seq id as key and the hit seq
-# id as value. It is global because it needs to be accessible in both
-# python code and snakemake files
-HITS = {}
-
-
-def _filter_proteins(in_fp, out_fp):
-    with open(out_fp, 'w') as out:
-        for seq in read(in_fp, format='fasta', constructor=Protein):
-            seq_id = seq.metadata['id']
-            if seq_id not in HITS:
-                write(seq, format='fasta', into=out)

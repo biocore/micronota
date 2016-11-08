@@ -1,5 +1,4 @@
-from micronota.workflow import HITS, _filter_proteins
-from micronota.parsers.cds import parsers
+from micronota.parsers.cds import parsers, HITS, _filter_proteins
 
 
 rule diamond_uniref90:
