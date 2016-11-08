@@ -6,11 +6,9 @@
 # The full license is in the file COPYING.txt, distributed with this software.
 # ----------------------------------------------------------------------------
 
-import gzip
 from logging import getLogger
 from sqlite3 import connect, IntegrityError
 from xml.etree import ElementTree as ET
-from os.path import join, basename
 
 
 logger = getLogger(__name__)
@@ -66,7 +64,7 @@ def add_metadata(xml_fh, db_fp):
                 accn = entry.find('./xmlns:accession', ns_map).text
                 # get the protein product name
                 name = entry.find('.//xmlns:fullName', ns_map).text
-            except AttributeError:
+            except AttributeError as e:
                 raise Exception(
                     'failed to get accession and name '
                     'for record %d' % n) from e

@@ -10,7 +10,6 @@ from unittest import TestCase, skipIf, main
 from pkg_resources import resource_filename
 from shutil import which, rmtree
 from os.path import join
-from os import mkdir
 from tempfile import TemporaryDirectory, mkdtemp
 
 from snakemake.logging import logger, setup_logger

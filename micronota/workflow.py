@@ -8,7 +8,7 @@
 
 import os
 from pkg_resources import resource_filename
-from os.path import join, isdir
+from os.path import join
 from logging import getLogger
 from importlib import import_module
 

@@ -6,11 +6,9 @@
 # The full license is in the file COPYING.txt, distributed with this software.
 # ----------------------------------------------------------------------------
 import gzip
-from os.path import join, dirname, exists
 from os import remove
 from tempfile import mkstemp
 from unittest import main
-from shutil import rmtree
 
 from micronota.util import _DBTest, _get_named_data_path
 from micronota.database.uniprot import add_metadata, _parse_xml
