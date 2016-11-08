@@ -64,12 +64,11 @@ setup(name='micronota',
           'rules/*']},
       install_requires=[
           'click >= 6',
-          'scikit-bio >= 0.4.0',
-          'burrito >= 0.9'
+          'scikit-bio >= 0.5.0',
       ],
       extras_require={'test': ["nose", "pep8", "flake8"],
                       'coverage': ["coverage"],
-                      'doc': ["Sphinx == 1.3.3"]},
+                      'doc': ["Sphinx >= 1.4"]},
       entry_points={
           'console_scripts': [
               'micronota=micronota.cli:cmd',
