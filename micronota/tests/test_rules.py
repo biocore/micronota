@@ -21,9 +21,21 @@ class TestRules(TestCase):
     def setUp(self):
         self.seq_fn = 'test.fna'
         self.snakefile = resource_filename('micronota', 'rules/Snakefile')
-        self.config = {'seq': 'test.fna', 'genetic_code': 11}
         self.tmpd = mkdtemp()
-
+        uniref90 = join(self.tmpd, 'uniref90.dmnd')
+        open(uniref90, 'w').close()
+        prodigal = join(self.tmpd, 'prodigal.faa')
+        open(prodigal, 'w').close()
+        self.config = {
+            'seq': 'test.fna', 'genetic_code': 11,
+            'tools': {},
+            'protein': {
+                'diamond_uniref90': {
+                    'db': uniref90,
+                    'params': '',
+                    'threads': 1,
+                    'input': prodigal,
+                    'output': 'rest.faa'}}}
         # this is required to set snakemake logging to files correctly
         setup_logger(printshellcmds=True)
         logger.logger.removeHandler(logger.logger.handlers[1])
@@ -95,34 +107,15 @@ class TestRules(TestCase):
 
     @skipIf(which("diamond") is None, 'diamond not installed.')
     def test_diamond(self):
-        with TemporaryDirectory() as tmpd:
-            db = tmpd
-            open(join(db, 'uniref90.dmnd'), 'w').close()
-            open(join(db, 'uniref50.dmnd'), 'w').close()
-            d = join(self.tmpd, 'prodigal')
-            mkdir(d)
-            open(join(d, self.seq_fn + '.faa'), 'w').close()
-            config = {'params': '--index-chunks 1 --query-cover 80 -k 3',
-                      'priority': 80, 'threads': 4, 'db': db}
-            self.config['tools'] = {'diamond': config}
-            log = self._run_snakemake(self.config)
-
-        exp = ('diamond blastp {p} --threads {n} --db {db}/uniref90.dmnd -q {i}'
-               ' -a {o}_uniref90.daa &> {o}_uniref90.daa.log'.format(
+        log = self._run_snakemake(self.config)
+        config = self.config['protein']['diamond_uniref90']
+        exp = ('diamond blastp {p} --threads {n} --db {db} -q {i}'
+               ' -o diamond_uniref90.m12'.format(
                    p=config['params'],
                    n=config['threads'],
                    db=config['db'],
-                   o='diamond/%s' % self.seq_fn,
-                   i='prodigal/%s.faa' % self.seq_fn))
-        self.assertIn(exp, log)
+                   i=config['input']))
 
-        unmatched = join('diamond', self.seq_fn + '_uniref90_unmatched.faa')
-        exp = ('diamond blastp {p} --threads {n} --db {db}/uniref50.dmnd -q {i}'
-               ' -a {o}_uniref50.daa &> {o}_uniref50.daa.log'.format(
-                   p=config['params'],
-                   n=config['threads'],
-                   db=config['db'],
-                   o='diamond/%s' % self.seq_fn, i=unmatched))
         self.assertIn(exp, log)
 
     def tearDown(self):

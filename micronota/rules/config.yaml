@@ -24,14 +24,14 @@ protein:
         params: '--index-chunks 1 --query-cover 80 -k 3'
         priority: 50
         threads: 1
-        db: '/Users/zech/Dropbox/git/micronota/micronota/data/uniref90.dmnd'
+        db: '~/database/uniref/uniref90.dmnd'
         input: 'prodigal.faa'
         output: 'diamond_uniref90.faa'
     diamond_uniref50:
         params: '--index-chunks 1 --query-cover 80 -k 3'
         priority: 50
         threads: 1
-        db: '/Users/zech/Dropbox/git/micronota/micronota/data/uniref50.dmnd'
+        db: '~/databaseb/uniref/uniref50.dmnd'
         input: 'diamond_uniref90.faa'
         output: 'rest.faa'
     # hmmscan:

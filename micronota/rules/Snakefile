@@ -1,4 +1,4 @@
-from os.path import join, basename, abspath
+from os.path import join
 
 
 def grab_output(wildcards):
