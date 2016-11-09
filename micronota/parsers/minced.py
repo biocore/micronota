@@ -15,19 +15,19 @@ from skbio.io import read
 logger = getLogger(__name__)
 
 
-def parse(interval_metadata, out_dir):
+def parse(interval_metadata_dict, out_dir, fn='minced.gff'):
     '''Parse the annotation and add it to interval metadata.
 
     Parameters
     ----------
-    interval_metadata : dict
+    interval_metadata_dict : dict
         key is seq id and value is the interval metadata for the seq.
     out_dir : str
         the output dir
     seq_fn : str
         input seq file name. With `out_dir` and `seq_fn`, you should
-        be able to create the file name output from this prediction
-        tool to parse the annotaton.
+        be able to create the file name outputted from this prediction
+        tool.
 
     '''
     logger.debug('Parsing minced prediction')
