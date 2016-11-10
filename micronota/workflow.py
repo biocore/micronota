@@ -8,14 +8,16 @@
 
 import os
 from pkg_resources import resource_filename
-from os.path import join
+from os.path import join, exists
 from logging import getLogger
 from importlib import import_module
 
 from snakemake import snakemake
 from skbio.io import read, write
+import pandas as pd
 
 from . import parsers
+from .parsers.cds import _add_protein_annotation, _parse_seq_id
 
 
 logger = getLogger(__name__)
@@ -77,6 +79,8 @@ def validate_seq(in_fp, in_fmt, min_len, out_fp):
     out_fp : str
         output seq file path
     '''
+    if exists(out_fp):
+        return
     logger.info('Filtering and validating input sequences')
     ids = set()
     with open(out_fp, 'w') as out:
@@ -93,7 +97,7 @@ def validate_seq(in_fp, in_fmt, min_len, out_fp):
 
 
 def integrate(out_dir, seq_fn, out_fmt='genbank'):
-    '''integrate all the structural annotations and write to disk.
+    '''integrate all the annotations and write to disk.
 
     seq_fn : str
         input seq file path.
@@ -109,14 +113,25 @@ def integrate(out_dir, seq_fn, out_fmt='genbank'):
         imd[seq.metadata['id']] = seq.interval_metadata
         seqs.append(seq)
 
+    hits = []
     for f in os.listdir(out_dir):
-        if not f.endswith('.ok'):
-            continue
-        tool = f.rsplit('.', 1)[0]
-        submodule = import_module('.%s' % tool, parsers.__name__)
-        f = getattr(submodule, 'parse')
-        f(imd, out_dir)
+        if f.endswith('.hit'):
+            hits.append(join(out_dir, f))
+        elif f.endswith('.ok'):
+            # parse the output of each feature prediction tool into
+            # interval metadata
+            tool = f.rsplit('.', 1)[0]
+            submodule = import_module('.%s' % tool, parsers.__name__)
+            f = getattr(submodule, 'parse')
+            f(imd, out_dir)
 
+    # add functional metadata to the protein-coding gene
+    hit = pd.concat([pd.read_table(i) for i in hits], axis=0)
+    hit_dict = _parse_seq_id(hit)
+    _add_protein_annotation(imd, hit_dict)
+
+    # write out the annotation
     with open(join(out_dir, '%s.gbk' % seq_fn), 'w') as out:
         for seq in seqs:
             write(seq, into=out, format='genbank')
+

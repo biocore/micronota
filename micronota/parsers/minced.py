@@ -32,4 +32,4 @@ def parse(interval_metadata_dict, out_dir, fn='minced.gff'):
     '''
     logger.debug('Parsing minced prediction')
     fp = join(out_dir, 'minced.gff')
-    list(read(fp, format='gff3', interval_metadata_dict=interval_metadata))
+    list(read(fp, format='gff3', interval_metadata_dict=interval_metadata_dict))

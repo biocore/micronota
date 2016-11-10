@@ -33,7 +33,7 @@ from ..workflow import annotate, validate_seq, integrate
               help='Genetic code to predict ORFs.')
 @click.option('--cpus', type=int, default=1,
               help='Number of CPUs to use.')
-@click.option('--force', is_flag=True,
+@click.option('--force', is_flag=True, default=False,
               help='Force overwrite if the output directory exists')
 @click.option('-d', '--dry_run', is_flag=True,
               help='Do not execute anything.')

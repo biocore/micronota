@@ -1,4 +1,4 @@
-from micronota.parsers.cds import parsers, HITS, _filter_proteins
+from micronota.parsers.cds import parsers, _filter_proteins
 
 
 rule diamond_uniref90:
@@ -28,7 +28,9 @@ rule unmatched_uniref90:
         rule_config['input'],
         'diamond_uniref90.m12'
     output:
-        faa = rule_config['output']
+        faa = rule_config['output'],
+        hit = rule_config['hit']
     run:
-        HITS.update(parsers['parse_diamond_uniref90']())
-        _filter_proteins(input[0], output.faa)
+        df = parsers['parse_diamond_uniref90']()
+        df.to_csv(output.hit, sep='\t', index=False)
+        _filter_proteins(input[0], output.faa, df.qseqid)
