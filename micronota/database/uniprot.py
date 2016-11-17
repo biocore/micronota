@@ -151,3 +151,23 @@ def _process_entry(elem, ns_map, path):
             '\n'.join('%s:%s' % (child.tag, child.text) for child in elem)))
 
     return match.text
+
+
+def query_xref(db_fp, accn):
+    '''Query with UniProt accession number.'''
+    tables = ['ec', 'go', 'tigrfam']
+    with connect(db_fp) as conn:
+        c = conn.cursor()
+        c.execute('SELECT name FROM uniprot WHERE accn = ?;', (accn,))
+        name = c.fetchone()[0]
+        for table in tables:
+            query_xref = '''SELECT {0}.accn FROM {0}
+                        INNER JOIN uniprot_{0} j ON j.{0}_id = {0}.id
+                        INNER JOIN uniprot u ON j.uniprot_id = u.id
+                        WHERE u.accn = ?;'''.format(table)
+            # 'K9NBS6'
+            xref = []
+            for i in c.execute(query_xref, (accn,)):
+                xref.append(i[0])
+            yield table, xref
+
