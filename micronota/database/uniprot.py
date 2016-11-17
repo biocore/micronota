@@ -153,21 +153,21 @@ def _process_entry(elem, ns_map, path):
     return match.text
 
 
-def query_xref(db_fp, accn):
+def query(db_fp, accn):
     '''Query with UniProt accession number.'''
-    tables = ['ec', 'go', 'tigrfam']
-    with connect(db_fp) as conn:
-        c = conn.cursor()
-        c.execute('SELECT name FROM uniprot WHERE accn = ?;', (accn,))
-        name = c.fetchone()[0]
+    tables = ['EC_number', 'GO', 'TIGRFAM']
+    info = {}
+    with connect(db_fp) as c:
         for table in tables:
-            query_xref = '''SELECT {0}.accn FROM {0}
-                        INNER JOIN uniprot_{0} j ON j.{0}_id = {0}.id
-                        INNER JOIN uniprot u ON j.uniprot_id = u.id
-                        WHERE u.accn = ?;'''.format(table)
+            query_xref = '''SELECT {0}.accn, u.name FROM {0}
+                            INNER JOIN uniprot_{0} j ON j.{0}_id = {0}.id
+                            INNER JOIN uniprot u ON j.uniprot_id = u.id
+                            WHERE u.accn = ?;'''.format(table)
             # 'K9NBS6'
-            xref = []
-            for i in c.execute(query_xref, (accn,)):
-                xref.append(i[0])
-            yield table, xref
+            res = [i for i in c.execute(query_xref, (accn,))]
+            if 'product' not in info:
+                name = [i[1] for i in res]
+                info['product'] = name[0]
+            info[table] = [i[0] for i in res]
+    return info
 
