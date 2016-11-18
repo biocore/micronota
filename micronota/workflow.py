@@ -40,9 +40,9 @@ def annotate(in_fp, out_dir, gcode, cpus, force, dry_run, config):
     config : config file for snakemake
     '''
     logger.info('Running annotation pipeline')
-    snakefile = resource_filename(__name__, 'rules/Snakefile')
+    snakefile = resource_filename(__package__, 'rules/Snakefile')
     if config is None:
-        config = resource_filename(__name__, 'rules/config.yaml')
+        config = resource_filename(__package__, 'rules/config.yaml')
 
     success = snakemake(
         snakefile,
@@ -107,11 +107,9 @@ def integrate(out_dir, seq_fn, out_fmt='genbank'):
         output format
     '''
     logger.info('Integrating annotation for output')
-    imd = {}
-    seqs = []
+    seqs = {}
     for seq in read(join(out_dir, seq_fn), format='fasta'):
-        imd[seq.metadata['id']] = seq.interval_metadata
-        seqs.append(seq)
+        seqs[seq.metadata['id']] = seq
 
     hits = []
     for f in os.listdir(out_dir):
@@ -123,15 +121,17 @@ def integrate(out_dir, seq_fn, out_fmt='genbank'):
             tool = f.rsplit('.', 1)[0]
             submodule = import_module('.%s' % tool, parsers.__name__)
             f = getattr(submodule, 'parse')
-            f(imd, out_dir)
+            for seq_id, imd in f(out_dir):
+                seq = seqs[seq_id]
+                imd.upper_bound = len(seq)
+                seq.interval_metadata.merge(imd)
 
     # add functional metadata to the protein-coding gene
     hit = pd.concat([pd.read_table(i) for i in hits], axis=0)
     hit_dict = _parse_seq_id(hit)
-    _add_protein_annotation(imd, hit_dict)
+    _add_protein_annotation(seqs, hit_dict)
 
     # write out the annotation
     with open(join(out_dir, '%s.gbk' % seq_fn), 'w') as out:
-        for seq in seqs:
+        for _, seq in seqs.items():
             write(seq, into=out, format='genbank')
-

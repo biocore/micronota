@@ -15,13 +15,11 @@ from skbio.io import read
 logger = getLogger(__name__)
 
 
-def parse(interval_metadata_dict, out_dir, fn='minced.gff'):
+def parse(out_dir, fn='minced.gff'):
     '''Parse the annotation and add it to interval metadata.
 
     Parameters
     ----------
-    interval_metadata_dict : dict
-        key is seq id and value is the interval metadata for the seq.
     out_dir : str
         the output dir
     seq_fn : str
@@ -32,4 +30,4 @@ def parse(interval_metadata_dict, out_dir, fn='minced.gff'):
     '''
     logger.debug('Parsing minced prediction')
     fp = join(out_dir, 'minced.gff')
-    list(read(fp, format='gff3', interval_metadata_dict=interval_metadata_dict))
+    return read(fp, format='gff3')

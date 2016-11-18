@@ -15,18 +15,21 @@ from skbio.io import read
 logger = getLogger(__name__)
 
 
-def parse(interval_metadata_dict, out_dir, fn='prodigal.gff'):
+def parse(out_dir, fn='prodigal.gff'):
     '''Parse the annotation and add it to interval metadata.
 
     Parameters
     ----------
-    interval_metadata_dict : dict
-        key is seq id and value is the interval metadata for the seq.
     out_dir : str
         the output dir
     fn : str
         the file name from prodigal prediction
+
+    Yield
+    -----
+    tuple of str and IntervalMetadata
+        seq_id and interval metadata
     '''
     logger.debug('Parsing prodigal prediction')
     fp = join(out_dir, fn)
-    list(read(fp, format='gff3', interval_metadata_dict=interval_metadata_dict))
+    return read(fp, format='gff3')

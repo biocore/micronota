@@ -25,11 +25,11 @@ def _filter_proteins(in_fp, out_fp, ids):
                 write(seq, format='fasta', into=out)
 
 
-def _add_protein_annotation(imd_dict, seq_hits):
+def _add_protein_annotation(seqs, seq_hits):
     ''''''
-    for seq_id, imd in imd_dict.items():
+    for seq_id, seq in seqs.items():
         hits = seq_hits[seq_id]
-        for intvl in imd._intervals:
+        for intvl in seq.interval_metadata._intervals:
             md = intvl.metadata
             if md['type'] == 'CDS':
                 # this md is parsed from prodigal output, which
