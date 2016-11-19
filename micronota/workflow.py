@@ -134,4 +134,5 @@ def integrate(out_dir, seq_fn, out_fmt='genbank'):
     # write out the annotation
     with open(join(out_dir, '%s.gbk' % seq_fn), 'w') as out:
         for _, seq in seqs.items():
+            seq.interval_metadata.sort()
             write(seq, into=out, format='genbank')

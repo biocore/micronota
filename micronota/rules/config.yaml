@@ -15,7 +15,7 @@ tools:
         priority: 50
         threads: 1
     aragorn:
-        params: '-l'
+        params: '-w'
         priority: 50
         threads: 1
 # homologous search for proteins
