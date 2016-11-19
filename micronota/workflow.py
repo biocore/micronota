@@ -123,7 +123,7 @@ def integrate(out_dir, seq_fn, out_fmt='genbank'):
             f = getattr(submodule, 'parse')
             for seq_id, imd in f(out_dir):
                 seq = seqs[seq_id]
-                imd.upper_bound = len(seq)
+                imd._upper_bound = len(seq)
                 seq.interval_metadata.merge(imd)
 
     # add functional metadata to the protein-coding gene

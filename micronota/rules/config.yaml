@@ -35,7 +35,14 @@ protein:
         input: 'diamond_uniref90.faa'
         output: 'rest.faa'
     # hmmscan_tigrfam:
-    #     params: ''
+    #     params: '−−cug_nc'
+    #     priority: 60
+    #     threads: 1
+    #     db: '~/database/tigrfam/tigrfam.hmm'
+    #     input: ''
+    #     output: ''
+    # hmmscan_tigrfam:
+    #     params: '−−cug_ga'
     #     priority: 60
     #     threads: 1
     #     db: '~/database/tigrfam/tigrfam.hmm'
