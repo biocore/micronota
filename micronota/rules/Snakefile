@@ -8,18 +8,18 @@ def grab_output(wildcards):
         f.append(p)
     return f
 
-
 outputs = []
-for tool in config['tools']:
-    outputs.append('%s.ok' % tool)
-    tool_config = config['tools'][tool]
-    include: '%s.rule' % tool
-
-for rule in config['protein']:
-    rule_config = config['protein'][rule]
-    include: '%s.rule' % rule
-
-outputs.append('rest.faa')
+for task in config:
+    if task in ['seq', 'genetic_code']:
+        continue
+    task_config = config[task]
+    for rule in task_config:
+        if task == 'protein':
+            outputs.append('%s.hit' % rule)
+        else:
+            outputs.append('%s.ok' % rule)
+        rule_config = task_config[rule]
+        include: '%s.rule' % rule
 
 rule all:
     input:

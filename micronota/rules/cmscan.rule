@@ -1,7 +1,7 @@
 rule cmscan:
     '''Run cmscan.'''
     input:
-        db = tool_config['db'],
+        db = rule_config['db'],
         fna = config['seq']
     output:
         'cmscan.txt',
@@ -9,11 +9,11 @@ rule cmscan:
     log:
         'cmscan.log'
     threads:
-        tool_config['threads']
+        rule_config['threads']
     params:
-        tool_config['params']
+        rule_config['params']
     priority:
-        tool_config['priority']
+        rule_config['priority']
     message:
         '--- RUNNING cmscan ...'
     shell:

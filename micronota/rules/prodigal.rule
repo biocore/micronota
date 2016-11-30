@@ -10,9 +10,9 @@ rule prodigal:
     log:
         'prodigal.log'
     params:
-        tool_config['params']
+        rule_config['params']
     priority:
-        tool_config['priority']
+        rule_config['priority']
     message:
         '--- RUNNING Prodigal ...'
     shell:

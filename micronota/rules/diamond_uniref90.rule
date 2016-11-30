@@ -28,8 +28,8 @@ rule unmatched_uniref90:
         rule_config['input'],
         'diamond_uniref90.m12'
     output:
-        faa = rule_config['output'],
-        hit = rule_config['hit']
+        faa = rule_config['output'] + '.faa',
+        hit = rule_config['output'] + '.hit',
     run:
         df = parsers['parse_diamond_uniref90']()
         df.to_csv(output.hit, sep='\t', index=False)

@@ -8,13 +8,13 @@ rule hmmscan:
     output:
         'hmmscan_tigrfam.txt'
     params:
-        tool_config['params']
+        rule_config['params']
     threads:
-        tool_config['threads']
+        rule_config['threads']
     log:
         '.log'
     priority:
-        tool_config['priority']
+        rule_config['priority']
     message:
         '--- RUNNING hmmscan ...'
     shell:

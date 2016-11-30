@@ -8,9 +8,9 @@ rule aragorn:
     log:
         'aragorn.log'
     params:
-        tool_config['params']
+        rule_config['params']
     priority:
-        tool_config['priority']
+        rule_config['priority']
     message:
         '--- RUNNING Aragorn ...'
     shell:
