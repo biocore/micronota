@@ -36,9 +36,12 @@ def add_metadata(xml_fh, db_fp):
     ns_map = {'xmlns': 'http://uniprot.org/uniprot',
               'xsi': 'http://WWW.w3.org/2001/XMLSchema-instance'}
     entry_tag = '{{{ns}}}{tag}'.format(ns=ns_map['xmlns'], tag='entry')
-    paths = {'ec': './/xmlns:ecNumber',  # E.C. number
-             'go': './xmlns:dbReference[@type="GO"]',  # GO
-             'tigrfam': './xmlns:dbReference[@type="TIGRFAMs"]'}
+    paths = {'EC_number': './/xmlns:ecNumber',  # E.C. number
+             'GO': './xmlns:dbReference[@type="GO"]',  # GO
+             'KEGG': './xmlns:dbReference[@type="KEGG"]',  # KEGG,
+             'Pfam': './xmlns:dbReference[@type="Pfam"]',
+             'eggNOG': './xmlns:dbReference[@type="eggNOG"]',
+             'TIGRFAM': './xmlns:dbReference[@type="TIGRFAMs"]'}
     inserts = {}
     with connect(db_fp) as conn:
         c = conn.cursor()

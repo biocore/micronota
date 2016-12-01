@@ -11,7 +11,7 @@ from tempfile import mkstemp
 from unittest import main
 
 from micronota.util import _DBTest, _get_named_data_path
-from micronota.database.uniprot import add_metadata, _parse_xml
+from micronota.database.uniprot import add_metadata, _parse_xml, query
 
 
 class UniprotTests(_DBTest):
@@ -48,10 +48,17 @@ class UniprotTests(_DBTest):
         self._test_eq_db(self.tmpf, self.uniprot_all)
         self.assertEqual(n, sum(self.uniprot_n))
 
-    # def test_a(self):
-    #     with gzip.open('/Users/zech/database/uniprot_2016_10/uniprot_sprot.xml.gz') as fh:
-    #         n = add_metadata(fh, '/Users/zech/database/uniprot_2016_10/uniprot_sprot.sqlite')
+    def test_query(self):
+        db = '/Users/zech/database/uniprot_2016_10/uniprot_sprot.sqlite'
+        print(query(db, 'K9NBS6'))
 
+    # def test_a(self):
+    #     for xml in [
+    #             '/home/zhxu5194/database/uniprot/uniprot_sprot.xml.gz',
+    #             '/home/zhxu5194/database/uniprot/uniprot_trembl.xml.gz']:
+    #         with gzip.open(xml) as fh:
+    #             n = add_metadata(fh, '/home/zhxu5194/database/uniprot/uniprot.sqlite')
+    #             print(n)
     # def test_b(self):
     #     with gzip.open(self.uniprot_xml[1]) as fh:
     #         n = add_metadata(fh, '/tmp/c.sqlite')
