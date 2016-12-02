@@ -154,23 +154,3 @@ def _process_entry(elem, ns_map, path):
             '\n'.join('%s:%s' % (child.tag, child.text) for child in elem)))
 
     return match.text
-
-
-def query(db_fp, accn):
-    '''Query with UniProt accession number.'''
-    tables = ['EC_number', 'GO', 'TIGRFAM']
-    info = {}
-    with connect(db_fp) as c:
-        for table in tables:
-            query_xref = '''SELECT {0}.accn, u.name FROM {0}
-                            INNER JOIN uniprot_{0} j ON j.{0}_id = {0}.id
-                            INNER JOIN uniprot u ON j.uniprot_id = u.id
-                            WHERE u.accn = ?;'''.format(table)
-            # 'K9NBS6'
-            res = [i for i in c.execute(query_xref, (accn,))]
-            if 'product' not in info:
-                name = [i[1] for i in res]
-                info['product'] = name[0]
-            info[table] = [i[0] for i in res]
-    return info
-

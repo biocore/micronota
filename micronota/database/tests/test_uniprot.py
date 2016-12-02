@@ -50,7 +50,7 @@ class UniprotTests(_DBTest):
 
     def test_query(self):
         db = '/Users/zech/database/uniprot_2016_10/uniprot_sprot.sqlite'
-        print(query(db, 'K9NBS6'))
+        print(query(db, 'uniprot', 'K9NBS6'))
 
     # def test_a(self):
     #     for xml in [

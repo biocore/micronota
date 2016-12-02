@@ -1,7 +1,7 @@
 rule prodigal:
     '''Predict CDS with Prodigal.'''
     input:
-        config['seq']
+        seq
     output:
         gff = 'prodigal.gff',
         faa = 'prodigal.faa',
@@ -18,5 +18,5 @@ rule prodigal:
     shell:
         'prodigal {params} -f gff -g %d -i {input[0]} -o {output.gff}'
         ' -a {output.faa} -d {output.fna} &> {log} && '
-        'touch {output.ok}'% config['genetic_code']
+        'touch {output.ok}'% genetic_code
 

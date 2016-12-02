@@ -2,7 +2,7 @@ rule cmscan:
     '''Run cmscan.'''
     input:
         db = rule_config['db'],
-        fna = config['seq']
+        fna = seq
     output:
         'cmscan.txt',
         'cmscan.ok'

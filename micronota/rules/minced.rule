@@ -1,7 +1,7 @@
 rule minced:
     '''Predict CRISPR with minced.'''
     input:
-        fna = config['seq']
+        fna = seq
     output:
         'minced.gff',
         'minced.ok'

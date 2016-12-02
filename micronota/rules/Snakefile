@@ -1,17 +1,8 @@
-from os.path import join
-
-
-def grab_output(wildcards):
-    f = []
-    for tool in config['tools']:
-        p = join(tool, config['seq'] + '.gff')
-        f.append(p)
-    return f
-
+general = config.pop('general')
+seq = general['seq']
+genetic_code = general['genetic_code']
 outputs = []
 for task in config:
-    if task in ['seq', 'genetic_code']:
-        continue
     task_config = config[task]
     for rule in task_config:
         if task == 'protein':

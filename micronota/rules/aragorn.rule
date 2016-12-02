@@ -1,7 +1,7 @@
 rule aragorn:
     '''Predict tRNA with Aragorn.'''
     input:
-        fna = config['seq']
+        fna = seq
     output:
         'aragorn.txt',
         'aragorn.ok'
@@ -15,5 +15,5 @@ rule aragorn:
         '--- RUNNING Aragorn ...'
     shell:
         'aragorn {params} -gc%r -o {output[0]} {input.fna} &> {log} && '
-        'touch {output[1]}' % config['genetic_code']
+        'touch {output[1]}' % genetic_code
 

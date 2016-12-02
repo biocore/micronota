@@ -32,5 +32,6 @@ rule unmatched_uniref90:
         hit = rule_config['output'] + '.hit',
     run:
         df = parsers['parse_diamond_uniref90']()
+        df.columns = ['query', 'uniprot']
         df.to_csv(output.hit, sep='\t', index=False)
-        _filter_proteins(input[0], output.faa, df.qseqid)
+        _filter_proteins(input[0], output.faa, df.uniprot)

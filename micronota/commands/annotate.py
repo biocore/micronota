@@ -6,12 +6,10 @@
 # The full license is in the file COPYING.txt, distributed with this software.
 # ----------------------------------------------------------------------------
 
-from os.path import basename, join
-import os
 
 import click
 
-from ..workflow import annotate, validate_seq, integrate
+from ..workflow import annotate
 
 
 @click.command()
@@ -43,14 +41,6 @@ from ..workflow import annotate, validate_seq, integrate
 def cli(ctx, input_fp, in_fmt, min_len, output_dir, out_fmt, gcode,
         cpus, force, dry_run, config):
     '''Annotate prokaryotic genomes.'''
-    os.makedirs(output_dir, exist_ok=True)
-
-    seq_fn = basename(input_fp)
-
-    validate_seq(input_fp, in_fmt, min_len, join(output_dir, seq_fn))
-
-    done = annotate(seq_fn, output_dir, gcode, cpus, force, dry_run, config)
-
-    if done:
-        # if snakemake finishes successfully
-        integrate(output_dir, seq_fn, out_fmt)
+    annotate(input_fp, in_fmt, min_len,
+             output_dir, out_fmt,
+             gcode, cpus, force, dry_run, config)

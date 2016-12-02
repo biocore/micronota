@@ -12,6 +12,8 @@ from collections import defaultdict
 import pandas as pd
 from skbio import read, write, Protein
 
+from ..database._util import query, _format_xref
+
 
 logger = getLogger(__name__)
 
@@ -25,10 +27,10 @@ def _filter_proteins(in_fp, out_fp, ids):
                 write(seq, format='fasta', into=out)
 
 
-def _add_protein_annotation(seqs, seq_hits):
-    ''''''
+def _add_cds_metadata(seqs, cds_metadata):
+    '''Add metadata to all the CDS interval features.'''
     for seq_id, seq in seqs.items():
-        hits = seq_hits[seq_id]
+        hits = cds_metadata[seq_id]
         for intvl in seq.interval_metadata._intervals:
             md = intvl.metadata
             if md['type'] == 'CDS':
@@ -36,19 +38,24 @@ def _add_protein_annotation(seqs, seq_hits):
                 # has ID like "1_1", "1_2" for genes
                 idx = md['ID'].split('_')[1]
                 if idx in hits:
-                    md['db_xref'] = hits[idx]
+                    md.update(hits[idx])
 
 
-def _parse_seq_id(hits):
+def _fetch_cds_metadata(hit_fp, db):
     '''prodigal outputs faa file with seq id of
-    'gi|556503834|ref|NC_000913.3|_3224'. need to get the input seq id
+    'gi|556503834|ref|NC_000913.3|_3224'. split to get the input seq id
     and the index for the protein seq
 
     '''
     d = defaultdict(dict)
-    for row in hits.itertuples():
+    hit = pd.read_table(hit_fp)
+    ref = hit.columns[1]
+    for row in hit.itertuples():
         seq_id, i = row[1].rsplit('_', 1)
-        d[seq_id][i] = row[2]
+        accn = row[2]
+        md = _format_xref(query(db, ref, accn))
+        md['db_xref'].append('{0}:{1}'.format(ref, accn))
+        d[seq_id][i] = md
     return d
 
 

@@ -8,22 +8,24 @@
 
 import os
 from pkg_resources import resource_filename
-from os.path import join, exists
+from os.path import join, exists, basename
 from logging import getLogger
 from importlib import import_module
 
 from snakemake import snakemake
 from skbio.io import read, write
+import yaml
 import pandas as pd
 
 from . import parsers
-from .parsers.cds import _add_protein_annotation, _parse_seq_id
+from .parsers.cds import _add_cds_metadata, _fetch_cds_metadata
 
 
 logger = getLogger(__name__)
 
 
-def annotate(in_fp, out_dir, gcode, cpus, force, dry_run, config):
+def annotate(in_fp, in_fmt, min_len, out_dir, out_fmt, gcode,
+             cpus, force, dry_run, config):
     '''Annotate the sequences in the input file.
 
     Parameters
@@ -40,10 +42,22 @@ def annotate(in_fp, out_dir, gcode, cpus, force, dry_run, config):
     config : config file for snakemake
     '''
     logger.info('Running annotation pipeline')
-    snakefile = resource_filename(__package__, 'rules/Snakefile')
-    if config is None:
-        config = resource_filename(__package__, 'rules/config.yaml')
 
+    os.makedirs(out_dir, exist_ok=True)
+
+    seq_fn = basename(in_fp)
+
+    validate_seq(in_fp, in_fmt, min_len, join(out_dir, seq_fn))
+
+    if config is None:
+        config = resource_filename(__package__, 'config.yaml')
+    with open(config) as fh:
+        cfg = yaml.load(fh)
+
+    cfg['general']['seq'] = seq_fn
+    cfg['general']['genetic_code'] = gcode
+
+    snakefile = resource_filename(__package__, 'rules/Snakefile')
     success = snakemake(
         snakefile,
         cores=cpus,
@@ -53,12 +67,14 @@ def annotate(in_fp, out_dir, gcode, cpus, force, dry_run, config):
         printshellcmds=True,
         dryrun=dry_run,
         forcetargets=force,
-        config={'seq': in_fp, 'genetic_code': gcode},
-        configfile=config,
+        config=cfg,
+        # configfile=config,
         keep_target_files=True,
         keep_logger=True)
 
-    return success
+    if success:
+        # if snakemake finishes successfully
+        integrate(cfg['general'], out_dir, seq_fn, out_fmt)
 
 
 def validate_seq(in_fp, in_fmt, min_len, out_fp):
@@ -96,7 +112,7 @@ def validate_seq(in_fp, in_fmt, min_len, out_fp):
             write(seq, format='fasta', into=out)
 
 
-def integrate(out_dir, seq_fn, out_fmt='genbank'):
+def integrate(cfg, out_dir, seq_fn, out_fmt='genbank'):
     '''integrate all the annotations and write to disk.
 
     seq_fn : str
@@ -114,6 +130,7 @@ def integrate(out_dir, seq_fn, out_fmt='genbank'):
     hits = []
     for f in os.listdir(out_dir):
         if f.endswith('.hit'):
+            # protein homologous map
             hits.append(join(out_dir, f))
         elif f.endswith('.ok'):
             # parse the output of each feature prediction tool into
@@ -127,9 +144,11 @@ def integrate(out_dir, seq_fn, out_fmt='genbank'):
                 seq.interval_metadata.merge(imd)
 
     # add functional metadata to the protein-coding gene
-    hit = pd.concat([pd.read_table(i) for i in hits], axis=0)
-    hit_dict = _parse_seq_id(hit)
-    _add_protein_annotation(seqs, hit_dict)
+    cds_metadata = {}
+    for f in hits:
+        cds_metadata.update(_fetch_cds_metadata(f, cfg['metadata']))
+    if cds_metadata:
+        _add_cds_metadata(seqs, cds_metadata)
 
     # write out the annotation
     with open(join(out_dir, '%s.gbk' % seq_fn), 'w') as out:
