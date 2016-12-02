@@ -1,4 +1,3 @@
-# settings of wrapped tools
 gene:
     prodigal:
         # params: '-p meta'
@@ -21,11 +20,12 @@ tRNA:
         params: '-w'
         priority: 50
         threads: 1
-rRNA:
-    cmscan:
-        params: ''
-        threads: 1
-        db: 'rRNA.cm'
+# rRNA:
+#     cmscan:
+#         params: ''
+#         priority: 50
+#         threads: 1
+#         db: 'rRNA.cm'
 protein:
 # homologous search for proteins
     diamond_uniref90:
@@ -34,14 +34,14 @@ protein:
         threads: 1
         db: '~/database/uniref/uniref90.dmnd'
         input: 'prodigal.faa'
-        output: 'diamond_uniref90.faa'
+        output: 'diamond_uniref90'
     diamond_uniref50:
         params: '--index-chunks 1 --query-cover 80 -k 3'
         priority: 50
         threads: 1
         db: '~/database/uniref/uniref50.dmnd'
         input: 'diamond_uniref90.faa'
-        output: 'diamond_uniref50.faa'
+        output: 'diamond_uniref50'
     # hmmscan_tigrfam:
     #     params: '−−cug_nc'
     #     priority: 60
@@ -56,3 +56,6 @@ protein:
     #     db: '~/database/tigrfam/tigrfam.hmm'
     #     input: ''
     #     output: ''
+
+general:
+    metadata: '~/database/protein.sqlite'
