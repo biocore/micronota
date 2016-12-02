@@ -73,6 +73,7 @@ def add_metadata(xml_fh, db_fp):
                     'for record %d' % n) from e
             # customize with more informative error msg
             try:
+                # None is to increment the id column automatically
                 c.execute(insert, (None, accn, name))
             except IntegrityError as e:
                 raise Exception(
@@ -84,7 +85,7 @@ def add_metadata(xml_fh, db_fp):
                 it, ilt = inserts[other_db]
                 select = 'SELECT id FROM %s WHERE accn = ?;' % other_db
                 for elem in entry.findall(path, ns_map):
-                    if other_db == 'ec':
+                    if other_db == 'EC_number':
                         other_accn = elem.text
                     else:
                         other_accn = elem.attrib['id']

@@ -38,6 +38,7 @@ def _add_cds_metadata(seqs, cds_metadata):
                 # has ID like "1_1", "1_2" for genes
                 idx = md['ID'].split('_')[1]
                 if idx in hits:
+                    print(idx, hits)
                     md.update(hits[idx])
 
 
