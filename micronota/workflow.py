@@ -7,11 +7,12 @@
 # ----------------------------------------------------------------------------
 
 import os
-from pkg_resources import resource_filename
+from collections import defaultdict
 from os.path import join, exists, basename
 from logging import getLogger
 from importlib import import_module
 
+from pkg_resources import resource_filename
 from snakemake import snakemake
 from skbio.io import read, write
 import yaml
@@ -144,9 +145,11 @@ def integrate(cfg, out_dir, seq_fn, out_fmt='genbank'):
                 seq.interval_metadata.merge(imd)
 
     # add functional metadata to the protein-coding gene
-    cds_metadata = {}
+    # create defaultdict of defaultdict of dict
+    cds_metadata = defaultdict(lambda : defaultdict(dict))
     for f in hits:
-        cds_metadata.update(_fetch_cds_metadata(f, cfg['metadata']))
+        for seq_id, idx, md in _fetch_cds_metadata(f, cfg['metadata']):
+            cds_metadata[seq_id][idx].update(md)
     if cds_metadata:
         _add_cds_metadata(seqs, cds_metadata)
 

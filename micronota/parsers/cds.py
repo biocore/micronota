@@ -31,6 +31,7 @@ def _add_cds_metadata(seqs, cds_metadata):
     '''Add metadata to all the CDS interval features.'''
     for seq_id, seq in seqs.items():
         hits = cds_metadata[seq_id]
+        print(hits)
         for intvl in seq.interval_metadata._intervals:
             md = intvl.metadata
             if md['type'] == 'CDS':
@@ -38,7 +39,6 @@ def _add_cds_metadata(seqs, cds_metadata):
                 # has ID like "1_1", "1_2" for genes
                 idx = md['ID'].split('_')[1]
                 if idx in hits:
-                    print(idx, hits)
                     md.update(hits[idx])
 
 
@@ -48,7 +48,6 @@ def _fetch_cds_metadata(hit_fp, db):
     and the index for the protein seq
 
     '''
-    d = defaultdict(dict)
     hit = pd.read_table(hit_fp)
     ref = hit.columns[1]
     for row in hit.itertuples():
@@ -56,8 +55,7 @@ def _fetch_cds_metadata(hit_fp, db):
         accn = row[2]
         md = _format_xref(query(db, ref, accn))
         md['db_xref'].append('{0}:{1}'.format(ref, accn))
-        d[seq_id][i] = md
-    return d
+        yield seq_id, i, md
 
 
 def parse_diamond_uniref(fn, pident=90):
