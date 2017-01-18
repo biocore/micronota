@@ -51,6 +51,9 @@ def _cmscan_to_interval_metadata(fp):
             else:
                 if current is not False:
                     yield current, _parse_record(lines)
+                    lines = [line]
+                else:
+                    lines.append(line)
                 current = seq_id
         yield current, _parse_record(lines)
 
