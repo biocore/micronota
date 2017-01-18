@@ -8,6 +8,7 @@
 
 from os.path import join
 from logging import getLogger
+import re
 
 from skbio.io.format._sequence_feature_vocabulary import _yield_section
 from skbio.metadata import IntervalMetadata
@@ -22,7 +23,7 @@ def parse(out_dir, fn='aragorn.txt'):
     Parameters
     ----------
     out_dir : str
-        the output dir
+        the dir where the aragorn output file exist
     fn : str
         the file name from aragorn prediction
 
@@ -38,10 +39,17 @@ def parse(out_dir, fn='aragorn.txt'):
 
 def _aragorn_to_interval_metadata(fp):
     '''Yield seq_id and its interval metadata.'''
+    # aragorn output has a final summary line like this:
+    # >end    5 sequences 97 tRNA genes 1 tmRNA genes
+    # This line should be skipped and not parsed
+    p = re.compile(r'>end\s+\d+ sequences \d+ tRNA genes \d+ tmRNA genes')
     splitter = _yield_section(lambda line: line.startswith('>'))
     with open(fp) as fh:
         for lines in splitter(fh):
-            sid = lines[0].split(None, 1)[0][1:]
+            headline = lines[0]
+            if p.match(headline):
+                return
+            sid = headline.split(None, 1)[0][1:]
             # the first 2 lines are not actual data lines
             yield sid, _parse_record(lines[2:])
 
@@ -57,7 +65,7 @@ def _parse_record(lines):
 
 def _parse_line(line):
     _, tRNA, loc, _, _ = line.split()
-    md = {'strand': '+', 'product': tRNA, 'type': 'tRNA'}
+    md = {'strand': '+', 'product': tRNA, 'type': 'tRNA', 'source': 'Aragorn'}
     if loc[0] == 'c':
         loc = loc[1:]
         md['strand'] = '-'

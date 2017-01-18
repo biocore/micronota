@@ -31,7 +31,7 @@ def _add_cds_metadata(seqs, cds_metadata):
     '''Add metadata to all the CDS interval features.'''
     for seq_id, seq in seqs.items():
         hits = cds_metadata[seq_id]
-        print(hits)
+        # print(hits)
         for intvl in seq.interval_metadata._intervals:
             md = intvl.metadata
             if md['type'] == 'CDS':

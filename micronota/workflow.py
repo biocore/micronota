@@ -92,7 +92,7 @@ def validate_seq(in_fp, in_fmt, min_len, out_fp):
     in_fmt : str
         the format of seq file
     min_len : int
-        cutoff of seq len to filter
+        cutoff of seq len to filter away
     out_fp : str
         output seq file path
     '''
@@ -154,7 +154,13 @@ def integrate(cfg, out_dir, seq_fn, out_fmt='genbank'):
         _add_cds_metadata(seqs, cds_metadata)
 
     # write out the annotation
-    with open(join(out_dir, '%s.gbk' % seq_fn), 'w') as out:
-        for _, seq in seqs.items():
-            seq.interval_metadata.sort()
-            write(seq, into=out, format='genbank')
+    if out_fmt == 'genbank':
+        out_fp = join(out_dir, '%s.gbk' % seq_fn)
+        write((seq for _, seq in seqs.items()),
+              into=out_fp, format=out_fmt)
+    elif out_fmt == 'gff3':
+        out_fp = join(out_dir, '%s.gff' % seq_fn)
+        write(((sid, seq.interval_metadata) for sid, seq in seqs.items()),
+              into=out_fp, format=out_fmt)
+    else:
+        raise ValueError('Unknown specified output format: %r' % out_fmt)
