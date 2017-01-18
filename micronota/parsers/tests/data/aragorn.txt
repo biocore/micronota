@@ -1,0 +1,10 @@
+>NC_016822.1 Shigella sonnei 53G main chromosome, complete genome
+2 genes found
+1   tRNA-Ile               [237930,238006]	35  	(gat)
+2   tRNA-Ala               [238049,238124]	34  	(tgc)
+>NC_016833.1 Shigella sonnei 53G plasmid A, complete genome
+1 genes found
+1  tRNA-Ser            c[4954142,4954228]	35  	(cag)
+>NC_016834.1 Shigella sonnei 53G plasmid E, complete genome
+0 genes found
+>end 	3 sequences 3 tRNA genes 0 tmRNA genes
