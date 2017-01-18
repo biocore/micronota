@@ -29,5 +29,5 @@ def parse(out_dir, fn='minced.gff'):
 
     '''
     logger.debug('Parsing minced prediction')
-    fp = join(out_dir, 'minced.gff')
+    fp = join(out_dir, fn)
     return read(fp, format='gff3')
