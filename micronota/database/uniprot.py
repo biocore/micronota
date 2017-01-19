@@ -49,18 +49,17 @@ def add_metadata(xml_fh, db_fp):
         # alias for ROWID or _ROWID_ or OID.
         # You can't ignore this column because ROWID can't server
         # as foreign key.
-        c.execute('CREATE TABLE IF NOT EXISTS uniprot ('
+        c.execute('CREATE TABLE IF NOT EXISTS UniProt ('
                   ' id   INTEGER PRIMARY KEY,'
                   ' accn TEXT  UNIQUE,'
                   ' name TEXT  NOT NULL);')
-        insert = ('INSERT OR IGNORE INTO uniprot (id, accn, name)'
-                  ' VALUES (?,?,?);')
+        insert = 'INSERT OR IGNORE INTO UniProt (id, accn, name) VALUES (?,?,?);'
 
-        for other_db in paths:
-            ct, it, clt, ilt = _cross_ref_table(other_db)
+        for other_table in paths:
+            ct, it, clt, ilt = _cross_ref_table(other_table)
             c.execute(ct)
             c.execute(clt)
-            inserts[other_db] = [it, ilt]
+            inserts[other_table] = [it, ilt]
         for n, entry in enumerate(_parse_xml(xml_fh, entry_tag), 1):
             try:
                 # get the primary accession number
@@ -68,30 +67,30 @@ def add_metadata(xml_fh, db_fp):
                 # get the protein product name
                 name = entry.find('.//xmlns:fullName', ns_map).text
             except AttributeError as e:
-                raise Exception(
-                    'failed to get accession and name '
-                    'for record %d' % n) from e
-            # customize with more informative error msg
+                # customize with more informative error msg
+                raise AttributeError('failed to get accession and name for record %d' % n) from e
+
             try:
-                # None is to increment the id column automatically
+                # `None` to increment the id column automatically
                 c.execute(insert, (None, accn, name))
             except IntegrityError as e:
-                raise Exception(
-                    'failed to insert {}'.format((accn, name))) from e
+                raise IntegrityError('failed to insert {}'.format((accn, name))) from e
+
+            # get the ID for UniProt entry just inserted into the table
             uniprot_id = c.execute(
-                'SELECT id FROM uniprot WHERE accn = ?;',
-                (accn, )).fetchone()[0]
-            for other_db, path in paths.items():
-                it, ilt = inserts[other_db]
-                select = 'SELECT id FROM %s WHERE accn = ?;' % other_db
+                'SELECT id FROM UniProt WHERE accn = ?;', (accn, )).fetchone()[0]
+
+            for other_table, path in paths.items():
+                it, ilt = inserts[other_table]
+                select = 'SELECT id FROM %s WHERE accn = ?;' % other_table
                 for elem in entry.findall(path, ns_map):
-                    if other_db == 'EC_number':
+                    if other_table == 'EC_number':
                         other_accn = elem.text
                     else:
                         other_accn = elem.attrib['id']
                     c.execute(it, (None, other_accn, None))
-                    row_id = c.execute(select, (other_accn, )).fetchone()[0]
-                    c.execute(ilt, (uniprot_id, row_id))
+                    other_table_id = c.execute(select, (other_accn, )).fetchone()[0]
+                    c.execute(ilt, (uniprot_id, other_table_id))
 
         conn.commit()
     return n
@@ -108,12 +107,12 @@ def _cross_ref_table(name):
               ' name TEXT);').format(name)
     insert = ('INSERT OR IGNORE INTO {} (id, accn, name)'
               ' VALUES (?,?,?);').format(name)
-    # junction table from uniprot to other annotation databases
+    # junction table from uniprot to other reference databases
     create_link_table = ('CREATE TABLE IF NOT EXISTS uniprot_{0} ('
                          ' uniprot_id INTEGER,'
                          ' {0}_id     INTEGER,'
                          ' PRIMARY KEY (uniprot_id, {0}_id),'
-                         ' FOREIGN KEY (uniprot_id) REFERENCES uniprot(id),'
+                         ' FOREIGN KEY (uniprot_id) REFERENCES UniProt(id),'
                          ' FOREIGN KEY ({0}_id) REFERENCES {0}(id));').format(
                              name)
     insert_link_table = ('INSERT OR IGNORE INTO uniprot_{0} (uniprot_id, {0}_id)'
@@ -127,8 +126,6 @@ def _parse_xml(xml_fh, tag):
     Parameters
     ----------
     xml_fh : xml file object or file path
-    ns_map : dict
-        namespace map
     '''
     # it is very important to set the events to 'end'; otherwise,
     # elem would be an incomplete record.
@@ -137,21 +134,3 @@ def _parse_xml(xml_fh, tag):
             yield elem
             # this is necessary for garbage collection
             elem.clear()
-
-
-def _process_entry(elem, ns_map, path):
-    '''Return the text content of an element matching the path.
-
-    Parameters
-    ----------
-    elem : xml.etree.ElementTree.Element
-    ns_map : dict
-        namespace map
-    '''
-    match = elem.find(path, ns_map)
-    if match is None:
-        raise ValueError('Cannot find the path {} in elem: \n {}'.format(
-            path,
-            '\n'.join('%s:%s' % (child.tag, child.text) for child in elem)))
-
-    return match.text
