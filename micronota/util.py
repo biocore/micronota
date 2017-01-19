@@ -23,41 +23,16 @@ from unittest import TestCase
 from sqlite3 import connect
 from inspect import stack
 
-from skbio import read, write
+from skbio import read, write, Sequence
 
 
-def _overwrite(path, overwrite=False, append=False):
-    if exists(path):
-        if overwrite:
-            if isdir(path):
-                shutil.rmtree(path)
-            else:
-                remove(path)
-        elif append:
-            return
-        else:
-            raise FileExistsError('The file path {} already exists.'.format(path))
-
-
-def _download(src, dest, **kwargs):
-    _overwrite(dest, **kwargs)
-    with urlopen(src) as i_f, open(dest, 'wb') as o_f:
-        shutil.copyfileobj(i_f, o_f)
-
-
-def _get_named_data_path(fname):
-    # get caller's file path
-    caller_fp = abspath(stack()[1][1])
-    d = dirname(caller_fp)
-    # remove file suffix and prefix of "test_"
-    name = splitext(basename(caller_fp))[0][5:]
-    return join(d, 'data', name, fname)
-
-
-def convert(in_fmt, out_fmt, in_f, out_f):
-    '''convert between file formats'''
-    for obj in read(in_f, format=in_fmt):
-        write(obj, format=out_fmt, into=out_f)
+def _filter_sequence_ids(in_fp, out_fp, ids):
+    '''Filter away the seq with specified IDs.'''
+    with open(out_fp, 'w') as out:
+        for seq in read(in_fp, format='fasta', constructor=Sequence):
+            seq_id = seq.metadata['id']
+            if seq_id not in ids:
+                write(seq, format='fasta', into=out)
 
 
 class _DBTest(TestCase):

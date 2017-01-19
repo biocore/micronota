@@ -21,20 +21,7 @@ class TestRules(TestCase):
         self.seq_fn = 'test.fna'
         self.snakefile = resource_filename('micronota', 'rules/Snakefile')
         self.tmpd = mkdtemp()
-        uniref90 = join(self.tmpd, 'uniref90.dmnd')
-        open(uniref90, 'w').close()
-        prodigal = join(self.tmpd, 'prodigal.faa')
-        open(prodigal, 'w').close()
-        self.config = {
-            'seq': 'test.fna', 'genetic_code': 11,
-            'tools': {},
-            'protein': {
-                'diamond_uniref90': {
-                    'db': uniref90,
-                    'params': '',
-                    'threads': 1,
-                    'input': prodigal,
-                    'output': 'rest.faa'}}}
+        self.config = {'general': {'seq': 'test.fna', 'genetic_code': 11}}
         # this is required to set snakemake logging to files correctly
         setup_logger(printshellcmds=True)
         logger.logger.removeHandler(logger.logger.handlers[1])
@@ -102,19 +89,6 @@ class TestRules(TestCase):
         exp = ('cmscan  --cpu {n} --tblout cmscan.txt {db} {o} &>'
                ' cmscan.log && touch cmscan.ok').format(
                    o=self.seq_fn, db=db, n=2)
-        self.assertIn(exp, log)
-
-    @skipIf(which("diamond") is None, 'diamond not installed.')
-    def test_diamond(self):
-        log = self._run_snakemake(self.config)
-        config = self.config['protein']['diamond_uniref90']
-        exp = ('diamond blastp {p} --threads {n} --db {db} -q {i}'
-               ' -o diamond_uniref90.m12'.format(
-                   p=config['params'],
-                   n=config['threads'],
-                   db=config['db'],
-                   i=config['input']))
-
         self.assertIn(exp, log)
 
     def tearDown(self):

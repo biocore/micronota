@@ -97,6 +97,9 @@ def validate_seq(in_fp, in_fmt, min_len, out_fp):
         output seq file path
     '''
     if exists(out_fp):
+        # do not overwrite because all the snakemake steps will be rerun when
+        # this file is updated.
+        logger.debug('The sequence file already exist. Skip validating step.')
         return
     logger.info('Filtering and validating input sequences')
     ids = set()

@@ -7,7 +7,9 @@
 # ----------------------------------------------------------------------------
 
 from unittest import TestCase, main
-from tempfile import mkstemp
+from tempfile import mkdtemp
+from os.path import join
+from shutil import rmtree
 
 from skbio import DNA, read, write
 
@@ -16,30 +18,31 @@ from micronota.workflow import validate_seq
 
 class Tests(TestCase):
     def setUp(self):
-        _, self.ifile = mkstemp()
-        _, self.ofile = mkstemp()
+        self.tmpd = mkdtemp()
+        self.i = join(self.tmpd, 'i.fna')
+        self.o = join(self.tmpd, 'o.fna')
 
     def test_validate_seq(self):
         seqs = [DNA('ATGC', {'id': 'a', 'description': 'A'}),
                 DNA('A', {'id': 'b', 'description': 'B'})]
-        with open(self.ifile, 'w') as o:
-            for seq in seqs:
-                write(seq, into=o, format='fasta')
+        write((seq for seq in seqs), into=self.i, format='fasta')
         for l in [0, 2, 4, 5]:
-            validate_seq(self.ifile, 'fasta', l, self.ofile)
-            obs = list(read(self.ofile, constructor=DNA, format='fasta'))
+            out = '%s_%d' % (self.o, l)
+            validate_seq(self.i, 'fasta', l, out)
+            obs = list(read(out, constructor=DNA, format='fasta'))
             exp = [i for i in seqs if len(i) >= l]
             self.assertEqual(exp, obs)
 
     def test_validate_seq_duplicate_ids(self):
         seqs = [DNA('A', {'id': 'a'}),
                 DNA('T', {'id': 'a'})]
-        with open(self.ifile, 'w') as o:
-            for seq in seqs:
-                write(seq, into=o, format='fasta')
+        write((seq for seq in seqs), into=self.i, format='fasta')
 
         with self.assertRaisesRegex(ValueError, 'Duplicate'):
-            validate_seq(self.ifile, 'fasta', 1, self.ofile)
+            validate_seq(self.i, 'fasta', 0, self.o)
+
+    def tearDown(self):
+        rmtree(self.tmpd)
 
 
 if __name__ == '__main__':

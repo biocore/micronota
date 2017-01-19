@@ -15,6 +15,6 @@ rule tandem_repeats_finder:
         '--- RUNNING Tandem Repeats Finder ...'
     shell:
         # use recommended parameters
-        'trf {input[0]} 2 7 7 80 10 50 500 -ngs > {output.txt}'
-        ' 2> trf.log && '
+        'trf {input[0]} 2 7 7 80 10 50 500 -h -ngs > {output.txt}'
+        ' 2> tandem_repeats_finder.log && '
         'touch {output.ok}'
