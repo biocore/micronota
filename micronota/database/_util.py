@@ -26,6 +26,7 @@ def query(sql_fp, db, accn):
         db1 = db + '_'
         db2 = '_' + db
         for table in tables:
+            # find all the junction tables that is linked to the ref table
             if db1 in table:
                 other = table.replace(db1, '')
             elif db2 in table:
@@ -38,25 +39,33 @@ def query(sql_fp, db, accn):
                             WHERE t.accn = ?;'''.format(db, other, table)
             # 'K9NBS6'
             res = [i for i in c.execute(query_xref, (accn,))]
-            if res and 'product' not in info:
-                name = [i[1] for i in res]
-                info['product'] = name[0]
-            info[other] = [i[0] for i in res]
+            if res:
+                if 'product' not in info:
+                    name = [i[1] for i in res]
+                    info['product'] = name[0]
+                info[other] = [i[0] for i in res]
     return info
 
 
-def _format_xref(d):
-    old_ec, new_ec = 'ec_number', 'EC_number'
-    if old_ec in d:
-        d[new_ec] = d.pop(old_ec)
-    replaces = [('tigrfam', 'TIGRFAM'),
-                ('eggnog', 'eggNOG'),
-                ('kegg', 'KO'),
-                ('pfam', 'Pfam')]
+def format_xref(d):
+    '''format the metadata
+
+    Parameters
+    ----------
+    d : dict
+        metadata for a gene obtained from ``query`` function
+
+    Returns
+    -------
+    dict
+        the formatted metadata convenient for output
+    '''
+    refs = ('TIGRFAM', 'eggNOG', 'KEGG', 'Pfam')
     # GO id already in the form of "GO:1290834". only need to add to xref
-    xref = d.pop('go', [])
+    xref = d.pop('GO', [])
     # For other ref dbs, ref db name need to prefix their IDs
-    for old, new in replaces:
-        xref.extend(['{0}:{1}'.format(new, i) for i in d.pop(old, [])])
-    d['db_xref'] = xref
+    for ref in refs:
+        xref.extend(['{0}:{1}'.format(ref, i) for i in d.pop(ref, [])])
+    if xref:
+        d['db_xref'] = xref
     return d
