@@ -7,11 +7,11 @@
 # ----------------------------------------------------------------------------
 
 from unittest import TestCase, skipIf, main
-from pkg_resources import resource_filename
 from shutil import which, rmtree
 from os.path import join
 from tempfile import TemporaryDirectory, mkdtemp
 
+from pkg_resources import resource_filename
 from snakemake.logging import logger, setup_logger
 from snakemake import snakemake
 
@@ -42,7 +42,7 @@ class TestRules(TestCase):
 
     @skipIf(which("aragorn") is None, 'Aragorn not installed.')
     def test_aragorn(self):
-        self.config['tools'] = {'aragorn':
+        self.config['tRNA'] = {'aragorn':
                                 {'params': '-l',
                                  'priority': 50,
                                  'threads': 1}}
@@ -53,7 +53,7 @@ class TestRules(TestCase):
 
     @skipIf(which("minced") is None, 'minced not installed.')
     def test_minced(self):
-        self.config['tools'] = {'minced':
+        self.config['CRISPR'] = {'minced':
                                 {'params': '',
                                  'priority': 50,
                                  'threads': 1}}
@@ -64,7 +64,7 @@ class TestRules(TestCase):
 
     @skipIf(which("prodigal") is None, 'Prodigal not installed.')
     def test_prodigal(self):
-        self.config['tools'] = {'prodigal':
+        self.config['gene'] = {'prodigal':
                                 {'params': '-p meta',
                                  'priority': 90,
                                  'threads': 1}}
@@ -80,7 +80,7 @@ class TestRules(TestCase):
         with TemporaryDirectory() as tmpd:
             db = join(tmpd, 'rfam.cm')
             open(db, 'w').close()
-            self.config['tools'] = {'cmscan':
+            self.config['ncRNA'] = {'cmscan':
                                     {'params': '',
                                      'priority': 30,
                                      'threads': 2,

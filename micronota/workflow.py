@@ -8,7 +8,7 @@
 
 import os
 from collections import defaultdict
-from os.path import join, exists, basename
+from os.path import join, exists, basename, splitext
 from logging import getLogger
 from importlib import import_module
 
@@ -48,14 +48,15 @@ def annotate(in_fp, in_fmt, min_len, out_dir, out_fmt, gcode,
 
     seq_fn = basename(in_fp)
 
-    validate_seq(in_fp, in_fmt, min_len, join(out_dir, seq_fn))
+    seq_fn_val = splitext(seq_fn)[0] + '.valid.fna'
+    validate_seq(in_fp, in_fmt, min_len, join(out_dir, seq_fn_val))
 
     if config is None:
         config = resource_filename(__package__, 'config.yaml')
     with open(config) as fh:
         cfg = yaml.load(fh)
 
-    cfg['general']['seq'] = seq_fn
+    cfg['general']['seq'] = seq_fn_val
     cfg['general']['genetic_code'] = gcode
 
     snakefile = resource_filename(__package__, 'rules/Snakefile')
@@ -75,7 +76,7 @@ def annotate(in_fp, in_fmt, min_len, out_dir, out_fmt, gcode,
 
     if success:
         # if snakemake finishes successfully
-        integrate(cfg['general'], out_dir, seq_fn, out_fmt)
+        integrate(cfg['general'], out_dir, seq_fn_val, out_fmt)
 
 
 def validate_seq(in_fp, in_fmt, min_len, out_fp):
@@ -107,7 +108,12 @@ def validate_seq(in_fp, in_fmt, min_len, out_fp):
         for seq in read(in_fp, format=in_fmt):
             if len(seq) < min_len:
                 continue
-            ident = seq.metadata['id']
+            if in_fmt == 'genbank':
+                seq.metadata['id'] = seq.metadata['LOCUS']['locus_name']
+            try:
+                ident = seq.metadata['id']
+            except KeyError:
+                raise KeyError('Ill input file format: at least one sequences do not have IDs.')
             if ident in ids:
                 raise ValueError(
                     'Duplicate seq IDs in your input file: {}'.format(ident))
