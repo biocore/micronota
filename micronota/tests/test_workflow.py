@@ -8,12 +8,14 @@
 
 from unittest import TestCase, main
 from tempfile import mkdtemp
-from os.path import join
+from os.path import join, splitext, exists
 from shutil import rmtree
 
+from pkg_resources import resource_filename
 from skbio import DNA, read, write
+import yaml
 
-from micronota.workflow import validate_seq
+from micronota.workflow import validate_seq, annotate
 
 
 class Tests(TestCase):
@@ -40,6 +42,42 @@ class Tests(TestCase):
 
         with self.assertRaisesRegex(ValueError, 'Duplicate'):
             validate_seq(self.i, 'fasta', 0, self.o)
+
+    def test_validate_seq_genbank(self):
+        write(DNA('ATGC',
+                  {'LOCUS': {'date': '26-APR-1993',
+                             'division': 'BCT',
+                             'locus_name': 'ECOALKP',
+                             'mol_type': 'mRNA',
+                             'shape': 'linear',
+                             'size': 4,
+                             'unit': 'bp'}}),
+              into=self.i, format='genbank')
+        validate_seq(self.i, 'genbank', 2, self.o)
+        exp = '>ECOALKP\nATGC\n'
+        with open(self.o) as f:
+            obs = f.read()
+        self.assertEqual(exp, obs)
+
+    def test_annotate(self):
+        config = {'CRISPR': {'minced':
+                             {'params': '',
+                              'priority': 50,
+                              'threads': 1}},
+                  'gene': {'prodigal':
+                           {'params': '-p meta',
+                            'priority': 90,
+                            'threads': 1}},
+                  'general' : {'metadata': 'foo.sqlite'}}
+        config_fp = join(self.tmpd, 'config.yaml')
+        with open(config_fp, 'w') as f:
+            yaml.dump(config, f, default_flow_style=True)
+        write(DNA('ATGC', {'id': 'seq1'}), into=self.i, format='fasta')
+        print(self.tmpd)
+        annotate(self.i, 'fasta', 1, self.tmpd, 'gff3', 11, 1, True, False, config_fp)
+        output = join(self.tmpd, splitext(self.i)[0] + '.valid.fna')
+        self.assertTrue(exists(output))
+        self.assertTrue(exists(output + '.gff'))
 
     def tearDown(self):
         rmtree(self.tmpd)
