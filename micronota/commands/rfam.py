@@ -19,9 +19,7 @@ logger = getLogger(__name__)
 
 @click.command()
 @click.option('--operation', type=click.Choice(['kingdom', 'other', 'all']),
-              default='kingdom',
-              required=True,
-              help='')
+              default='kingdom', required=True, help='')
 @click.argument('infile', type=click.File('r'), nargs=1)
 @click.argument('outpath', type=str,  nargs=1)
 @click.pass_context

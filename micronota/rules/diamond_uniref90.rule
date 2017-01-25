@@ -31,6 +31,8 @@ rule unmatched_uniref90:
     output:
         faa = rule_config['output'] + '.faa',
         hit = rule_config['output'] + '.hit',
+    message:
+        '--- RUNNING diamond unmatched filtering ...'
     run:
         df = parse_diamond_uniref(pident=90, fn='diamond_uniref90.m12')()
         df.columns = ['query', 'uniprot']

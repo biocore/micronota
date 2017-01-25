@@ -15,7 +15,7 @@ from skbio.io import read
 logger = getLogger(__name__)
 
 
-def parse(out_dir, fn='prodigal.gff'):
+def parse(out_dir, fn='prodigal.txt'):
     '''Parse the annotation and add it to interval metadata.
 
     Parameters

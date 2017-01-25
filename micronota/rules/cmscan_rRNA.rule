@@ -1,5 +1,5 @@
-rule cmscan:
-    '''Predict ncRNA with cmscan and Rfam.'''
+rule cmscan_rRNA:
+    '''Predict rRNA with cmscan.'''
     input:
         db = rule_config['db'],
         fna = seq

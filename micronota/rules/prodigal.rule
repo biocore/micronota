@@ -3,20 +3,20 @@ rule prodigal:
     input:
         seq
     output:
-        gff = 'prodigal.gff',
-        faa = 'prodigal.faa',
-        fna = 'prodigal.fna',
-        ok  = 'prodigal.ok'
+        gff = rule_config['output'] + '.txt',
+        faa = rule_config['output'] + '.faa',
+        fna = rule_config['output'] + '.fna',
+        ok  = rule_config['output'] + '.ok'
     log:
-        'prodigal.log'
+        rule_config['output'] + '.log'
     params:
         rule_config['params']
     priority:
         rule_config['priority']
     message:
-        '--- RUNNING Prodigal ...'
+        '--- RUNNING rule Prodigal ...'
     shell:
         'prodigal {params} -f gff -g %d -i {input[0]} -o {output.gff}'
         ' -a {output.faa} -d {output.fna} &> {log} && '
-        'touch {output.ok}'% genetic_code
+        'touch {output.ok}' % genetic_code
 

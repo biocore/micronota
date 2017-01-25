@@ -6,7 +6,6 @@
 # The full license is in the file COPYING.txt, distributed with this software.
 # ----------------------------------------------------------------------------
 
-
 import click
 
 from ..workflow import annotate
@@ -29,6 +28,9 @@ from ..workflow import annotate
               help='Output format for the annotated sequences.')
 @click.option('--gcode', type=int, default=11,
               help='Genetic code to predict ORFs.')
+@click.option('--kingdom', type=click.Choice(['bacteria', 'archaea', 'eukarya']), default='bacteria',
+              required=True,
+              help='which Kingdom the sequences are from')
 @click.option('--cpus', type=int, default=1,
               help='Number of CPUs to use.')
 @click.option('--force', is_flag=True, default=False,
@@ -38,9 +40,9 @@ from ..workflow import annotate
 @click.option('--config', type=click.Path(exists=True, dir_okay=False),
               help='Config file for annotation workflow.')
 @click.pass_context
-def cli(ctx, input_fp, in_fmt, min_len, output_dir, out_fmt, gcode,
+def cli(ctx, input_fp, in_fmt, min_len, output_dir, out_fmt, gcode, kingdom,
         cpus, force, dry_run, config):
     '''Annotate prokaryotic genomes.'''
     annotate(input_fp, in_fmt, min_len,
              output_dir, out_fmt,
-             gcode, cpus, force, dry_run, config)
+             gcode, kingdom, cpus, force, dry_run, config)

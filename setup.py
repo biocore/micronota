@@ -59,8 +59,8 @@ setup(name='micronota',
       test_suite='nose.collector',
       packages=find_packages(),
       package_data={'micronota': [
+          'log.cfg', 'log2file.cfg', 'config.yaml',
           'data/*',
-          'log.cfg',
           'rules/*']},
       install_requires=[
           'click >= 6',

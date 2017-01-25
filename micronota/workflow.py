@@ -25,7 +25,7 @@ from .parsers.cds import _add_cds_metadata, _fetch_cds_metadata
 logger = getLogger(__name__)
 
 
-def annotate(in_fp, in_fmt, min_len, out_dir, out_fmt, gcode,
+def annotate(in_fp, in_fmt, min_len, out_dir, out_fmt, gcode, kingdom,
              cpus, force, dry_run, config):
     '''Annotate the sequences in the input file.
 
@@ -33,8 +33,18 @@ def annotate(in_fp, in_fmt, min_len, out_dir, out_fmt, gcode,
     ----------
     in_fp : str
         Input seq file name
+    in_fmt : str
+        Input file format
+    min_len : int
+        The threshold of seq length to be filtered away
     out_dir : str
         Output file directory.
+    out_fmt : str
+        Output file format
+    gcode : int
+        The translation table to use for protein-coding genes
+    kingdom : str
+        The kingdom where the sequences are from
     cpus : int
         Number of cpus to use.
     force : boolean
@@ -58,6 +68,7 @@ def annotate(in_fp, in_fmt, min_len, out_dir, out_fmt, gcode,
 
     cfg['general']['seq'] = seq_fn_val
     cfg['general']['genetic_code'] = gcode
+    cfg['general']['kingdom'] = kingdom
 
     snakefile = resource_filename(__package__, 'rules/Snakefile')
     success = snakemake(
@@ -143,16 +154,19 @@ def integrate(cfg, out_dir, seq_fn, out_fmt='genbank'):
             # protein homologous map
             hits.append(join(out_dir, f))
         elif f.endswith('.ok'):
-            # parse the output of each feature prediction tool into
-            # interval metadata
-            tool = f.rsplit('.', 1)[0]
-            submodule = import_module('.%s' % tool, parsers.__name__)
-            f = getattr(submodule, 'parse')
-            for seq_id, imd in f(out_dir):
-                seq = seqs[seq_id]
-                imd._upper_bound = len(seq)
-                seq.interval_metadata.merge(imd)
-
+            try:
+                # parse the output of each feature prediction tool into
+                # interval metadata
+                tool = f.split('.', 1)[0]
+                submodule = import_module('.%s' % tool, parsers.__name__)
+                func = getattr(submodule, 'parse')
+                for seq_id, imd in func(out_dir):
+                    seq = seqs[seq_id]
+                    imd._upper_bound = len(seq)
+                    seq.interval_metadata.merge(imd)
+            except Exception as e:
+                # print more useful info if exception is raised
+                raise Exception('Error while parsing %s into ``IntervalMetadata``' % f) from e
     # add functional metadata to the protein-coding gene
     # create defaultdict of defaultdict of dict
     cds_metadata = defaultdict(lambda : defaultdict(dict))

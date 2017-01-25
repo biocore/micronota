@@ -21,7 +21,10 @@ class TestRules(TestCase):
         self.seq_fn = 'test.fna'
         self.snakefile = resource_filename('micronota', 'rules/Snakefile')
         self.tmpd = mkdtemp()
-        self.config = {'general': {'seq': 'test.fna', 'genetic_code': 11}}
+        self.config = {'general': {'seq': 'test.fna', 'genetic_code': 11, 'kingdom': 'bacteria'},
+                       'structural_annotation': {},
+                       'bacteria': {},
+                       'protein': {}}
         # this is required to set snakemake logging to files correctly
         setup_logger(printshellcmds=True)
         logger.logger.removeHandler(logger.logger.handlers[1])
@@ -42,9 +45,10 @@ class TestRules(TestCase):
 
     @skipIf(which("aragorn") is None, 'Aragorn not installed.')
     def test_aragorn(self):
-        self.config['tRNA'] = {'aragorn':
+        self.config['structural_annotation'] = {'aragorn':
                                 {'params': '-l',
                                  'priority': 50,
+                                 'output': 'aragorn',
                                  'threads': 1}}
         log = self._run_snakemake(self.config)
         exp = ('aragorn -l -gc11 -o aragorn.txt {0} &> aragorn.log && '
@@ -53,8 +57,9 @@ class TestRules(TestCase):
 
     @skipIf(which("minced") is None, 'minced not installed.')
     def test_minced(self):
-        self.config['CRISPR'] = {'minced':
+        self.config['structural_annotation'] = {'minced':
                                 {'params': '',
+                                 'output': 'minced',
                                  'priority': 50,
                                  'threads': 1}}
         log = self._run_snakemake(self.config)
@@ -64,12 +69,13 @@ class TestRules(TestCase):
 
     @skipIf(which("prodigal") is None, 'Prodigal not installed.')
     def test_prodigal(self):
-        self.config['gene'] = {'prodigal':
+        self.config['structural_annotation'] = {'prodigal':
                                 {'params': '-p meta',
+                                 'output': 'prodigal',
                                  'priority': 90,
                                  'threads': 1}}
         log = self._run_snakemake(self.config)
-        exp = ('prodigal -p meta -f gff -g 11 -i {0} -o prodigal.gff'
+        exp = ('prodigal -p meta -f gff -g 11 -i {0} -o prodigal.txt'
                ' -a prodigal.faa -d prodigal.fna &>'
                ' prodigal.log && '
                'touch prodigal.ok').format(self.seq_fn)
@@ -80,8 +86,9 @@ class TestRules(TestCase):
         with TemporaryDirectory() as tmpd:
             db = join(tmpd, 'rfam.cm')
             open(db, 'w').close()
-            self.config['ncRNA'] = {'cmscan':
+            self.config['structural_annotation'] = {'cmscan':
                                     {'params': '',
+                                     'output': 'cmscan',
                                      'priority': 30,
                                      'threads': 2,
                                      'db': db}}

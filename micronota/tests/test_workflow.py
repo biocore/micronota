@@ -60,21 +60,25 @@ class Tests(TestCase):
         self.assertEqual(exp, obs)
 
     def test_annotate(self):
-        config = {'CRISPR': {'minced':
-                             {'params': '',
-                              'priority': 50,
-                              'threads': 1}},
-                  'gene': {'prodigal':
-                           {'params': '-p meta',
-                            'priority': 90,
-                            'threads': 1}},
+        config = {'structural_annotation': {'minced':
+                                            {'params': '',
+                                             'priority': 50,
+                                             'output': 'minced',
+                                             'threads': 1},
+                                            'prodigal':
+                                            {'params': '-p meta',
+                                             'priority': 90,
+                                             'output': 'prodigal',
+                                             'threads': 1}},
+                  'protein': {},
+                  'bacteria': {},
                   'general' : {'metadata': 'foo.sqlite'}}
         config_fp = join(self.tmpd, 'config.yaml')
         with open(config_fp, 'w') as f:
             yaml.dump(config, f, default_flow_style=True)
         write(DNA('ATGC', {'id': 'seq1'}), into=self.i, format='fasta')
         print(self.tmpd)
-        annotate(self.i, 'fasta', 1, self.tmpd, 'gff3', 11, 1, True, False, config_fp)
+        annotate(self.i, 'fasta', 1, self.tmpd, 'gff3', 11, 'bacteria', 1, True, False, config_fp)
         output = join(self.tmpd, splitext(self.i)[0] + '.valid.fna')
         self.assertTrue(exists(output))
         self.assertTrue(exists(output + '.gff'))

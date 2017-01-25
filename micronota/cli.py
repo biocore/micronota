@@ -96,7 +96,8 @@ def cmd(ctx, log, verbose):
         log = resource_filename(__package__, 'log.cfg')
     # setting False allows snakemake logger to print log.
     fileConfig(log, disable_existing_loggers=False)
-    levels = ['CRITICAL', 'ERROR', 'WARNING', 'INFO', 'DEBUG']
+    # default logging level is warning
+    levels = ['WARNING', 'INFO', 'DEBUG']
     n = len(levels)
     if verbose >= n:
         verbose = n - 1
