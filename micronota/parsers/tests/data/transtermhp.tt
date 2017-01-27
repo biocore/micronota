@@ -1,0 +1,114 @@
+TransTermHP v2.08 (built on Jan 19 2017)
+25 bins; sample size is 20000000
+--pval-conf=expterm.dat
+
+--gc=-2.3 --au=-0.9 --gu=1.3 --mm=3.5 --gap=6
+--max-len=59 --min-stem=4 --max-loop=13 --min-loop=3
+--uwin-length=6 --uwin-require=3 --max-hp-score=-2 --max-tail-score=-2.5
+--loop-penalty=1,2,3,4,5,6,7,8,9,10,11
+--start-cut=0 --end-cut=25
+
+Genes: 0.463513 %AT, 57336 nt, 530 terms.
+Intergenic: 0.570574 %AT, H2T: 4562 nt, 51 terms; T2T: 1192 nt, 24 terms; H2H: 2229 nt, 38 terms. 
+
+Each terminator entry starts in column 3 and is of the form:
+  term #       start - end      +/-  regionconf   hp     tail | notes
+Followed by the sequence of the 5' tail, 5' stem, loop, 3' stem, and 3' tail.
+Genes are interspersed, and start the first column.
+
+
+SEQUENCE gi|556503834|ref|NC_000913.3|1 Escherichia coli str. K-12 substr. MG1655, complete genome (length 50361)
+
+1_1               336 - 2799     + | 
+1_2              2800 - 3733     + | 
+1_3              3733 - 5020     + | 
+  TERM 1         5044 - 5070     + F    95    -8 -5.24129 | gap 1, opp_overlap 5043
+  CATTATCTCAATCAG        GCCGGGTTTGC TTTTAT GCAG-CCCGGC         TTTTTTATGAAGAAA
+1_4              5233 - 5530     + | 
+  TERM 2         5558 - 5539     - T    76  -7.8 -4.13654 | overlap 5552
+  CCGCTAAATGACAAA            TGCCGGGT AACA ATCCGGCA             TTCAGCGCCTGATGC
+  TERM 3         5564 - 5597     + T    80 -11.7 -2.62043 | opp_overlap 5552, overlap 5559 5574
+  CAATCCGGCATTCAG     CGCCTGATGCGACGC TGGC GCGTCTTATCAGGCC      TACGTTAATTCTGCA
+1_5              6459 - 5682     - | 
+1_6              7959 - 6528     - | 
+1_7              8237 - 9191     + | 
+  TERM 4         9198 - 9227     + F    90 -12.9  -2.5294 | overlap 9197 9195
+  CTGCTGTAATCATTC       TTAGCGTGACCGG GAAG TCGGTCACGCTAC        CTCTTCTGAAGCCTG
+1_8              9305 - 9893     + | 
+  TERM 5         9916 - 9899     - T   100 -12.7  -5.8187 | 
+  TAGCGAATAAAAAAA             TCCCCCC GAGC GGGGGGA              TCTCAAAACAATTAG
+1_9             10494 - 9927     - | 
+1_10            11356 - 10642    - | 
+1_11            11786 - 11381    - | 
+1_12            12162 - 14079    + | 
+  TERM 6        14105 - 14142    + F   100 -17.1 -3.25823 | gap 1, opp_overlap 14104
+  AACGGGTAATTATAC   TGACACGGGCGAAGGGGA ATT TCCTCTCCGCCCGTG-CA   TTCATCTAGGGGCAA
+1_13            14167 - 15298    + | 
+1_14            15444 - 16557    + | 
+1_15            16579 - 16720    + | 
+1_16            16960 - 16750    - | 
+1_17            17488 - 18655    + | 
+  TERM 7        18671 - 18690    + F   100 -10.7 -4.59414 | 
+  CAGGACGGTTTACCG            GGGAGCC ATAAAC GGCTCCC             TTTTCATTGTTATCA
+1_18            18720 - 19620    + | 
+1_19            20188 - 19810    - | 
+1_20            20508 - 20232    - | 
+  TERM 8        20784 - 20771    - R   100  -9.5 -5.64274 | opp_overlap 20770 20771
+  GCAGGCATAAAAAAA               CCCGC TTGC GCGGG                CTTTTTCACAAAGCT
+1_21            21078 - 20814    - | 
+1_22            21406 - 22348    + | 
+1_23            22390 - 25207    + | 
+1_24            25206 - 25701    + | 
+  TERM 9        25729 - 25778    + F   100 -18.1 -3.53811 | gap 1, opp_overlap 25708 25707 25760 25775, overlap 25716 25719
+  GATGCGATGCTGACG CATCTTATCCGGCCTACAGATTGC TGC GAAATC-GTAGGCCGGATAAGGCG TTTACGCCGCATCCG
+1_25            25825 - 26275    + | 
+1_26            26276 - 27227    + | 
+  TERM 10       27256 - 27275    + F   100  -9.3 -5.24129 | opp_overlap 27256, overlap 27273
+  TAAGTTATGCGAAAA            TGCCGGT CTTGTT ACCGGCA             TTTTTTATGGAGAAA
+1_27            27292 - 28207    + | 
+1_28            28373 - 29195    + | 
+1_29            29650 - 30799    + | 
+1_30            30816 - 34038    + | 
+  TERM 11       34092 - 34111    + F   100   -10 -6.07627 | opp_overlap 34090 34092
+  ATCGAATAACTAATA            CGGTTCTC TGAT GAGGACCG             TTTTTTTTTGCCCAT
+1_31            34299 - 34695    + | 
+  TERM 12       34804 - 34826    + T    82  -8.4 -4.33165 | overlap 34819
+  TAGGCGTCACATCCG           TCGTCCCC TGCAAAC GGGGGCGA           TTTTCCTCCATTTGC
+1_32            35371 - 34780    - | 
+1_33            36162 - 35376    - | 
+1_34            37824 - 36270    - | 
+1_35            39115 - 37897    - | 
+1_36            40386 - 39243    - | 
+1_37            41931 - 40416    - | 
+1_38            42402 - 43173    + | 
+1_39            43187 - 44129    + | 
+1_40            44179 - 45466    + | 
+1_41            45462 - 45750    + | 
+1_42            45806 - 47138    + | 
+1_43            47245 - 47776    + | 
+1_44            47768 - 49631    + | 
+1_45            49711 - 50302    + | 
+
+SEQUENCE gi|556503834|ref|NC_000913.3|2 Escherichia coli str. K-12 substr. MG1655, complete genome (length 15464)
+
+2_1               861 - 18       - | 
+2_2              1245 - 867      - | 
+2_3              2069 - 1247     - | 
+2_4              3055 - 2065     - | 
+2_5              4341 - 3054     - | 
+2_6              6748 - 4393     - | 
+2_7              7002 - 7818     + | 
+  TERM 1         7857 - 7876     + F    95 -11.4 -3.90744 | opp_overlap 7856 7857
+  TGCCCACGATTAAAG            GTGGCCGC CCTG GCGGTCAC             TTCTTTGAGAAAAGG
+2_8              8112 - 8763     + | 
+2_9              8759 - 8918     + | 
+  TERM 2         8958 - 8919     - T   100 -25.3 -3.83226 | 
+  AATGAGCCAGAATAA  GCTAAGGTTGAAGGGGC TGGAAC GCCCCTTCAACCTTAGC   AGTAGCGTGGGATGA
+  TERM 3         9258 - 9273     + T    89 -10.4 -4.03234 | opp_overlap 9258
+  GGCAGAAACAAAAAA              TCCCCG GACT CGGGGA               TTTATGTACAAGAGG
+  TERM 4         9273 - 9258     - T   100 -10.4 -5.72622 | opp_overlap 9258
+  GGCAGAAACAAAAAA              TCCCCG GACT CGGGGA               TTTATGTACAAGAGG
+2_10             9985 - 9325     - | 
+2_11            12903 - 9996     - | 
+2_12            15419 - 13067    - | 
+
