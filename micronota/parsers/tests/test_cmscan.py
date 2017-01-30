@@ -7,7 +7,6 @@
 # ----------------------------------------------------------------------------
 
 from unittest import TestCase, main
-from os.path import dirname
 
 from skbio.util import get_data_path
 from skbio.metadata import IntervalMetadata
@@ -32,9 +31,8 @@ class ParseTests(TestCase):
                ('NC_016833.1', imd2),
                ('NC_016834.1', imd3))
 
-        fn = 'cmscan.txt'
-        fp = get_data_path(fn)
-        gen = parse(dirname(fp), fn)
+        fp = get_data_path('cmscan.txt')
+        gen = parse(fp)
 
         for (exp_id, exp_imd), (obs_id, obs_imd) in zip(exp, gen):
             self.assertEqual(exp_id, obs_id)

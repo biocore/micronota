@@ -9,22 +9,21 @@
 from os.path import join
 from logging import getLogger
 
-from skbio.io.format._sequence_feature_vocabulary import _yield_section
 from skbio.metadata import IntervalMetadata
+
+from ..util import split, SplitterID
 
 
 logger = getLogger(__name__)
 
 
-def parse(out_dir, fn='cmscan.txt'):
+def parse(fp='cmscan.txt'):
     '''Parse the annotation and add it to interval metadata.
 
     Parameters
     ----------
-    out_dir : str
-        the output dir
-    fn : str
-        the file name from prediction
+    fp : str
+        the file path from cmscan run.
 
     Yield
     -----
@@ -32,39 +31,21 @@ def parse(out_dir, fn='cmscan.txt'):
         seq_id and interval metadata
     '''
     logger.debug('Parsing cmscan prediction of Rfam')
-    fp = join(out_dir, fn)
-    return _cmscan_to_interval_metadata(fp)
-
-
-def _cmscan_to_interval_metadata(fp):
-    '''Yield seq_id and its interval metadata.'''
-    current = False
-    lines = []
+    splitter = split(SplitterID(lambda s: s.split()[2]),
+                     ignore=lambda s: s.startswith('#'))
     with open(fp) as fh:
-        for line in fh:
-            if line.startswith('#'):
-                continue
-            items = line.split()
-            seq_id = items[2]
-            if current == seq_id:
-                lines.append(line)
-            else:
-                if current is not False:
-                    yield current, _parse_record(lines)
-                    lines = [line]
-                else:
-                    lines.append(line)
-                current = seq_id
-        yield current, _parse_record(lines)
+        for lines in splitter(fh):
+            yield _parse_record(lines)
 
 
 def _parse_record(lines):
     '''Return interval metadata'''
     imd = IntervalMetadata(None)
+    seq_id = lines[0].split()[2]
     for line in lines:
         bounds, md = _parse_line(line)
         imd.add(bounds, metadata=md)
-    return imd
+    return seq_id, imd
 
 
 def _parse_line(line):

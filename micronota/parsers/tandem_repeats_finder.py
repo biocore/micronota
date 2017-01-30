@@ -9,22 +9,21 @@
 from os.path import join
 from logging import getLogger
 
-from skbio.io.format._sequence_feature_vocabulary import _yield_section
 from skbio.metadata import IntervalMetadata
+
+from ..util import split, split_head
 
 
 logger = getLogger(__name__)
 
 
-def parse(out_dir, fn='tandem_repeats_finder.txt'):
+def parse(fp='tandem_repeats_finder.txt'):
     '''Parse the annotation and add it to interval metadata.
 
     Parameters
     ----------
-    out_dir : str
-        the dir where the Tandem Repeat Finder output file exist
-    fn : str
-        the file name from Tandem Repeat Finder prediction
+    fp : str
+        the file path from Tandem Repeat Finder prediction
 
     Yield
     -----
@@ -32,13 +31,8 @@ def parse(out_dir, fn='tandem_repeats_finder.txt'):
         seq_id and interval metadata
     '''
     logger.debug('Parsing tandem repeat prediction')
-    fp = join(out_dir, fn)
-    return _tandem_repeats_finder_to_interval_metadata(fp)
 
-
-def _tandem_repeats_finder_to_interval_metadata(fp):
-    '''Return interval metadata'''
-    splitter = _yield_section(lambda line: line.startswith('@'))
+    splitter = split(split_head, is_head=lambda line: line.startswith('@'))
     with open(fp) as fh:
         for lines in splitter(fh):
             sid = lines[0].split(None, 1)[0][1:]

@@ -26,6 +26,17 @@ from inspect import stack
 from skbio import read, write, Sequence
 
 
+def to_ptt(seq_id, imd, f):
+    for intvl in imd._intervals:
+        if intvl.metadata.get('type', '') == 'CDS':
+            start = str(intvl.bounds[0][0])
+            end = str(intvl.bounds[-1][-1])
+            if intvl.metadata.get('strand', '.') == '-':
+                start, end = end, start
+            f.write(' '.join([intvl.metadata.get('ID', '___'), start, end, seq_id]))
+            f.write('\n')
+
+
 def convert(in_f, in_fmt, out_f, out_fmt):
     '''convert between file formats
 
@@ -67,7 +78,7 @@ class _DBTest(TestCase):
                 self.assertEqual(co.fetchall(), ce.fetchall())
 
 
-def split(is_another, construct=None, ignore=None):
+def split(is_another, construct=None, ignore=None, **kwargs):
     '''Return a function to yield record.
 
     Parameters
@@ -82,6 +93,8 @@ def split(is_another, construct=None, ignore=None):
     ignore : callable (optional)
         A callable to ignore the line if it returns ``True``. Do nothing
         if it is ``None``.
+    kwargs : dict
+        optional key word arguments passing to ``is_another``
 
     Returns
     -------
@@ -95,7 +108,7 @@ def split(is_another, construct=None, ignore=None):
         for line in stream:
             if ignore is not None and ignore(line):
                 continue
-            if is_another(line):
+            if is_another(line, **kwargs):
                 if lines:
                     yield lines
                     lines = []
@@ -136,7 +149,7 @@ class SplitterTail:
     Parameters
     ----------
     is_tail : callable
-        to return a bool indicate if the current line concludes current record
+        to return a bool indicating if the current line concludes current record
 
     Examples
     --------

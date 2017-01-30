@@ -31,7 +31,7 @@ def parse(f='transtermhp.tt'):
     tuple of str and IntervalMetadata
         seq_id and interval metadata
     '''
-    logger.debug('Parsing cmscan prediction of Rfam')
+    logger.debug('Parsing TransTermHP prediction of Rfam')
     p = re.compile(r'Genes are interspersed, and start the first column.')
     p2 = re.compile(r'SEQUENCE ')
     splitter = split(split_head, ignore=lambda s: not s.strip(),
@@ -69,6 +69,7 @@ def _parse_record(lines):
             bounds = [(start, end)]
             md = {'ID': term_id, 'gene_id': gene_id,
                   'confidence': items[7], 'strand': strand,
-                  'sequence': hair_pin_seq}
+                  'sequence': hair_pin_seq,
+                  'type': 'terminator'}
             imd.add(bounds, metadata=md)
     return sid, imd

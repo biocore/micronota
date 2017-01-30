@@ -23,7 +23,8 @@ def _add_cds_metadata(seqs, cds_metadata):
         hits = cds_metadata[seq_id]
         for intvl in seq.interval_metadata._intervals:
             md = intvl.metadata
-            if md['type'] == 'CDS':
+            md_type = md.get('type', '')
+            if md_type == 'CDS':
                 # this md is parsed from prodigal output, which
                 # has ID like "seq1_1", "seq1_2" for genes
                 idx = md['ID'].split('_')[1]

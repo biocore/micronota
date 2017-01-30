@@ -10,21 +10,20 @@ from os.path import join
 from logging import getLogger
 import re
 
-from skbio.io.format._sequence_feature_vocabulary import _yield_section
 from skbio.metadata import IntervalMetadata
+
+from ..util import split, split_head
 
 
 logger = getLogger(__name__)
 
 
-def parse(out_dir, fn='aragorn.txt'):
+def parse(fp='aragorn.txt'):
     '''Parse the annotation and add it to interval metadata.
 
     Parameters
     ----------
-    out_dir : str
-        the dir where the aragorn output file exist
-    fn : str
+    fp : str
         the file name from aragorn prediction
 
     Yield
@@ -33,17 +32,11 @@ def parse(out_dir, fn='aragorn.txt'):
         seq_id and interval metadata
     '''
     logger.debug('Parsing aragorn prediction')
-    fp = join(out_dir, fn)
-    return _aragorn_to_interval_metadata(fp)
-
-
-def _aragorn_to_interval_metadata(fp):
-    '''Yield seq_id and its interval metadata.'''
     # aragorn output has a final summary line like this:
     # >end    5 sequences 97 tRNA genes 1 tmRNA genes
     # This line should be skipped and not parsed
     p = re.compile(r'>end\s+\d+ sequences \d+ tRNA genes \d+ tmRNA genes')
-    splitter = _yield_section(lambda line: line.startswith('>'))
+    splitter = split(split_head)
     with open(fp) as fh:
         for lines in splitter(fh):
             headline = lines[0]

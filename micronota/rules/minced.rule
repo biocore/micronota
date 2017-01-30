@@ -3,7 +3,7 @@ rule minced:
     input:
         fna = seq
     output:
-        'minced.gff',
+        'minced.txt',
         'minced.ok'
     log:
         'minced.log'

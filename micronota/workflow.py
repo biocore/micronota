@@ -160,7 +160,8 @@ def integrate(cfg, out_dir, seq_fn, out_fmt='genbank'):
                 tool = f.split('.', 1)[0]
                 submodule = import_module('.%s' % tool, parsers.__name__)
                 func = getattr(submodule, 'parse')
-                for seq_id, imd in func(out_dir):
+                fp = join(out_dir, f.replace('.ok', '.txt'))
+                for seq_id, imd in func(fp):
                     seq = seqs[seq_id]
                     imd._upper_bound = len(seq)
                     seq.interval_metadata.merge(imd)
