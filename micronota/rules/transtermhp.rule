@@ -1,0 +1,25 @@
+# cite:
+# C. Kingsford, K. Ayanbule and S.L. Salzberg. Rapid, accurate, computational discovery of Rho-independent transcription terminators illuminates their relationship to DNA uptake. Genome Biology 8:R22 (2007).
+
+# website: http://transterm.cbcb.umd.edu/index.php
+
+rule TransTermHP:
+    '''Predict rho-independent transcription terminators with TransTermHP.'''
+    input:
+        seq
+    output:
+        tt = 'transtermhp.txt',
+        ok  = 'transtermhp.ok'
+    log:
+        'transtermhp.log'
+    params:
+        rule_config['params']
+    priority:
+        rule_config['priority']
+    message:
+        '--- RUNNING TransTermHP ...'
+    shell:
+        'transterm {params} {input[0]} {input[0]}.coords'
+        ' > {output.tt} && '
+        'touch {output.ok}'
+
