@@ -91,15 +91,19 @@ def cmd(ctx, log, verbose):
 
     For more info, please check out https://github.com/biocore/micronota.
     '''
-    if log is None:
-        # load the config.
-        log = resource_filename(__package__, 'log.cfg')
-    # setting False allows snakemake logger to print log.
-    fileConfig(log, disable_existing_loggers=False)
     # default logging level is warning
     levels = ['WARNING', 'INFO', 'DEBUG']
     n = len(levels)
     if verbose >= n:
         verbose = n - 1
+    if log is None:
+        # load the config.
+        log = resource_filename(__package__, 'log.cfg')
+    disable_snakemake_log = True
+    if verbose > 1:
+        disable_snakemake_log = False
+    # setting False allows snakemake logger to print log.
+    fileConfig(log, disable_existing_loggers=disable_snakemake_log)
+
     logger = getLogger()
     logger.setLevel(levels[verbose])
