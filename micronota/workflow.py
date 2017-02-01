@@ -47,9 +47,9 @@ def annotate(in_fp, in_fmt, min_len, out_dir, out_fmt, gcode, kingdom,
         The kingdom where the sequences are from
     cpus : int
         Number of cpus to use.
-    force : boolean
+    force : bool
         Force to overwrite.
-    dry_run : boolean
+    dry_run : bool
     config : config file for snakemake
     '''
     logger.info('Running annotation pipeline')
@@ -66,9 +66,9 @@ def annotate(in_fp, in_fmt, min_len, out_dir, out_fmt, gcode, kingdom,
     with open(config) as fh:
         cfg = yaml.load(fh)
 
-    cfg['general']['seq'] = seq_fn_val
-    cfg['general']['genetic_code'] = gcode
-    cfg['general']['kingdom'] = kingdom
+    cfg['seq'] = seq_fn_val
+    cfg['genetic_code'] = gcode
+    cfg['kingdom'] = kingdom
 
     snakefile = resource_filename(__package__, 'rules/Snakefile')
     success = snakemake(
@@ -79,15 +79,15 @@ def annotate(in_fp, in_fmt, min_len, out_dir, out_fmt, gcode, kingdom,
         workdir=out_dir,
         printshellcmds=True,
         dryrun=dry_run,
-        forcetargets=force,
+        forceall=force,
         config=cfg,
         # configfile=config,
         keep_target_files=True,
-        keep_logger=True)
+        keep_logger=False)
 
     if success:
         # if snakemake finishes successfully
-        integrate(cfg['general'], out_dir, seq_fn_val, out_fmt)
+        integrate(cfg, out_dir, seq_fn_val, out_fmt)
 
 
 def validate_seq(in_fp, in_fmt, min_len, out_fp):
