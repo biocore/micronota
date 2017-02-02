@@ -19,8 +19,8 @@ def add_metadata(xml_fh, db_fp):
 
     Parameters
     ----------
-    in_fps : list of str
-        The gzipped files of either UniProtKB Swiss-Prot or TrEMBLE.
+    xml_fh : file object
+        The file of either UniProtKB Swiss-Prot or TrEMBLE.
     db_fp : str
         The output database file. See ``Notes``.
 
@@ -30,7 +30,7 @@ def add_metadata(xml_fh, db_fp):
         The number of records processed.
 
     '''
-    logger.info('Adding UniProt metadata to db')
+    logger.info('Adding UniProt metadata to db from %r' % xml_fh)
 
     # this is the namespace for uniprot xml files.
     ns_map = {'xmlns': 'http://uniprot.org/uniprot',

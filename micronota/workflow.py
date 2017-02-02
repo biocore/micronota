@@ -89,6 +89,7 @@ def annotate(in_fp, in_fmt, min_len, out_dir, out_fmt, gcode, kingdom,
         # if snakemake finishes successfully
         integrate(cfg, out_dir, seq_fn_val, out_fmt)
 
+    logger.info('Done with annnotation')
 
 def validate_seq(in_fp, in_fmt, min_len, out_fp):
     '''Validate input seq file.

@@ -1,13 +1,18 @@
-from sqlite3 import connect
+# ----------------------------------------------------------------------------
+# Copyright (c) 2015--, micronota development team.
+#
+# Distributed under the terms of the Modified BSD License.
+#
+# The full license is in the file COPYING.txt, distributed with this software.
+# ----------------------------------------------------------------------------
 
-
-def query(sql_fp, db, accn):
+def query(c, db, accn):
     '''Query with accession number of a reference db.
 
     Parameters
     ----------
-    sql_fp : str
-        sqlite file path
+    c : ``sqlite3.Connection``
+        connection to the db that has the entry metadata
     db : str
         reference db name (eg uniprot, tigrfam, kegg, etc)
     accn : str
@@ -19,31 +24,30 @@ def query(sql_fp, db, accn):
         The cross-ref IDs to other db and product of the accession.
     '''
     info = {}
-    with connect(sql_fp) as c:
-        tables = {i[0] for i in c.execute(
-            "SELECT name FROM sqlite_master WHERE type='table'")}
-        tables.discard(db)
-        db1 = db + '_'
-        db2 = '_' + db
-        for table in tables:
-            # find all the junction tables that is linked to the ref table
-            if db1 in table:
-                other = table.replace(db1, '')
-            elif db2 in table:
-                other = table.replace(db2, '')
-            else:
-                continue
-            query_xref = '''SELECT {1}.accn, t.name FROM {1}
-                            INNER JOIN {2} j ON j.{1}_id = {1}.id
-                            INNER JOIN {0} t ON j.{0}_id = t.id
-                            WHERE t.accn = ?;'''.format(db, other, table)
-            # 'K9NBS6'
-            res = [i for i in c.execute(query_xref, (accn,))]
-            if res:
-                if 'product' not in info:
-                    name = [i[1] for i in res]
-                    info['product'] = name[0]
-                info[other] = [i[0] for i in res]
+    tables = {i[0] for i in c.execute(
+        "SELECT name FROM sqlite_master WHERE type='table'")}
+    tables.discard(db)
+    db1 = db + '_'
+    db2 = '_' + db
+    for table in tables:
+        # find all the junction tables that is linked to the ref table
+        if db1 in table:
+            other = table.replace(db1, '')
+        elif db2 in table:
+            other = table.replace(db2, '')
+        else:
+            continue
+        query_xref = '''SELECT {1}.accn, t.name FROM {1}
+                        INNER JOIN {2} j ON j.{1}_id = {1}.id
+                        INNER JOIN {0} t ON j.{0}_id = t.id
+                        WHERE t.accn = ?;'''.format(db, other, table)
+        # 'K9NBS6'
+        res = [i for i in c.execute(query_xref, (accn,))]
+        if res:
+            if 'product' not in info:
+                name = [i[1] for i in res]
+                info['product'] = name[0]
+            info[other] = [i[0] for i in res]
     return info
 
 

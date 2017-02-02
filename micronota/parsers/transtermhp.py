@@ -31,7 +31,7 @@ def parse(f='transtermhp.tt'):
     tuple of str and IntervalMetadata
         seq_id and interval metadata
     '''
-    logger.debug('Parsing TransTermHP prediction of Rfam')
+    logger.debug('Parsing TransTermHP prediction')
     p = re.compile(r'Genes are interspersed, and start the first column.')
     p2 = re.compile(r'SEQUENCE ')
     splitter = split(split_head, ignore=lambda s: not s.strip(),
@@ -46,7 +46,6 @@ def parse(f='transtermhp.tt'):
 
 
 def _parse_record(lines):
-    logger.debug('Parsing each record')
     sid = lines[0].split()[1]
     splitter = split(split_head,
                      is_head=lambda s: not s.startswith('  '))
