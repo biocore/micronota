@@ -33,6 +33,6 @@ rule unmatched_uniref50:
         hit = rule_config['output'] + '.hit',
     run:
         df = parse_diamond_uniref(pident=50, fn='diamond_uniref50.m12')()
-        df.columns = ['query', 'uniprot']
-        df.to_csv(output.hit, sep='\t', index=False)
         _filter_sequence_ids(input[0], output.faa, df.uniprot)
+        df.uniprot = df.uniprot.apply(lambda s: s.split('_', 1)[-1])
+        df.to_csv(output.hit, sep='\t', index=False)

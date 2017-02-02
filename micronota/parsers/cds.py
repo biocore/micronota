@@ -7,6 +7,7 @@
 # ----------------------------------------------------------------------------
 
 from logging import getLogger
+from sqlite3 import connect
 
 import pandas as pd
 from skbio import read, write, Sequence
@@ -40,18 +41,20 @@ def _fetch_cds_metadata(hit_f, db):
     the input seq id and the index for the protein seq
 
     '''
+    logger.debug('Parsing %s for protein metadata' % hit_f)
     hits = pd.read_table(hit_f)
     ref = hits.columns[1]
-    for row in hits.itertuples():
-        seq_id, i = row[1].rsplit('_', 1)
-        accn = row[2]
-        hit = '{0}:{1}'.format(ref, accn)
-        md = format_xref(query(db, ref, accn))
-        if 'db_xref' in md:
-            md['db_xref'].append(hit)
-        else:
-            md['db_xref'] = [hit]
-        yield seq_id, i, md
+    with connect(db) as c:
+        for row in hits.itertuples():
+            seq_id, i = row[1].rsplit('_', 1)
+            accn = row[2]
+            hit = '{0}:{1}'.format(ref, accn)
+            md = format_xref(query(c, ref, accn))
+            if 'db_xref' in md:
+                md['db_xref'].append(hit)
+            else:
+                md['db_xref'] = [hit]
+            yield seq_id, i, md
 
 
 def parse_diamond_uniref(fn, pident=90):
@@ -62,7 +65,9 @@ def parse_diamond_uniref(fn, pident=90):
         logger.debug('Parsing diamond search against UniRef')
         df = pd.read_table(fn, names=columns)
         df_filtered = filter_ident_overlap(df, pident)
-        return df_filtered.loc[:, ['qseqid', 'sseqid']]
+        df_filtered = df_filtered.loc[:, ['qseqid', 'sseqid']]
+        df_filtered.columns = ['query', 'uniprot']
+        return df_filtered
     return parse
 
 
