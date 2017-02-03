@@ -16,14 +16,15 @@ from ..database.rfam import filter_models
 
 logger = getLogger(__name__)
 
-
-@click.command()
+# keep this command hidden from help msg
+@click.command(hidden=True)
 @click.option('--operation', type=click.Choice(['kingdom', 'other', 'all']),
               default='kingdom', required=True, help='')
 @click.argument('infile', type=click.File('r'), nargs=1)
 @click.argument('outpath', type=str,  nargs=1)
 @click.pass_context
 def cli(ctx, operation, infile, outpath):
+    '''Create rfam database for micronota usage.'''
     if operation == 'other':
         with open(join(outpath, 'miscRfam.cm'), 'w') as outfile:
             filter_models(infile, outfile)

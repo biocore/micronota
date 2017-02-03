@@ -31,9 +31,6 @@ class AliasedGroup(click.Group):
 
     This is borrowed from `click` example of alias.
     '''
-    def _get_command(self, ctx, cmd_name):
-        return click.Group.get_command(self, ctx, cmd_name)
-
     def get_command(self, ctx, cmd_name):
         # allow automatic abbreviation of the command.  "status" for
         # instance will match "st".  We only allow that however if
@@ -43,7 +40,7 @@ class AliasedGroup(click.Group):
         if not matches:
             return
         elif len(matches) == 1:
-            return self._get_command(ctx, matches[0])
+            return click.Group.get_command(ctx, matches[0])
         ctx.fail('Too many matches: %s' % ', '.join(sorted(matches)))
 
 
@@ -52,7 +49,7 @@ class ComplexCLI(AliasedGroup):
 
     It looks in `commands` folder for subcommands.
 
-    This is borrowed from `click` examples of complex.
+    This is borrowed from `click` example of complex.
     '''
     def list_commands(self, ctx):
         rv = []
@@ -63,14 +60,14 @@ class ComplexCLI(AliasedGroup):
         rv.sort()
         return rv
 
-    def _get_command(self, ctx, cmd_name):
+    def get_command(self, ctx, cmd_name):
         try:
             mod = __import__('micronota.commands.' + cmd_name,
                              None, None, ['cli'])
-        except ImportError as err:
-            print(err)
+        except ImportError:
             return
         return mod.cli
+
 
 
 @click.group(cls=ComplexCLI, context_settings=_CONTEXT_SETTINGS)

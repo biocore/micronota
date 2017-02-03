@@ -18,7 +18,7 @@ from ..database.uniprot import add_metadata
 logger = getLogger(__name__)
 
 
-@click.command()
+@click.command(hidden=True)
 @click.argument('infile', type=click.Path(), nargs=-1)
 @click.argument('outpath', type=click.Path(),  nargs=1)
 @click.pass_context
