@@ -47,7 +47,7 @@ class Tests(TestCase):
         with io.StringIO() as fh:
             df.to_csv(fh, sep='\t', index=False)
             obs = fh.getvalue()
-            exp = ('qseqid\tsseqid\n'
+            exp = ('query\tuniprot\n'
                    'seq_3\tA3DA47\n'
                    'seq_9\tA3DA49\n')
             self.assertEqual(obs, exp)
@@ -57,7 +57,7 @@ class Tests(TestCase):
         with io.StringIO() as fh:
             df.to_csv(fh, sep='\t', index=False)
             obs = fh.getvalue()
-            exp = ('qseqid\tsseqid\n'
+            exp = ('query\tuniprot\n'
                    'seq_9\tA3DA49\n')
             self.assertEqual(obs, exp)
 

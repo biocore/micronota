@@ -28,19 +28,23 @@ class ParseTests(TestCase):
         exp_imd.add([(7857, 7876)],
                     metadata={'strand': '+', 'confidence': '95',
                               'sequence': 'TGCCCACGATTAAAG/GTGGCCGC/CCTG/GCGGTCAC/TTCTTTGAGAAAAGG',
-                              'ID': 'TERM_1', 'gene_id': '2_7'})
+                              'ID': 'TERM_1', 'gene_id': '2_7',
+                              'type': 'terminator'})
         exp_imd.add([(8919, 8958)],
                     metadata={'strand': '-', 'confidence': '100',
                               'sequence': 'AATGAGCCAGAATAA/GCTAAGGTTGAAGGGGC/TGGAAC/GCCCCTTCAACCTTAGC/AGTAGCGTGGGATGA',
-                              'ID': 'TERM_2', 'gene_id': '2_9'})
+                              'ID': 'TERM_2', 'gene_id': '2_9',
+                              'type': 'terminator'})
         exp_imd.add([(9258, 9273)],
                     metadata={'strand': '+', 'confidence': '89',
                               'sequence': 'GGCAGAAACAAAAAA/TCCCCG/GACT/CGGGGA/TTTATGTACAAGAGG',
-                              'ID': 'TERM_3', 'gene_id': '2_9'})
+                              'ID': 'TERM_3', 'gene_id': '2_9',
+                              'type': 'terminator'})
         exp_imd.add([(9258, 9273)],
                     metadata={'strand': '-', 'confidence': '100',
                               'sequence': 'GGCAGAAACAAAAAA/TCCCCG/GACT/CGGGGA/TTTATGTACAAGAGG',
-                              'ID': 'TERM_4', 'gene_id': '2_9'})
+                              'ID': 'TERM_4', 'gene_id': '2_9',
+                              'type': 'terminator'})
         self.assertEqual(exp_imd, imd)
 
 

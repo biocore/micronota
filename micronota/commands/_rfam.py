@@ -22,12 +22,12 @@ logger = getLogger(__name__)
 @click.option('--operation', type=click.Choice(['kingdom', 'other', 'all']),
               default='kingdom', required=True, help='')
 @click.argument('infile', type=click.File('r'), nargs=1)
-@click.argument('outpath', type=str,  nargs=1)
+@click.argument('outfile', type=click.Path(),  nargs=1)
 @click.pass_context
-def cli(ctx, operation, infile, outpath):
+def cli(ctx, operation, infile, outfile):
     '''Create rfam database for micronota usage.'''
     if operation in ['other', 'all']:
-        with open(join(outpath, 'miscRfam.cm'), 'w') as outfile:
+        with open(join(outfile, 'miscRfam.cm'), 'w') as outfile:
             filter_models(infile, outfile)
     if operation in ['kingdom', 'all']:
         kingdom_models = {'bacteria': {('RF00001', '5S_rRNA'),
@@ -41,7 +41,7 @@ def cli(ctx, operation, infile, outpath):
                                       ('RF01960', 'SSU_rRNA_eukarya'),
                                       ('RF02543', 'LSU_rRNA_eukarya')}}
         for kingdom in kingdom_models:
-            with open(join(outpath, kingdom + '.cm'), 'w') as outfile:
+            with open(join(outfile, kingdom + '.cm'), 'w') as outfile:
                 filter_models(infile, outfile, negate=True, models=kingdom_models[kingdom])
             # don't forget to restart from the beginning of the file.
             infile.seek(0, 0)
