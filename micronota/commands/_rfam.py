@@ -16,6 +16,7 @@ from ..database.rfam import filter_models
 
 logger = getLogger(__name__)
 
+
 # keep this command hidden from help msg
 @click.command(hidden=True)
 @click.option('--operation', type=click.Choice(['kingdom', 'other', 'all']),
@@ -25,10 +26,10 @@ logger = getLogger(__name__)
 @click.pass_context
 def cli(ctx, operation, infile, outpath):
     '''Create rfam database for micronota usage.'''
-    if operation == 'other':
+    if operation in ['other', 'all']:
         with open(join(outpath, 'miscRfam.cm'), 'w') as outfile:
             filter_models(infile, outfile)
-    elif operation == 'kingdom':
+    if operation in ['kingdom', 'all']:
         kingdom_models = {'bacteria': {('RF00001', '5S_rRNA'),
                                        ('RF00177', 'SSU_rRNA_bacteria'),
                                        ('RF02541', 'LSU_rRNA_bacteria')},

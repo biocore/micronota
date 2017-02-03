@@ -20,16 +20,16 @@ logger = getLogger(__name__)
 
 @click.command(hidden=True)
 @click.argument('infile', type=click.Path(), nargs=-1)
-@click.argument('outpath', type=click.Path(),  nargs=1)
+@click.argument('outfile', type=click.Path(),  nargs=1)
 @click.pass_context
-def cli(ctx, infile, outpath):
+def cli(ctx, infile, outfile):
     '''Create UniProt protein cross-ref database.'''
     n = 0
     for fp in infile:
         if fp.endswith('.gz'):
             with gzip.open(fp) as f:
-                n += add_metadata(f, outpath)
+                n += add_metadata(f, outfile)
         else:
             with open(fp) as f:
-                n += add_metadata(f, outpath)
+                n += add_metadata(f, outfile)
     logger.info('Parsed %d records from %r' % (n, infile))
