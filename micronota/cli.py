@@ -69,7 +69,6 @@ class ComplexCLI(AliasedGroup):
         return mod.cli
 
 
-
 @click.group(cls=ComplexCLI, context_settings=_CONTEXT_SETTINGS)
 @click.option('--log', default=None,
               type=click.Path(exists=True, dir_okay=False),

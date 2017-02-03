@@ -15,13 +15,8 @@ This module (:mod:`micronota.util`) provides various utility functionality,
 # The full license is in the file COPYING.txt, distributed with this software.
 # ----------------------------------------------------------------------------
 
-import shutil
-from os import remove
-from os.path import exists, isdir, join, abspath, dirname, basename, splitext
-from urllib.request import urlopen
 from unittest import TestCase
 from sqlite3 import connect
-from inspect import stack
 
 from skbio import read, write, Sequence
 

@@ -1,47 +1,65 @@
-gene:
+metadata: '/home/zhxu5194/database/uniprot/20161130/uniprot.sqlite'
+structural_annotation:
     prodigal:
         # params: '-p meta'
         params: '-p single'
         priority: 90
-        threads: 1
-ncRNA:
     cmscan:
         params: ''
         priority: 50
-        threads: 1
-        db: '~/database/rfam/rfam.cm'
-CRISPR:
+        threads: 16
+        db: '/home/zhxu5194/database/Rfam/v12.2/miscRfam.cm'
     minced:
         params: ''
         priority: 50
-        threads: 1
-tRNA:
     aragorn:
         params: '-w'
         priority: 50
-        threads: 1
-# rRNA:
-#     cmscan:
-#         params: ''
-#         priority: 50
-#         threads: 1
-#         db: 'rRNA.cm'
+    tandem_repeats_finder:
+        params: ''
+        priority: 50
+    transtermhp:
+        priority: 50
+        params: '-p /home/zhxu5194/miniconda/envs/micronota/lib/transtermhp/expterm.dat'
+        # '--all-context'  # output all predicted terminators instead of legitimate ones
+archaea:
+    cmscan.rRNA:
+        params: ''
+        priority: 50
+        threads: 16
+        db: '/home/zhxu5194/database/Rfam/v12.2/archaea.cm'
+bacteria:
+    cmscan.rRNA:
+        params: ''
+        priority: 50
+        threads: 16
+        db: '/home/zhxu5194/database/Rfam/v12.2/bacteria.cm'
+        output: 'cmscan.rRNA'
+eukarya:
+    cmscan.rRNA:
+        params: ''
+        priority: 50
+        threads: 16
+        db: '/home/zhxu5194/database/Rfam/v12.2/eukarya.cm'
+        output: 'cmscan.eukarya'
+
 protein:
 # homologous search for proteins
     diamond_uniref90:
         params: '--index-chunks 1 --query-cover 80 -k 3'
         priority: 50
-        threads: 1
-        db: '~/database/uniref/uniref90.dmnd'
+        threads: 16
+        db: '/home/zhxu5194/database/uniref/20160415/uniref90.dmnd'
         input: 'prodigal.faa'
         output: 'diamond_uniref90'
     diamond_uniref50:
         params: '--index-chunks 1 --query-cover 80 -k 3'
         priority: 50
-        threads: 1
-        db: '~/database/uniref/uniref50.dmnd'
+        threads: 16
+        db: '/home/zhxu5194/database/uniref/20160415/uniref50.dmnd'
         input: 'diamond_uniref90.faa'
         output: 'diamond_uniref50'
+
     # hmmscan_tigrfam:
     #     params: '−−cug_nc'
     #     priority: 60
@@ -56,6 +74,3 @@ protein:
     #     db: '~/database/tigrfam/tigrfam.hmm'
     #     input: ''
     #     output: ''
-
-general:
-    metadata: '~/database/protein.sqlite'

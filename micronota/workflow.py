@@ -16,7 +16,6 @@ from pkg_resources import resource_filename
 from snakemake import snakemake
 from skbio.io import read, write
 import yaml
-import pandas as pd
 
 from . import parsers
 from .parsers.cds import _add_cds_metadata, _fetch_cds_metadata
@@ -91,6 +90,7 @@ def annotate(in_fp, in_fmt, min_len, out_dir, out_fmt, gcode, kingdom,
 
     logger.info('Done with annnotation')
 
+
 def validate_seq(in_fp, in_fmt, min_len, out_fp):
     '''Validate input seq file.
 
@@ -138,9 +138,9 @@ def integrate(cfg, out_dir, seq_fn, out_fmt='genbank'):
     '''integrate all the annotations and write to disk.
 
     seq_fn : str
-        input seq file path.
+        input seq file name.
     out_dir : str
-        annotated output file path.
+        annotation output directory.
     out_fmt : str
         output format
     '''
@@ -171,7 +171,7 @@ def integrate(cfg, out_dir, seq_fn, out_fmt='genbank'):
                 raise Exception('Error while parsing %s into ``IntervalMetadata``' % f) from e
     # add functional metadata to the protein-coding gene
     # create defaultdict of defaultdict of dict
-    cds_metadata = defaultdict(lambda : defaultdict(dict))
+    cds_metadata = defaultdict(lambda: defaultdict(dict))
     for f in hits:
         for seq_id, idx, md in _fetch_cds_metadata(f, cfg['metadata']):
             cds_metadata[seq_id][idx].update(md)

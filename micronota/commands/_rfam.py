@@ -45,4 +45,3 @@ def cli(ctx, operation, infile, outfile):
                 filter_models(infile, outfile, negate=True, models=kingdom_models[kingdom])
             # don't forget to restart from the beginning of the file.
             infile.seek(0, 0)
-

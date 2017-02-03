@@ -7,7 +7,6 @@
 # ----------------------------------------------------------------------------
 
 import gzip
-from os.path import join
 from logging import getLogger
 
 import click

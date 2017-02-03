@@ -16,4 +16,4 @@ def cli(ctx):
 
     It includes system info, database info, and external dependencies, etc.
     '''
-    click.echo(repr(ctx.parent.config))
+
