@@ -48,7 +48,7 @@ def _parse_record(lines):
 
 
 def _parse_line(line):
-    md = {'type': 'ncRNA'}
+    md = {'type': 'ncRNA', 'source': 'Rfam'}
     items = line.split()
     md['db_xref'] = items[1]
     md['ncRNA_class'] = items[0]
