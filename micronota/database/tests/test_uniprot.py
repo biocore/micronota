@@ -14,7 +14,6 @@ from skbio.util import get_data_path
 
 from micronota.util import _DBTest
 from micronota.database.uniprot import add_metadata, _parse_xml
-from micronota.database._util import query
 
 
 class UniProtTests(_DBTest):

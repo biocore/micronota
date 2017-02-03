@@ -6,6 +6,7 @@
 # The full license is in the file COPYING.txt, distributed with this software.
 # ----------------------------------------------------------------------------
 
+
 def query(c, db, accn):
     '''Query with accession number of a reference db.
 

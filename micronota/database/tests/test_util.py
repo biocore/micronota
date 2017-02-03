@@ -43,7 +43,7 @@ class Tests(TestCase):
 
     def test_format_xref(self):
         d = {'GO': ['GO:0016021', 'GO:0005886', 'GO:0030246', 'GO:0009405'],
-             'KEGG': ['bmb:BruAb2_0497'], 'Pfam':['PF07886'],
+             'KEGG': ['bmb:BruAb2_0497'], 'Pfam': ['PF07886'],
              'EC_number': ['2.5.1.15'],
              'product': 'Lectin-like protein BA14k'}
         obs = format_xref(d)

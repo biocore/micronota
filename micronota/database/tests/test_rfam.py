@@ -7,8 +7,6 @@
 # ----------------------------------------------------------------------------
 
 from unittest import TestCase, main
-from tempfile import mkdtemp
-from os.path import join, splitext, exists
 import io
 
 from skbio.util import get_data_path

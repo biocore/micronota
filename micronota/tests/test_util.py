@@ -10,8 +10,6 @@ from unittest import TestCase, main
 from os.path import join
 from tempfile import mkdtemp
 
-from skbio.util import get_data_path
-from skbio.metadata import IntervalMetadata
 from skbio import write, read, Sequence
 
 from micronota.util import _filter_sequence_ids
@@ -40,4 +38,3 @@ class Tests(TestCase):
 
 if __name__ == '__main__':
     main()
-

@@ -10,7 +10,6 @@ from logging import getLogger
 from sqlite3 import connect
 
 import pandas as pd
-from skbio import read, write, Sequence
 
 from ..database._util import query, format_xref
 

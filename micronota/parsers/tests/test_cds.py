@@ -8,12 +8,7 @@
 
 import io
 from unittest import TestCase, main, mock
-from os.path import join
 from tempfile import mkdtemp
-
-from skbio.util import get_data_path
-from skbio.metadata import IntervalMetadata
-from skbio import Protein, write, read
 
 from micronota.parsers.cds import _fetch_cds_metadata, parse_diamond_uniref
 
@@ -64,4 +59,3 @@ class Tests(TestCase):
 
 if __name__ == '__main__':
     main()
-

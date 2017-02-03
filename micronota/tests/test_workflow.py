@@ -11,9 +11,8 @@ from tempfile import mkdtemp
 from os.path import join, splitext, exists
 from shutil import rmtree
 
-from pkg_resources import resource_filename
-from skbio import DNA, read, write
 import yaml
+from skbio import DNA, read, write
 
 from micronota.workflow import validate_seq, annotate
 
@@ -72,12 +71,11 @@ class Tests(TestCase):
                                              'threads': 1}},
                   'protein': {},
                   'bacteria': {},
-                  'general' : {'metadata': 'foo.sqlite'}}
+                  'general': {'metadata': 'foo.sqlite'}}
         config_fp = join(self.tmpd, 'config.yaml')
         with open(config_fp, 'w') as f:
             yaml.dump(config, f, default_flow_style=True)
         write(DNA('ATGC', {'id': 'seq1'}), into=self.i, format='fasta')
-        print(self.tmpd)
         annotate(self.i, 'fasta', 1, self.tmpd, 'gff3', 11, 'bacteria', 1, True, False, config_fp)
         output = join(self.tmpd, splitext(self.i)[0] + '.valid.fna')
         self.assertTrue(exists(output))

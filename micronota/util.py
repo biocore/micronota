@@ -21,17 +21,6 @@ from sqlite3 import connect
 from skbio import read, write, Sequence
 
 
-def to_ptt(seq_id, imd, f):
-    for intvl in imd._intervals:
-        if intvl.metadata.get('type', '') == 'CDS':
-            start = str(intvl.bounds[0][0])
-            end = str(intvl.bounds[-1][-1])
-            if intvl.metadata.get('strand', '.') == '-':
-                start, end = end, start
-            f.write(' '.join([intvl.metadata.get('ID', '___'), start, end, seq_id]))
-            f.write('\n')
-
-
 def convert(in_f, in_fmt, out_f, out_fmt):
     '''convert between file formats
 
