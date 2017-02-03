@@ -70,36 +70,34 @@ class ComplexCLI(AliasedGroup):
 
 
 @click.group(cls=ComplexCLI, context_settings=_CONTEXT_SETTINGS)
-@click.option('--log', default=None,
+@click.option('--log-config', default=None,
               type=click.Path(exists=True, dir_okay=False),
               help='Logging config file.')
-@click.option('-v', '--verbose', count=True, help='Verbosity')
+@click.option('--log-level', required=False,
+              type=click.IntRange(1, 5, clamp=True), default=2,
+              show_default=True, help="Level of messages for log file"
+              "(1-debug, 2-info, 3-warning, 4-error, 5-critical")
 @click.version_option()   # add --version option
 @click.pass_context
-def cmd(ctx, log, verbose):
+def cmd(ctx, log_config, log_level):
     '''Annotation pipeline for Bacterial and Archaeal (meta)genomes.
 
     It predicts features (ncRNA, coding genes, etc.) on the input sequences
     and assign functions to those features.
 
     It works best on long sequences, such as assembled contigs, draft genomes,
-    or full genomes.
+    or finished genomes.
 
     For more info, please check out https://github.com/biocore/micronota.
     '''
-    # default logging level is warning
-    levels = ['WARNING', 'INFO', 'DEBUG']
-    n = len(levels)
-    if verbose >= n:
-        verbose = n - 1
-    if log is None:
+    if log_config is None:
         # load the config.
         log = resource_filename(__package__, 'log.cfg')
     disable_snakemake_log = True
-    if verbose > 1:
+    if log_level > 2:
         disable_snakemake_log = False
     # setting False allows snakemake logger to print log.
     fileConfig(log, disable_existing_loggers=disable_snakemake_log)
 
     logger = getLogger()
-    logger.setLevel(levels[verbose])
+    logger.setLevel(log_level * 10)
