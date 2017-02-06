@@ -51,9 +51,10 @@ def _parse_line(line):
     md = {}
     items = line.split('\t')
     md['source'] = items[1]
-    md['type'] = items[-1]
+    md['type'] = items[2]
     md['score'] = items[5]
     md['strand'] = items[6]
+    md['product'] = items[-1]
     start = int(items[3]) - 1
     end = int(items[4])
     return [(start, end)], md

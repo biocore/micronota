@@ -48,10 +48,15 @@ def _parse_record(lines):
 
 
 def _parse_line(line):
-    md = {'type': 'ncRNA', 'source': 'Rfam'}
     items = line.split()
-    md['db_xref'] = items[1]
-    md['ncRNA_class'] = items[0]
+    fam_id = items[1]
+    md = {'source': 'Rfam', 'ncRNA_class': items[0], 'db_xref': fam_id}
+    if fam_id in {'RF00001', 'RF00177', 'RF02541', 'RF01959',
+                  'RF02540', 'RF00001', 'RF00002', 'RF01960', 'RF02543'}:
+        md['type'] = 'rRNA'
+    else:
+        md['type'] = 'ncRNA'
+
     strand = items[9]
     md['strand'] = strand
     if strand == '+':

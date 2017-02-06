@@ -62,6 +62,9 @@ def _parse_line(line):
         loc = loc[1:]
         md['strand'] = '-'
     start, end = loc.split(',')
-    start = int(start[1:]) - 1
+    start = int(start[1:])
     end = int(end[:-1])
+    if start > end:
+        start, end = end, start
+    start -= 1
     return [(start, end)], md

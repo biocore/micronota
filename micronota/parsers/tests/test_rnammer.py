@@ -18,12 +18,15 @@ class ParseTests(TestCase):
     def test_parse(self):
         imd1 = IntervalMetadata(None)
         imd1.add(bounds=[(0, 2853)],
-                 metadata={'source': 'RNAmmer-1.2', 'type': '23s_rRNA', 'strand': '-', 'score': '3222.8'})
+                 metadata={'source': 'RNAmmer-1.2', 'type': 'rRNA',
+                           'product': '23s_rRNA', 'strand': '-', 'score': '3222.8'})
         imd1.add(bounds=[(2924, 3040)],
-                 metadata={'source': 'RNAmmer-1.2', 'type': '5s_rRNA', 'strand': '+', 'score': '80.8'})
+                 metadata={'source': 'RNAmmer-1.2', 'type': 'rRNA',
+                           'product': '5s_rRNA', 'strand': '+', 'score': '80.8'})
         imd2 = IntervalMetadata(None)
         imd2.add(bounds=[(77272, 78834)],
-                 metadata={'source': 'RNAmmer-1.2', 'type': '16s_rRNA', 'strand': '+', 'score': '1984.2'})
+                 metadata={'source': 'RNAmmer-1.2', 'type': 'rRNA',
+                           'product': '16s_rRNA', 'strand': '+', 'score': '1984.2'})
 
         exp = (('NZ_JXDA01000005.1', imd1),
                ('NZ_JXDA01000001.1', imd2))

@@ -67,6 +67,7 @@ def _parse_record(lines):
             bounds = [(start, end)]
             md = {'ID': term_id, 'gene_id': gene_id,
                   'confidence': items[7], 'strand': strand,
+                  'source': 'TransTermHP',
                   'sequence': hair_pin_seq,
                   'type': 'terminator'}
             imd.add(bounds, metadata=md)
