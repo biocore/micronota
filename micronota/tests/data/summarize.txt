@@ -1,0 +1,3 @@
+seq_id	length	CDS	ncRNA	rRNA	tRNA	tandem_repeat	terminator	CRISPR
+gi|556503834|ref|NC_000913.3|	5000000	A:1.00	3	2	0	2	2	1	2
+gi|556503834|ref|NC_000913.2|	5000000	A:0.50;G:0.50	0	0	2	0	0	0	0

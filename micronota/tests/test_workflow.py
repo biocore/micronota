@@ -13,6 +13,7 @@ from shutil import rmtree
 
 import yaml
 from skbio import DNA, read, write
+from skbio.util import get_data_path
 
 from micronota.workflow import validate_seq, annotate, summarize
 
@@ -95,7 +96,15 @@ class Tests(TestCase):
         self.assertTrue(exists(output + '.gff'))
 
     def test_summarize(self):
-        summarize()
+        gff = get_data_path('summarize.gff')
+        seqs = [DNA('A' * 5000000, metadata={'id': 'gi|556503834|ref|NC_000913.3|'}),
+                DNA('AG' * 2500000, metadata={'id': 'gi|556503834|ref|NC_000913.2|'})]
+        for (seq_id, imd), seq in zip(read(gff, format='gff3'), seqs):
+            seq.interval_metadata = imd
+
+        summarize(seqs, self.o)
+        with open(self.o) as obs, open(get_data_path('summarize.txt')) as exp:
+            self.assertEqual(obs.read(), exp.read())
 
     def tearDown(self):
         rmtree(self.tmpd)

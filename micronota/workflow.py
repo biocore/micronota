@@ -204,8 +204,8 @@ def summarize(seqs, out_fp):
     out_fp : str
         output file path
     '''
-    types = ['CDS', 'ncRNA', '16s_rRNA', '23s_rRNA', '5s_rRNA',
-             'tandem_repeat', 'tRNA', 'terminator', 'CRISPR']
+    types = ['CDS', 'ncRNA', 'rRNA', 'tRNA',
+             'tandem_repeat', 'terminator', 'CRISPR']
     with open(out_fp, 'w') as out:
         out.write('seq_id\tlength\t')
         out.write('\t'.join(types))
@@ -213,7 +213,7 @@ def summarize(seqs, out_fp):
         for seq in seqs:
             freq = seq.frequencies(relative=True)
             items = [seq.metadata['id'], str(len(seq)),
-                     ';'.join(['%s:%.2f' % (k, v) for k, v in freq.items()])]
+                     ';'.join(['%s:%.2f' % (k, freq[k]) for k in sorted(freq)])]
             imd = seq.interval_metadata
             for t in types:
                 feature = imd.query(metadata={'type': t})
