@@ -14,7 +14,7 @@ from importlib import import_module
 
 from pkg_resources import resource_filename
 from snakemake import snakemake
-from skbio.io import read, write
+from skbio import read, write, DNA
 import yaml
 
 from . import parsers
@@ -96,7 +96,8 @@ def validate_seq(in_fp, in_fmt, min_len, out_fp):
 
     1. filter out short seq;
     2. validate seq IDs (no duplicates)
-    3. convert to fasta format
+    3. remove gaps in the sequence if there is any
+    4. convert to fasta format
 
     Parameters
     ----------
@@ -117,7 +118,8 @@ def validate_seq(in_fp, in_fmt, min_len, out_fp):
     logger.info('Filtering and validating input sequences')
     ids = set()
     with open(out_fp, 'w') as out:
-        for seq in read(in_fp, format=in_fmt):
+        for seq in read(in_fp, format=in_fmt, constructor=DNA):
+            seq = seq.degap()
             if len(seq) < min_len:
                 continue
             if in_fmt == 'genbank':
@@ -189,3 +191,32 @@ def integrate(cfg, out_dir, seq_fn, out_fmt='genbank'):
               into=out_fp, format=out_fmt)
     else:
         raise ValueError('Unknown specified output format: %r' % out_fmt)
+
+    summarize((v for _, v in seqs.items()), join(out_dir, 'summary.txt'))
+
+
+def summarize(seqs, out_fp):
+    '''Summarize the sequences and their annotation.
+
+    Parameters
+    ----------
+    seqs : list of ``Sequence``
+    out_fp : str
+        output file path
+    '''
+    types = ['CDS', 'ncRNA', '16s_rRNA', '23s_rRNA', '5s_rRNA',
+             'tandem_repeat', 'tRNA', 'terminator', 'CRISPR']
+    with open(out_fp, 'w') as out:
+        out.write('seq_id\tlength\t')
+        out.write('\t'.join(types))
+        out.write('\n')
+        for seq in seqs:
+            freq = seq.frequencies(relative=True)
+            items = [seq.metadata['id'], str(len(seq)),
+                     ';'.join(['%s:%.2f' % (k, v) for k, v in freq.items()])]
+            imd = seq.interval_metadata
+            for t in types:
+                feature = imd.query(metadata={'type': t})
+                items.append(str(len([i for i in feature])))
+            out.write('\t'.join(items))
+            out.write('\n')
