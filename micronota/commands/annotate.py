@@ -14,7 +14,7 @@ from ..workflow import annotate
 @click.command()
 @click.option('-i', '--in-seqs', type=click.Path(exists=True, dir_okay=False),
               required=True,
-              help='Input sequence file.')
+              help='Input sequence file (can be gzip file.')
 @click.option('--in-fmt', type=click.Choice(['fasta', 'genbank', 'gff3']),
               default='fasta',
               help='The format of input file. If it is gff3 format, it must contain seq in it.')
