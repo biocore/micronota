@@ -28,7 +28,7 @@ from ..workflow import annotate
               help='Output format for the annotated sequences.')
 @click.option('--gcode', type=int, default=11,
               help='Genetic code to predict ORFs.')
-@click.option('--kingdom', type=click.Choice(['bacteria', 'archaea', 'eukarya']), default='bacteria',
+@click.option('--kingdom', type=click.Choice(['bacteria', 'archaea']), default='bacteria',
               required=True,
               help='which Kingdom the sequences are from')
 @click.option('--cpus', type=int, default=1,

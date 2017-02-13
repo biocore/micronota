@@ -270,10 +270,13 @@ def create_faa(seqs, out_fp, genetic_code=11):
                 fna = DNA.concat([seq[start:end] for start, end in cds.bounds])
                 if cds.metadata.get('strand', '.') == '-':
                     fna = fna.reverse_complement()
-                # if translation table is not available in metadata, fallback
-                # to what is specified in the func parameter
-                faa = fna.translate(cds.metadata.get('transl_table', genetic_code))
-                faa.metadata['description'] = cds.metadata.get('product', '')
+                try:
+                    # if translation table is not available in metadata, fallback
+                    # to what is specified in the func parameter
+                    faa = fna.translate(cds.metadata.get('transl_table', genetic_code))
+                    faa.metadata['description'] = cds.metadata.get('product', '')
+                except NotImplementedError:
+                    logger.warning('This gene has degenerate nucleotide and will not be translated.')
                 # CDS metadata must have key of 'ID'
                 faa.metadata['id'] = cds.metadata['ID']
                 write(faa, into=out, format='fasta')
