@@ -13,9 +13,10 @@ from shutil import rmtree
 
 import yaml
 from skbio import DNA, read, write
+from skbio.metadata import IntervalMetadata
 from skbio.util import get_data_path
 
-from micronota.workflow import validate_seq, annotate, summarize
+from micronota.workflow import validate_seq, annotate, summarize, create_faa
 
 
 class Tests(TestCase):
@@ -102,9 +103,39 @@ class Tests(TestCase):
         for (seq_id, imd), seq in zip(read(gff, format='gff3'), seqs):
             seq.interval_metadata = imd
 
-        summarize(seqs, self.o)
-        with open(self.o) as obs, open(get_data_path('summarize.txt')) as exp:
+        with open(self.o, 'w') as obs, open(get_data_path('summarize.txt')) as exp:
+            summarize(seqs, obs)
+            obs.seek(0)
+            print(obs.read())
             self.assertEqual(obs.read(), exp.read())
+
+    def test_create_faa(self):
+        imd = IntervalMetadata(None)
+        imd.add([(0, 120)], metadata={'type': 'CDS', 'product': 'Homoserine kinase',
+                                      'ID': '1_1'})
+        seq = DNA('ATGGTTAAAGTTTATGCCCCGGCTTCCAGTGCCAATATGAGCGTCGGGTTTGATGTGCTC'
+                  'GGGGCGGCGGTGACACCCGTTGATGGTGCATTGCTCGGAGATGTAGTCACGGTTGAGGCG'
+                  'GCAGAGACATTCAGTCTCAACAACCTCGGACGCTTTGCCGATAAGCTGCCGTCAGAACCA'
+                  'CGGGAAAATATCGTTTATCAGTGCTGGGAGCGTTTTTGCCTGGAGCTGGGCAAGCAAATT'
+                  'CCAGTGGCGATGACTCTGGAAAAGAATATGCCGATCGGCTCGGGCTTAGGCTCCAGCGCC'
+                  'TGTTCGGTGGTCGCGGCGCTGATGGCGATGAATGAACACTGCGGCAAGCCACTTAATGAC'
+                  'ACCCGTTTGCTGGCTTTGATGGGCGAGCTGGAAGGACGTATCTCCGGCAGCATTCATTAC'
+                  'GACAACGTGGCACCGTGTTTTCTTGGTGGTATGCAGTTGATGATCGAAGAAAACGACATC'
+                  'ATCAGCCAGCAAGTGCCAGGGTTTGATGAGTGGCTGTGGGTGCTGGCGTATCCGGGAATT'
+                  'AAAGTCTCGACGGCAGAAGCCCGGGCTATTTTACCGGCGCAGTATCGCCGCCAGGATTGC'
+                  'ATTGCGCACGGGCGACATCTGGCTGGCTTCATTCACGCCTGCTATTCCCGTCAGCCTGAG'
+                  'CTTGCCGCGAAGCTGATGAAAGATGTTATCGCTGAACCCTACCGTGAACGGTTACTGCCT'
+                  'GGCTTCCGGCAGGCGCGGCAGGCGGTCGCGGAAATCGGCGCGGTAGCGAGCGGTATCTCC'
+                  'GGCTCCGGCCCGACCTTGTTCGCTCTATGTGACAAGCCGGATACCGCCCAGCGCGTTGCC'
+                  'GACTGGTTGGGTAAGAACTACCTGCAAAATCAGGAAGGTTTTGTTCATATTTGCCGGCTG'
+                  'GATACGGCGGGCGCACGAGTACTGGAAAACTAA',
+                  interval_metadata=imd)
+        create_faa([seq], self.o)
+        exp = '>1_1 Homoserine kinase\nMVKVYAPASSANMSVGFDVLGAAVTPVDGALLGDVVTVEA\n'
+
+        with open(self.o) as out:
+            obs = out.read()
+            self.assertEqual(exp, obs)
 
     def tearDown(self):
         rmtree(self.tmpd)

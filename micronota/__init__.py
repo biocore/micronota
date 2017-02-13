@@ -11,4 +11,4 @@ from .parsers import sam  # noqa
 
 
 __credits__ = "https://github.com/biocore/micronota/graphs/contributors"
-__version__ = "0.1.0.dev0"
+__version__ = "1.0.dev0"

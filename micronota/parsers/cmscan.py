@@ -54,6 +54,12 @@ def _parse_line(line):
     if fam_id in {'RF00001', 'RF00177', 'RF02541', 'RF01959',
                   'RF02540', 'RF00001', 'RF00002', 'RF01960', 'RF02543'}:
         md['type'] = 'rRNA'
+        if fam_id == 'RF00001':
+            md['product'] = '5s_rRNA'
+        elif fam_id in {'RF00177', 'RF01959'}:
+            md['product'] = '16s_rRNA'
+        elif fam_id in {'RF02541', 'RF02540'}:
+            md['product'] = '23s_rRNA'
     else:
         md['type'] = 'ncRNA'
 

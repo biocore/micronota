@@ -11,6 +11,7 @@ from collections import defaultdict
 from os.path import join, exists, basename, splitext
 from logging import getLogger
 from importlib import import_module
+from time import gmtime, strftime
 
 from pkg_resources import resource_filename
 from snakemake import snakemake
@@ -19,6 +20,8 @@ import yaml
 
 from . import parsers
 from .parsers.cds import _add_cds_metadata, _fetch_cds_metadata
+from .quality import compute_gene_score, compute_trna_score, compute_rrna_score, compute_seq_score
+from . import __version__
 
 
 logger = getLogger(__name__)
@@ -183,8 +186,22 @@ def integrate(cfg, out_dir, seq_fn, out_fmt='genbank'):
     # write out the annotation
     if out_fmt == 'genbank':
         out_fp = join(out_dir, '%s.gbk' % seq_fn)
-        write((seq for _, seq in seqs.items()),
-              into=out_fp, format=out_fmt)
+        with open(out_fp, 'w') as out:
+            for sid, seq in seqs.items():
+                seq.metadata['LOCUS'] = {
+                    'locus_name': sid,
+                    'size': len(seq),
+                    'unit': 'bp',
+                    'mol_type': 'DNA',
+                    'shape': 'linear',
+                    'division': None,
+                    'date': strftime("%d-%b-%Y", gmtime())}
+                seq.metadata['ACCESSION'] = ''
+                seq.metadata['VERSION'] = ''
+                seq.metadata['KEYWORDS'] = '.'
+                seq.metadata['SOURCE'] = {'ORGANISM': 'genus species', 'taxonomy': 'unknown'}
+                seq.metadata['COMMENT'] = 'Annotated with %s %s' % (__package__, __version__)
+                write(seq, into=out, format=out_fmt)
     elif out_fmt == 'gff3':
         out_fp = join(out_dir, '%s.gff' % seq_fn)
         write(((sid, seq.interval_metadata) for sid, seq in seqs.items()),
@@ -192,31 +209,71 @@ def integrate(cfg, out_dir, seq_fn, out_fmt='genbank'):
     else:
         raise ValueError('Unknown specified output format: %r' % out_fmt)
 
-    summarize((v for _, v in seqs.items()), join(out_dir, 'summary.txt'))
+    # create faa file
+    faa_fp = join(out_dir, '%s.faa' % seq_fn)
+    create_faa(seqs.values(), faa_fp)
+    with open(join(out_dir, 'summary.txt'), 'w') as out:
+        seq_score = compute_seq_score(seqs.values(), contigs=False)
+        trna_score = compute_trna_score((i.interval_metadata for i in seqs.values()))
+        rrna_score = compute_rrna_score((i.interval_metadata for i in seqs.values()))
+        gene_score = compute_gene_score(faa_fp)
+        out.write('# seq_score: %.2f  tRNA_score: %.2f  rRNA_score: %.2f  gene_score: %.2f\n' % (
+            seq_score, trna_score, rrna_score, gene_score))
+        summarize(seqs.values(), out)
 
 
-def summarize(seqs, out_fp):
+def summarize(seqs, out):
     '''Summarize the sequences and their annotation.
 
     Parameters
     ----------
     seqs : list of ``Sequence``
-    out_fp : str
-        output file path
+    out : file object
+        the file object to output to
     '''
     types = ['CDS', 'ncRNA', 'rRNA', 'tRNA',
              'tandem_repeat', 'terminator', 'CRISPR']
-    with open(out_fp, 'w') as out:
-        out.write('seq_id\tlength\t')
-        out.write('\t'.join(types))
+
+    out.write('#seq_id\tlength\t')
+    out.write('\t'.join(types))
+    out.write('\n')
+    for seq in seqs:
+        freq = seq.frequencies(relative=True)
+        items = [seq.metadata['id'], str(len(seq)),
+                 ';'.join(['%s:%.2f' % (k, freq[k]) for k in sorted(freq)])]
+        imd = seq.interval_metadata
+        for t in types:
+            feature = imd.query(metadata={'type': t})
+            items.append(str(len([i for i in feature])))
+        out.write('\t'.join(items))
         out.write('\n')
+
+
+def create_faa(seqs, out_fp, genetic_code=11):
+    '''Create protein sequence file.
+
+    It creates protein sequences based on the interval features
+    with type of "CDS".
+
+    Parameters
+    ----------
+    seqs : iterable of ``Sequence``
+        The list of DNA/RNA sequences
+    out_fp : str
+        File path for output
+    genetic_code : int
+        The fallback genetic code to use
+    '''
+    with open(out_fp, 'w') as out:
         for seq in seqs:
-            freq = seq.frequencies(relative=True)
-            items = [seq.metadata['id'], str(len(seq)),
-                     ';'.join(['%s:%.2f' % (k, freq[k]) for k in sorted(freq)])]
-            imd = seq.interval_metadata
-            for t in types:
-                feature = imd.query(metadata={'type': t})
-                items.append(str(len([i for i in feature])))
-            out.write('\t'.join(items))
-            out.write('\n')
+            for cds in seq.interval_metadata.query(metadata={'type': 'CDS'}):
+                fna = DNA.concat([seq[start:end] for start, end in cds.bounds])
+                if cds.metadata.get('strand', '.') == '-':
+                    fna = fna.reverse_complement()
+                # if translation table is not available in metadata, fallback
+                # to what is specified in the func parameter
+                faa = fna.translate(cds.metadata.get('transl_table', genetic_code))
+                faa.metadata['description'] = cds.metadata.get('product', '')
+                # CDS metadata must have key of 'ID'
+                faa.metadata['id'] = cds.metadata['ID']
+                write(faa, into=out, format='fasta')

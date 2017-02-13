@@ -21,16 +21,16 @@ class ParseTests(TestCase):
                  metadata={'ncRNA_class': 'RNaseP_bact_a', 'type': 'ncRNA', 'strand': '-',
                            'db_xref': 'RF00010', 'source': 'Rfam'})
         imd1.add(bounds=[(3355449, 3355633)],
-                 metadata={'ncRNA_class': '6S', 'type': 'ncRNA', 'strand': '+',
-                           'db_xref': 'RF00013', 'source': 'Rfam'})
+                 metadata={'ncRNA_class': '5S_rRNA', 'type': 'rRNA', 'strand': '+',
+                           'product': '5s_rRNA', 'db_xref': 'RF00001', 'source': 'Rfam'})
         imd2 = IntervalMetadata(None)
         imd2.add(bounds=[(85215, 85384)],
-                 metadata={'ncRNA_class': 'U2', 'type': 'ncRNA', 'strand': '+',
-                           'db_xref': 'RF00004', 'source': 'Rfam'})
+                 metadata={'ncRNA_class': 'LSU_rRNA_bacteria', 'type': 'rRNA', 'strand': '+',
+                           'product': '23s_rRNA', 'db_xref': 'RF02541', 'source': 'Rfam'})
         imd3 = IntervalMetadata(None)
         imd3.add(bounds=[(8739, 8777)],
-                 metadata={'ncRNA_class': 'U2', 'type': 'ncRNA', 'strand': '+',
-                           'db_xref': 'RF00004', 'source': 'Rfam'})
+                 metadata={'ncRNA_class': 'SSU_rRNA_bacteria', 'type': 'rRNA', 'strand': '+',
+                           'product': '16s_rRNA', 'db_xref': 'RF00177', 'source': 'Rfam'})
         exp = (('NC_016822.1', imd1),
                ('NC_016833.1', imd2),
                ('NC_016834.1', imd3))
