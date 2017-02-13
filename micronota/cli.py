@@ -61,11 +61,8 @@ class ComplexCLI(AliasedGroup):
         return rv
 
     def get_command(self, ctx, cmd_name):
-        try:
-            mod = __import__('micronota.commands.' + cmd_name,
-                             None, None, ['cli'])
-        except ImportError:
-            return
+        mod = __import__('micronota.commands.' + cmd_name,
+                         None, None, ['cli'])
         return mod.cli
 
 
