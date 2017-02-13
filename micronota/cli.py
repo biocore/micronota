@@ -72,8 +72,9 @@ class ComplexCLI(AliasedGroup):
               help='Logging config file.')
 @click.option('--log-level', required=False,
               type=click.IntRange(1, 5, clamp=True), default=2,
-              show_default=True, help="Level of messages for log file"
-              "(1-debug, 2-info, 3-warning, 4-error, 5-critical")
+              show_default=True,
+              help="Level of messages for log file The higher, "
+              "the more verbose (5-debug, 4-info, 3-warning, 2-error, 1-critical")
 @click.version_option()   # add --version option
 @click.pass_context
 def cmd(ctx, log_config, log_level):

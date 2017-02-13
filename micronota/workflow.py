@@ -27,7 +27,8 @@ from . import __version__
 logger = getLogger(__name__)
 
 
-def annotate(in_fp, in_fmt, min_len, out_dir, out_fmt, gcode, kingdom,
+def annotate(in_fp, in_fmt, min_len, out_dir, out_fmt, gcode,
+             mode, kingdom,
              cpus, force, dry_run, config):
     '''Annotate the sequences in the input file.
 
@@ -45,6 +46,8 @@ def annotate(in_fp, in_fmt, min_len, out_dir, out_fmt, gcode, kingdom,
         Output file format
     gcode : int
         The translation table to use for protein-coding genes
+    mode : bool
+        Run with metagenomic mode?
     kingdom : str
         The kingdom where the sequences are from
     cpus : int
@@ -71,7 +74,14 @@ def annotate(in_fp, in_fmt, min_len, out_dir, out_fmt, gcode, kingdom,
     cfg['seq'] = seq_fn_val
     cfg['genetic_code'] = gcode
     cfg['kingdom'] = kingdom
-
+    prodigal = cfg['structural_annotation']['prodigal']
+    if mode == 'finished':
+        prodigal['params'] = '-p single -c'
+    elif mode == 'draft':
+        prodigal['params'] = '-p single'
+    elif mode == 'metagenome':
+        prodigal['params'] = '-p meta'
+    cfg['mode'] = mode
     snakefile = resource_filename(__package__, 'rules/Snakefile')
     success = snakemake(
         snakefile,
@@ -212,14 +222,19 @@ def integrate(cfg, out_dir, seq_fn, out_fmt='genbank'):
     # create faa file
     faa_fp = join(out_dir, '%s.faa' % seq_fn)
     create_faa(seqs.values(), faa_fp)
-    with open(join(out_dir, 'summary.txt'), 'w') as out:
-        seq_score = compute_seq_score(seqs.values(), contigs=False)
-        trna_score = compute_trna_score((i.interval_metadata for i in seqs.values()))
-        rrna_score = compute_rrna_score((i.interval_metadata for i in seqs.values()))
-        gene_score = compute_gene_score(faa_fp)
-        out.write('# seq_score: %.2f  tRNA_score: %.2f  rRNA_score: %.2f  gene_score: %.2f\n' % (
-            seq_score, trna_score, rrna_score, gene_score))
-        summarize(seqs.values(), out)
+    if cfg['mode'] != 'metagenome':
+        with open(join(out_dir, 'summary.txt'), 'w') as out:
+            if cfg['mode'] == 'finish':
+                contigs = False
+            else:
+                contigs = True
+            seq_score = compute_seq_score(seqs.values(), contigs)
+            trna_score = compute_trna_score((i.interval_metadata for i in seqs.values()))
+            rrna_score = compute_rrna_score((i.interval_metadata for i in seqs.values()))
+            gene_score = compute_gene_score(faa_fp)
+            out.write('# seq_score: %.2f  tRNA_score: %.2f  rRNA_score: %.2f  gene_score: %.2f\n' % (
+                seq_score, trna_score, rrna_score, gene_score))
+            summarize(seqs.values(), out)
 
 
 def summarize(seqs, out):
@@ -234,7 +249,7 @@ def summarize(seqs, out):
     types = ['CDS', 'ncRNA', 'rRNA', 'tRNA',
              'tandem_repeat', 'terminator', 'CRISPR']
 
-    out.write('#seq_id\tlength\t')
+    out.write('#seq_id\tlength\tnuc_freq\t')
     out.write('\t'.join(types))
     out.write('\n')
     for seq in seqs:

@@ -1,8 +1,6 @@
 metadata: '/Users/zech/database/uniprot/20161130/uniprot.sqlite'
 structural_annotation:
     prodigal:
-        # params: '-p meta'
-        params: '-p single'
         priority: 90
     cmscan:
         params: ''
