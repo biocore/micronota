@@ -290,8 +290,8 @@ def create_faa(seqs, out_fp, genetic_code=11):
                     # to what is specified in the func parameter
                     faa = fna.translate(cds.metadata.get('transl_table', genetic_code))
                     faa.metadata['description'] = cds.metadata.get('product', '')
+                    # CDS metadata must have key of 'ID'
+                    faa.metadata['id'] = cds.metadata['ID']
+                    write(faa, into=out, format='fasta')
                 except NotImplementedError:
                     logger.warning('This gene has degenerate nucleotide and will not be translated.')
-                # CDS metadata must have key of 'ID'
-                faa.metadata['id'] = cds.metadata['ID']
-                write(faa, into=out, format='fasta')

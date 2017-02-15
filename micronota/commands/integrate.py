@@ -31,7 +31,7 @@ def cli(ctx, out_dir, out_fmt, config):
         config = resource_filename('micronota', 'config.yaml')
     with open(config) as fh:
         cfg = yaml.load(fh)
-
+    cfg['mode'] = 'draft'
     for fn in os.listdir(out_dir):
         if fn.endswith('.valid.fna'):
             integrate(cfg, out_dir, fn, out_fmt)
