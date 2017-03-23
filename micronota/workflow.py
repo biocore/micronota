@@ -82,7 +82,12 @@ def annotate(in_fp, in_fmt, min_len, out_dir, out_fmt, gcode,
     elif mode == 'metagenome':
         prodigal['params'] = '-p meta'
     cfg['mode'] = mode
+    cfg_file = join(out_dir, 'config.yaml')
+    with open(cfg_file, 'w') as out:
+        yaml.dump(cfg, out, default_flow_style=False)
+
     snakefile = resource_filename(__package__, 'rules/Snakefile')
+
     success = snakemake(
         snakefile,
         cores=cpus,
@@ -92,8 +97,8 @@ def annotate(in_fp, in_fmt, min_len, out_dir, out_fmt, gcode,
         printshellcmds=True,
         dryrun=dry_run,
         forceall=force,
-        config=cfg,
-        # configfile=config,
+        # config=cfg,
+        configfile=cfg_file,
         keep_target_files=True,
         keep_logger=False)
 
