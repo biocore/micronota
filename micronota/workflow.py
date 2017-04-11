@@ -13,13 +13,13 @@ from logging import getLogger
 from importlib import import_module
 from time import gmtime, strftime
 
-from pkg_resources import resource_filename
+from pkg_resources import resource_filename, iter_entry_points
 from snakemake import snakemake
 from skbio import read, write, DNA
 import yaml
 
-from . import parsers
-from .parsers.cds import _add_cds_metadata, _fetch_cds_metadata
+# from . import parsers
+# from .parsers.cds import _add_cds_metadata, _fetch_cds_metadata
 from .quality import compute_gene_score, compute_trna_score, compute_rrna_score, compute_seq_score
 from . import __version__
 
@@ -27,8 +27,8 @@ from . import __version__
 logger = getLogger(__name__)
 
 
-def annotate(in_fp, in_fmt, min_len, out_dir, out_fmt, gcode,
-             mode, kingdom,
+def annotate(in_fp, in_fmt, min_len, out_dir, out_fmt,
+             gcode, kingdom, mode, task,
              cpus, force, dry_run, config):
     '''Annotate the sequences in the input file.
 
@@ -58,42 +58,64 @@ def annotate(in_fp, in_fmt, min_len, out_dir, out_fmt, gcode,
     config : config file for snakemake
     '''
     logger.info('Running annotation pipeline')
+    logger.debug('working dir: %s' % out_dir)
+    if force:
+        logger.debug('run in force mode, will overwrite existing files')
+    if dry_run:
+        logger.debug('run in dry mode, will not produce output')
 
     os.makedirs(out_dir, exist_ok=True)
 
+    logger.debug('create validated input sequence file')
     seq_fn = basename(in_fp)
-
-    seq_fn_val = splitext(seq_fn)[0] + '.valid.fna'
-    validate_seq(in_fp, in_fmt, min_len, join(out_dir, seq_fn_val))
+    seq_fn_val = join(out_dir, splitext(seq_fn)[0] + '.fna')
+    validate_seq(in_fp, in_fmt, min_len, seq_fn_val)
 
     if config is None:
-        config = resource_filename(__package__, 'config.yaml')
+        config = resource_filename(__package__, kingdom + '.yaml')
+    logger.debug('run annotation in %s mode' % mode)
+    logger.debug('run annotation as %s' % kingdom)
+    logger.debug('use config file: %s' % config)
     with open(config) as fh:
         cfg = yaml.load(fh)
 
-    cfg['seq'] = seq_fn_val
-    cfg['genetic_code'] = gcode
-    cfg['kingdom'] = kingdom
-    prodigal = cfg['structural_annotation']['prodigal']
-    if mode == 'finished':
-        prodigal['params'] = '-p single -c'
-    elif mode == 'draft':
-        prodigal['params'] = '-p single'
-    elif mode == 'metagenome':
-        prodigal['params'] = '-p meta'
-    cfg['mode'] = mode
-    cfg_file = join(out_dir, 'config.yaml')
+    rules = {}
+    for k, v in cfg.items():
+        # specify the annotation task
+        if task is None or k in task:
+            for vk, vv in v.items():
+                if vk in rules:
+                    raise ValueError('You have multiple config for rule %s' % vk)
+                rules[vk] = vv
+
+    if 'prodigal' in rules:
+        prodigal = rules['prodigal']
+        param = prodigal['params']
+        if mode == 'finished':
+            prodigal['params'] = '-p single -c ' + param
+        elif mode == 'draft':
+            prodigal['params'] = '-p single ' + param
+        elif mode == 'metagenome':
+            prodigal['params'] = '-p meta ' + param
+
+    rules['_seq_'] = seq_fn_val
+    rules['_genetic_code_'] = gcode
+
+    cfg_file = join(out_dir, 'snakemake.yaml')
     with open(cfg_file, 'w') as out:
-        yaml.dump(cfg, out, default_flow_style=False)
+        yaml.dump(rules, out, default_flow_style=False)
 
-    snakefile = resource_filename(__package__, 'rules/Snakefile')
+    logger.debug('run snakemake workflow')
+    snakefile = resource_filename(__package__, 'Snakefile')
 
+    targets = rules.keys()
     success = snakemake(
         snakefile,
         cores=cpus,
+        targets=targets,
         # set work dir to output dir so simultaneous runs
         # doesn't interfere with each other.
-        workdir=out_dir,
+        workdir=join(out_dir, 'tmp'),
         printshellcmds=True,
         dryrun=dry_run,
         forceall=force,
@@ -106,7 +128,7 @@ def annotate(in_fp, in_fmt, min_len, out_dir, out_fmt, gcode,
         # if snakemake finishes successfully
         integrate(cfg, out_dir, seq_fn_val, out_fmt)
 
-    logger.info('Done with annnotation')
+    logger.info('Done with annotation')
 
 
 def validate_seq(in_fp, in_fmt, min_len, out_fp):
@@ -131,7 +153,7 @@ def validate_seq(in_fp, in_fmt, min_len, out_fp):
     if exists(out_fp):
         # do not overwrite because all the snakemake steps will be rerun when
         # this file is updated.
-        logger.debug('The sequence file already exist. Skip validating step.')
+        logger.debug('The sequence file already exists. Skip validating step.')
         return
     logger.info('Filtering and validating input sequences')
     ids = set()
@@ -154,7 +176,7 @@ def validate_seq(in_fp, in_fmt, min_len, out_fp):
             write(seq, format='fasta', into=out)
 
 
-def integrate(cfg, out_dir, seq_fn, out_fmt='genbank'):
+def integrate(cfg, out_dir, seq_fn, out_fmt='gff3'):
     '''integrate all the annotations and write to disk.
 
     seq_fn : str
@@ -164,6 +186,11 @@ def integrate(cfg, out_dir, seq_fn, out_fmt='genbank'):
     out_fmt : str
         output format
     '''
+    # for entry_point in iter_entry_points(group='micronota.%s' % kingdom, name=None):
+
+    # rule_config = config['rules'][task]
+    # outputs.append('%s.ok' % task)
+
     logger.info('Integrating annotation for output')
     seqs = {}
     for seq in read(join(out_dir, seq_fn), format='fasta'):
@@ -243,7 +270,7 @@ def integrate(cfg, out_dir, seq_fn, out_fmt='genbank'):
 
 
 def summarize(seqs, out):
-    '''Summarize the sequences and their annotation.
+    '''Summarize the sequences and their annotations.
 
     Parameters
     ----------
@@ -269,7 +296,7 @@ def summarize(seqs, out):
         out.write('\n')
 
 
-def create_faa(seqs, out_fp, genetic_code=11):
+def create_faa(seqs, out, genetic_code=11):
     '''Create protein sequence file.
 
     It creates protein sequences based on the interval features
@@ -279,24 +306,23 @@ def create_faa(seqs, out_fp, genetic_code=11):
     ----------
     seqs : iterable of ``Sequence``
         The list of DNA/RNA sequences
-    out_fp : str
-        File path for output
+    out : str
+        File object for output
     genetic_code : int
         The fallback genetic code to use
     '''
-    with open(out_fp, 'w') as out:
-        for seq in seqs:
-            for cds in seq.interval_metadata.query(metadata={'type': 'CDS'}):
-                fna = DNA.concat([seq[start:end] for start, end in cds.bounds])
-                if cds.metadata.get('strand', '.') == '-':
-                    fna = fna.reverse_complement()
-                try:
-                    # if translation table is not available in metadata, fallback
-                    # to what is specified in the func parameter
-                    faa = fna.translate(cds.metadata.get('transl_table', genetic_code))
-                    faa.metadata['description'] = cds.metadata.get('product', '')
-                    # CDS metadata must have key of 'ID'
-                    faa.metadata['id'] = cds.metadata['ID']
-                    write(faa, into=out, format='fasta')
-                except NotImplementedError:
-                    logger.warning('This gene has degenerate nucleotide and will not be translated.')
+    for seq in seqs:
+        for cds in seq.interval_metadata.query(metadata={'type': 'CDS'}):
+            fna = DNA.concat([seq[start:end] for start, end in cds.bounds])
+            if cds.metadata.get('strand', '.') == '-':
+                fna = fna.reverse_complement()
+            try:
+                # if translation table is not available in metadata, fallback
+                # to what is specified in the func parameter
+                faa = fna.translate(cds.metadata.get('transl_table', genetic_code))
+                faa.metadata['description'] = cds.metadata.get('product', '')
+                # CDS metadata must have key of 'ID'
+                faa.metadata['id'] = cds.metadata['ID']
+                write(faa, into=out, format='fasta')
+            except NotImplementedError:
+                logger.warning('This gene has degenerate nucleotide and will not be translated.')

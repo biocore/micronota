@@ -1,0 +1,298 @@
+from collections import defaultdict
+
+# default config settings for each wrapped tool.
+# default is empty
+default = defaultdict(str)
+# the file path of the input sequence to annotate
+seq = config['seq']
+# the translation table
+genetic_code = config['genetic_code']
+
+# for task in config['protein']:
+#     rule_config = config['protein'][task]
+#     outputs.append('%s.hit' % rule_config['output'])
+#     include: '%s.rule' % task
+
+# =============================================================================
+# Prodigal
+# =============================================================================
+prodigal = config['modules'].get('prodigal', default)
+rule prodigal:
+    '''Predict CDS with Prodigal.
+
+    References
+    ----------
+    Hyatt, D., Chen, G.-L., LoCascio, P.F., Land, M.L., Larimer, F.W., and
+    Hauser, L.J. (2010). Prodigal: prokaryotic gene recognition and
+    translation initiation site identification. BMC Bioinformatics 11, 119.
+    '''
+    input:
+        seq
+    output:
+        ok = touch('prodigal.ok'),
+        gff = 'prodigal.gff',
+        faa = 'prodigal.faa',
+        fna = 'prodigal.fna',
+    log:
+        'prodigal.log'
+    params:
+        prodigal['params']
+    priority:
+        prodigal['priority']
+    shell:
+        'prodigal {params} -g %d -i {input[0]} -o {output.gff}'
+        ' -a {output.faa} -d {output.fna} &> {log}' % genetic_code
+
+rule prodigal_coords:
+    '''Create .coords file (from prodigal output) required by TransTermHP'''
+    input:
+        gff = rules.prodigal.output.gff
+    output:
+        coords = 'prodigal.coords'
+    priority:
+        prodigal['priority']
+    run:
+        with open(input.gff) as f, open(output.coords, 'w') as out:
+            for line in f:
+                if line.startswith('#'):
+                    continue
+                items = line.split('\t')
+                strand = items[6]
+                start, end = items[3], items[4]
+                if strand == '-':
+                    start, end = end, start
+                gene_id = items[-1].split(';')[0].split('=')[1]
+                out.write('{}\t{}\t{}\t{}\n'.format(
+                    gene_id, start, end, items[0]))
+
+
+# =============================================================================
+# TransTermHP
+# =============================================================================
+transtermhp = config['modules'].get('transtermhp', default)
+rule TransTermHP:
+    '''Predict rho-independent transcription terminators with TransTermHP.
+
+    References
+    ----------
+    C. Kingsford, K. Ayanbule and S.L. Salzberg. Rapid, accurate,
+    computational discovery of Rho-independent transcription terminators
+    illuminates their relationship to DNA uptake. Genome Biology 8:R22
+    (2007).
+
+    http://transterm.cbcb.umd.edu/index.php
+    '''
+    input:
+        seq, rules.prodigal_coords.output.coords
+    output:
+        'transtermhp.txt',
+        ok = touch('transtermhp.ok')
+    log:
+        'transtermhp.log'
+    params:
+        transtermhp['params']
+    priority:
+        transtermhp['priority']
+    shell:
+        'transterm {params} {input[0]} {input[1]} > {output[0]} 2> {log}'
+
+
+minced = config['modules'].get('minced', default)
+rule minced:
+    '''Predict CRISPR with minced.'''
+    input:
+        fna = seq
+    output:
+        'minced.txt',
+        ok = touch('minced.ok')
+    log:
+        'minced.log'
+    params:
+        minced['params']
+    priority:
+        minced['priority']
+    shell:
+        'minced {params} -gff {input.fna} {output[0]} &> {log}'
+
+
+aragorn = config['modules'].get('aragorn', default)
+rule aragorn:
+    '''Predict tRNA with Aragorn.'''
+    input:
+        fna = seq
+    output:
+        'aragorn.txt',
+        ok = touch('aragorn.ok')
+    log:
+        'aragorn.log'
+    params:
+        aragorn['params']
+    priority:
+        aragorn['priority']
+    shell:
+        'aragorn {params} -gc%r -o {output[0]} {input.fna} &> {log}' % genetic_code
+
+
+cmscan = config['modules'].get('cmscan', defaultdict(str))
+rule cmscan:
+    '''Predict ncRNA with cmscan and Rfam.'''
+    input:
+        db = cmscan['db'],
+        fna = seq
+    output:
+        # this is expansive to compute. protect it so it is not overwritten accidentally
+        protected('cmscan.txt'),
+        ok = touch('cmscan.ok')
+    log:
+        'cmscan.log'
+    threads:
+        cmscan['threads']
+    params:
+        cmscan['params']
+    priority:
+        cmscan['priority']
+    shell:
+        'cmscan {params} --cpu {threads} --tblout {output[0]} {input.db} {input.fna} &> {log}'
+
+
+tandem_repeats_finder = config['modules'].get('tandem_repeats_finder', default)
+rule tandem_repeats_finder:
+    '''Predict tandem repeats with TRF.
+
+    References
+    ----------
+    Tandem repeats finder: a program to analyze DNA sequences
+    Nucleic Acid Research(1999)
+    Vol. 27, No. 2, pp. 573-580.
+
+    http://tandem.bu.edu/trf/trf.html
+    '''
+    input:
+        seq
+    output:
+        'tandem_repeats_finder.txt',
+        ok = touch('tandem_repeats_finder.ok')
+    log:
+        'tandem_repeats_finder.log'
+    params:
+        tandem_repeats_finder['params']
+    priority:
+        tandem_repeats_finder['priority']
+    shell:
+        # use recommended parameters
+        'trf {input[0]} 2 7 7 80 10 50 500 -h -ngs > {output[0]} 2> {log}'
+
+
+cmscan_rRNA = config.get('cmscan_rRNA', default)
+rule cmscan_rRNA:
+    '''Predict rRNA with cmscan.'''
+    input:
+        db = cmscan_rRNA['db'],
+        fna = seq
+    output:
+        'cmscan_rRNA.txt',
+        ok = touch('cmscan_rRNA.ok')
+    log:
+        'cmscan_rRNA.log'
+    threads:
+        cmscan_rRNA['threads']
+    params:
+        cmscan_rRNA['params']
+    priority:
+        cmscan_rRNA['priority']
+    shell:
+        'cmscan {params} --cpu {threads} --tblout {output[0]} {input.db} {input.fna} &> {log}'
+
+rule rnammer:
+    '''Predict rRNA with RNAmmer.'''
+    input:
+        fna = seq
+    output:
+        'rnammer.gff',
+        ok = touch('rnammer.ok')
+    params:
+        rnammer['params']
+    threads:
+        rnammer['threads']
+    shell:
+        'rnammer -S %s {params} -gff {output[0]} {input.fna}' % _k
+
+
+# =============================================================================
+# diamond_uniref
+# protein homologous annotation using diamond and uniref
+# =============================================================================
+from micronota.parsers.cds import parse_diamond_uniref
+from micronota.util import _filter_sequence_ids
+
+rule diamond_uniref90:
+    '''Homologous search UniRef90 with Diamond blastp.'''
+    input:
+        db = rule_config['db'],
+        faa = rule_config['input']
+    output:
+        protected('diamond_uniref90.m12')
+    log:
+        'diamond_uniref90.log'
+    priority:
+        rule_config['priority']
+    params:
+        rule_config['params']
+    threads:
+        rule_config['threads']
+    shell:
+        'diamond blastp {params} --threads {threads}'
+        ' --db {input.db} -q {input.faa} -o {output[0]}'
+        ' --outfmt 6 qseqid qlen sseqid slen pident length'
+        ' evalue bitscore qstart qend sstart send &> {log}'
+
+rule unmatched_uniref90:
+    '''Filter out the proteins that don't hit UniRef90'''
+    input:
+        rule_config['input'],
+        'diamond_uniref90.m12'
+    output:
+        faa = rule_config['output'] + '.faa',
+        hit = rule_config['output'] + '.hit',
+    run:
+        df = parse_diamond_uniref(pident=90, fn='diamond_uniref90.m12')()
+        _filter_sequence_ids(input[0], output.faa, df.uniprot)
+        df.uniprot = df.uniprot.apply(lambda s: s.split('_', 1)[-1])
+        df.to_csv(output.hit, sep='\t', index=False)
+
+
+rule diamond_uniref50:
+    '''Homologous search UniRef90 with Diamond blastp.'''
+    input:
+        db = rule_config['db'],
+        faa = rule_config['input']
+    output:
+        protected('diamond_uniref50.m12')
+    log:
+        'diamond_uniref50.log'
+    priority:
+        rule_config['priority']
+    params:
+        rule_config['params']
+    threads:
+        rule_config['threads']
+    shell:
+        'diamond blastp {params} --threads {threads}'
+        ' --db {input.db} -q {input.faa} -o {output[0]}'
+        ' --outfmt 6 qseqid qlen sseqid slen pident length gaps'
+        ' evalue bitscore qstart qend sstart send &> {log}'
+
+rule unmatched_uniref50:
+    '''Filter out the proteins that don't hit UniRef90'''
+    input:
+        rule_config['input'],
+        'diamond_uniref50.m12'
+    output:
+        faa = rule_config['output'] + '.faa',
+        hit = rule_config['output'] + '.hit',
+        ok = touch('diamond_uniref.ok')
+    run:
+        df = parse_diamond_uniref(pident=50, fn='diamond_uniref50.m12')()
+        _filter_sequence_ids(input[0], output.faa, df.uniprot)
+        df.uniprot = df.uniprot.apply(lambda s: s.split('_', 1)[-1])
+        df.to_csv(output.hit, sep='\t', index=False)

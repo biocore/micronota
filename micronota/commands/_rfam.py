@@ -18,6 +18,7 @@ logger = getLogger(__name__)
 
 
 # keep this command hidden from help msg
+# this option is only available in click v7
 @click.command(hidden=True)
 @click.option('--operation', type=click.Choice(['kingdom', 'other', 'all']),
               default='kingdom', required=True, help='')

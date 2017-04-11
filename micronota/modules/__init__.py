@@ -13,3 +13,5 @@ This module parse the outputs.
 
    embl
 '''
+
+from ._base import BaseMod

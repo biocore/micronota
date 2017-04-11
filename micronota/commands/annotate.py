@@ -35,7 +35,10 @@ from ..workflow import annotate
               default='draft',
               help='Run the proper mode to annotate the input sequences '
                    '(finished genome, draft genome, or metagenome.')
-@click.option('--cpus', type=int, default=1,
+@click.option('--task', type=str, nargs=-1,
+              default=None,
+              help='what annotation task(s) to run?')
+@click.option('--cpu', type=int, default=1,
               help='Number of CPUs to use.')
 @click.option('--force', is_flag=True, default=False,
               help='Force overwrite if the output directory exists')
@@ -44,9 +47,10 @@ from ..workflow import annotate
 @click.option('--config', type=click.Path(exists=True, dir_okay=False),
               help='Config file for annotation workflow.')
 @click.pass_context
-def cli(ctx, in_seqs, in_fmt, min_len, out_dir, out_fmt, gcode, kingdom,
-        mode, cpus, force, dry_run, config):
+def cli(ctx, in_seqs, in_fmt, min_len, out_dir, out_fmt, gcode, kingdom, mode, task,
+        cpu, force, dry_run, config):
     '''Annotate prokaryotic sequences.'''
     annotate(in_seqs, in_fmt, min_len,
              out_dir, out_fmt,
-             gcode, mode, kingdom, cpus, force, dry_run, config)
+             gcode, kingdom, mode, task,
+             cpu, force, dry_run, config)

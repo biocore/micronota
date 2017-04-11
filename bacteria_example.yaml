@@ -1,0 +1,73 @@
+CDS:
+    prodigal:
+        params: '-f gff'
+        priority: 100
+        threads: 1
+rho_independent_terminator:
+    transtermhp:
+        params: '-p $TRANSTERMHP'
+        # '--all-context'  # output all predicted terminators instead of legitimate ones
+        priority: 99
+        threads: 1
+ncRNA:
+    # cmscan:
+    #     params: ''
+    #     priority: 50
+    #     threads: 1
+    #     db: '/Users/zech/Dropbox/git/micronota/micronota/data/rfam.cm'
+    #     output: 'cmscan'
+CRISPR:
+    minced:
+        params: ''
+        priority: 50
+        threads: 1
+tRNA:
+    aragorn:
+        params: '-w'
+        priority: 50
+        threads: 1
+tandem_repeats:
+    tandem_repeats_finder:
+        params: ''
+        priority: 50
+        threads: 1
+        output: 'tandem_repeats_finder'
+rRNA:
+    rnammer:
+        params: '-S bac -m lsu,ssu,tsu'
+    # cmscan_rRNA:
+    #     params: ''
+    #     priority: 50
+    #     threads: 1
+    #     db: '/Users/zech/database/Rfam/v12.2/bacteria.cm'
+protein:
+    metadata: '/Users/zech/database/protein.sqlite'
+    diamond_uniref90:
+        params: '--index-chunks 1 --query-cover 80 -k 3'
+        priority: 50
+        threads: 1
+        db: '/Users/zech/Dropbox/git/micronota/micronota/data/uniref90.dmnd'
+        input: 'prodigal.faa'
+        output: 'diamond_uniref90'
+    diamond_uniref50:
+        params: '--index-chunks 1 --query-cover 80 -k 3'
+        priority: 50
+        threads: 1
+        db: '/Users/zech/Dropbox/git/micronota/micronota/data/uniref50.dmnd'
+        input: 'diamond_uniref90.faa'
+        output: 'diamond_uniref50'
+
+    # hmmscan_tigrfam:
+    #     params: '−−cug_nc'
+    #     priority: 60
+    #     threads: 1
+    #     db: '~/database/TIGRFAM/tigrfam.hmm'
+    #     input: ''
+    #     output: ''
+    # hmmscan_tigrfam:
+    #     params: '−−cug_ga'
+    #     priority: 60
+    #     threads: 1
+    #     db: '~/database/TIGRFAM/tigrfam.hmm'
+    #     input: ''
+    #     output: ''
