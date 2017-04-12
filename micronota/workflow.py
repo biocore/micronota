@@ -8,7 +8,7 @@
 
 import os
 from os.path import join, exists, basename, splitext
-from logging import getLogger
+from logging import getLogger, NullHandler
 from importlib import import_module
 from time import gmtime, strftime
 
@@ -56,7 +56,6 @@ def annotate(in_fp, in_fmt, min_len, out_dir, out_fmt,
     dry_run : bool
     config : config file for snakemake
     '''
-    logger.info('Running annotation pipeline')
     logger.debug('working dir: %s' % out_dir)
     if force:
         logger.debug('run in force mode, will overwrite existing files')
@@ -65,7 +64,6 @@ def annotate(in_fp, in_fmt, min_len, out_dir, out_fmt,
 
     os.makedirs(out_dir, exist_ok=True)
 
-    logger.debug('create validated input sequence file')
     seq_fn = basename(in_fp)
     prefix = splitext(seq_fn)[0]
     seq_fn_val = join(out_dir, prefix + '.fna')
@@ -73,8 +71,8 @@ def annotate(in_fp, in_fmt, min_len, out_dir, out_fmt,
 
     if config is None:
         config = resource_filename(__package__, kingdom + '.yaml')
-    logger.debug('run annotation in %s mode' % mode)
-    logger.debug('run annotation as %s' % kingdom)
+    logger.debug('set annotation in %s mode' % mode)
+    logger.debug('set annotation as %s' % kingdom)
     logger.debug('use config file: %s' % config)
     with open(config) as fh:
         cfg = yaml.load(fh)
@@ -102,9 +100,8 @@ def annotate(in_fp, in_fmt, min_len, out_dir, out_fmt,
     logger.debug('run snakemake workflow')
     # only run the targets specified in the yaml file
     targets = list(rules.keys())
-
     if not targets:
-        logger.info('No annotation task to run')
+        logger.warning('No annotation task to run')
         return
     rules['_seq_'] = seq_fn_val
     rules['_genetic_code_'] = gcode
@@ -113,6 +110,7 @@ def annotate(in_fp, in_fmt, min_len, out_dir, out_fmt,
         yaml.dump(rules, out, default_flow_style=False)
 
     snakefile = resource_filename(__package__, 'Snakefile')
+    logger.info('--- Run annotation pipeline')
     success = snakemake(
         snakefile,
         cores=cpus,
@@ -126,13 +124,16 @@ def annotate(in_fp, in_fmt, min_len, out_dir, out_fmt,
         # config=cfg,
         configfile=cfg_file,
         keep_target_files=True,
+        # provide this dummy to suppress unnecessary log
+        log_handler=lambda s: None,
+        quiet=True,  # do not print job info
         keep_logger=False)
 
     if success:
         # if snakemake finishes successfully
         integrate(out_dir, seq_fn_val, '/Users/zech/database/protein.sqlite', out_fmt)
 
-    logger.info('Done with annotation')
+    logger.info('--- Done with annotation')
 
 
 def validate_seq(in_fp, in_fmt, min_len, out_fp):
@@ -159,7 +160,7 @@ def validate_seq(in_fp, in_fmt, min_len, out_fp):
         # this file is updated.
         logger.debug('The sequence file already exists. Skip validating step.')
         return
-    logger.info('Filtering and validating input sequences')
+    logger.info('--- Filter and validat input sequences')
     ids = set()
     with open(out_fp, 'w') as out:
         for seq in read(in_fp, format=in_fmt, constructor=DNA):
@@ -202,27 +203,24 @@ def integrate(out_dir, seq_fn, protein_metadata, out_fmt='gff3'):
     out_fmt : str
         output format
     '''
-    logger.info('Integrating annotation for output')
+    logger.info('--- Integrate annotation for output')
     seqs = {}
     seq_fp = join(out_dir, seq_fn)
     tmp_dir = splitext(seq_fp)[0]
     for seq in read(seq_fp, format='fasta'):
         seqs[seq.metadata['id']] = seq
 
-    outputs = {f for f in os.listdir(tmp_dir) if f.endswith('.ok')}
-    if 'diamond' in outputs:
-        outputs.pop('diamond')
+    rules = {splitext(f)[0] for f in os.listdir(tmp_dir) if f.endswith('.ok')}
+    if 'diamond' in rules:
+        rules.discard('diamond')
         mod = import_module('.diamond', modules.__name__)
         diamond = mod.Module(directory=tmp_dir)
         diamond.parse(metadata=protein_metadata)
         protein = diamond.result
     else:
         protein = {}
-
-    for f in outputs:
-        rule = splitext(f)[0]
-        # if rule not in {'prodigal', 'aragorn'}: continue
-        print(rule)
+    for rule in rules:
+        logger.debug('parse the result from %s output' % rule)
         mod = import_module('.%s' % rule, modules.__name__)
         obj = mod.Module(directory=tmp_dir)
         obj.parse()

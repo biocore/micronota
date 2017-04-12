@@ -3,43 +3,43 @@ CDS:
         params: '-f gff'
         priority: 100
         threads: 1
-# rho_independent_terminator:
-#     transtermhp:
-#         params: '-p $TRANSTERMHP'
-#         # '--all-context'  # output all predicted terminators instead of legitimate ones
-#         priority: 99
-#         threads: 1
-# ncRNA:
-#     # cmscan:
-#     #     params: ''
-#     #     priority: 50
-#     #     threads: 1
-#     #     db: '/Users/zech/Dropbox/git/micronota/micronota/data/rfam.cm'
-#     #     output: 'cmscan'
-# CRISPR:
-#     minced:
-#         params: ''
-#         priority: 50
-#         threads: 1
-# tRNA:
-#     aragorn:
-#         params: '-w'
-#         priority: 50
-#         threads: 1
-# tandem_repeats:
-#     tandem_repeats_finder:
-#         params: ''
-#         priority: 50
-#         threads: 1
-#         output: 'tandem_repeats_finder'
-# rRNA:
-#     rnammer:
-#         params: '-S bac -m lsu,ssu,tsu'
-#     # cmscan_rRNA:
-#     #     params: ''
-#     #     priority: 50
-#     #     threads: 1
-#     #     db: '/Users/zech/database/Rfam/v12.2/bacteria.cm'
+rho_independent_terminator:
+    transtermhp:
+        params: '-p $TRANSTERMHP'
+        # '--all-context'  # output all predicted terminators instead of legitimate ones
+        priority: 99
+        threads: 1
+ncRNA:
+    # cmscan:
+    #     params: ''
+    #     priority: 50
+    #     threads: 1
+    #     db: '/Users/zech/Dropbox/git/micronota/micronota/data/rfam.cm'
+    #     output: 'cmscan'
+CRISPR:
+    minced:
+        params: ''
+        priority: 50
+        threads: 1
+tRNA:
+    aragorn:
+        params: '-w'
+        priority: 50
+        threads: 1
+tandem_repeats:
+    tandem_repeats_finder:
+        params: ''
+        priority: 50
+        threads: 1
+        output: 'tandem_repeats_finder'
+rRNA:
+    rnammer:
+        params: '-S bac -m lsu,ssu,tsu'
+    # cmscan_rRNA:
+    #     params: ''
+    #     priority: 50
+    #     threads: 1
+    #     db: '/Users/zech/database/Rfam/v12.2/bacteria.cm'
 protein:
     diamond_uniref90:
         params: '--index-chunks 1 --id 90 --subject-cover 80 --query-cover 80 --max-target-seqs 3'

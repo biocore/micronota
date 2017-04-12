@@ -241,7 +241,8 @@ rule diamond_uniref90:
         'diamond blastp {params} --threads {threads}'
         ' --db {input.db} -q {input.faa} -o {output[0]}'
         ' --outfmt 6 qseqid qlen sseqid slen pident length gaps'
-        ' evalue bitscore qstart qend sstart send &> {log}'
+        ' evalue bitscore qstart qend sstart send &> {log} && '
+        'cat {output[0]} >> diamond.hit'
 
 rule unmatched_uniref90:
     '''Filter out the proteins that don't hit UniRef90'''
@@ -263,7 +264,8 @@ rule diamond_uniref50:
         db = _diamond_uniref50['db'],
         faa = _diamond_uniref50['input']
     output:
-        protected('diamond_uniref50.m13')
+        protected('diamond_uniref50.m13'),
+        ok = touch('diamond.ok')
     log:
         'diamond_uniref50.log'
     priority:
@@ -276,7 +278,8 @@ rule diamond_uniref50:
         'diamond blastp {params} --threads {threads}'
         ' --db {input.db} -q {input.faa} -o {output[0]}'
         ' --outfmt 6 qseqid qlen sseqid slen pident length gaps'
-        ' evalue bitscore qstart qend sstart send &> {log}'
+        ' evalue bitscore qstart qend sstart send &> {log} && '
+        'cat {output[0]} >> diamond.hit'
 
 rule unmatched_uniref50:
     '''Filter out the proteins that don't hit UniRef50'''
@@ -289,14 +292,3 @@ rule unmatched_uniref50:
         with open(input[0]) as fh:
             ids = [line.split('\t')[0] for line in fh]
         _filter_sequence_ids(input[1], output.faa, ids)
-
-
-rule diamond:
-    input:
-        rules.diamond_uniref90.output,
-        rules.diamond_uniref50.output
-    output:
-        'diamond.hit',
-        ok = touch('diamond.ok')
-    shell:
-        'cat {input} >> {output[0]}'
