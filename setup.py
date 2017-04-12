@@ -71,29 +71,4 @@ setup(name='micronota',
                       'doc': ["Sphinx >= 1.5"]},
       entry_points={
           'console_scripts': ['micronota=micronota.cli:cmd'],
-          'micronota.bacteria': [
-              'CDS=micronota.prodigal:Module',
-              'tRNA=micronota.aragorn:Module',
-              'CRISPR=micronota.minced:Module',
-              'rho_independent_terminator=micronota.transtermhp:Module',
-              'ncRNA=micronota.cmscan:Module',
-              'tandem_repeat=micronota.tandem_repeats_finder:Module',
-              'rRNA=micronota.cmscan:Module',
-              'protein=micronota.diamond_uniref:Module'
-          ]
-          'micronota.archaea': [
-              'CDS=micronota.prodigal:Module',
-              'tRNA=micronota.aragorn:Module',
-              'CRISPR=micronota.minced:Module',
-              'rho_independent_terminator=micronota.transtermhp:Module',
-              'ncRNA=micronota.cmscan:Module',
-              'tandem_repeat=micronota.tandem_repeats_finder:Module',
-          ]
-          'micronota.eukarya': [
-              # 'CDS=micronota.augustus:Module',
-              'tRNA=micronota.aragorn:Module',
-              'ncRNA=micronota.cmscan:Module',
-              'tandem_repeat=micronota.tandem_repeats_finder:Module',
-          ]
-
-   })
+      })

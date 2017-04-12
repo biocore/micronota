@@ -35,7 +35,7 @@ from ..workflow import annotate
               default='draft',
               help='Run the proper mode to annotate the input sequences '
                    '(finished genome, draft genome, or metagenome.')
-@click.option('--task', type=str, nargs=-1,
+@click.option('--task', type=str,
               default=None,
               help='what annotation task(s) to run?')
 @click.option('--cpu', type=int, default=1,

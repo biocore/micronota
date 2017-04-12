@@ -17,13 +17,13 @@ logger = getLogger(__name__)
 
 
 class Module(BaseMod):
-    def __init__(self, name='prodigal'):
-        self.name = name
-        self.files = {'faa': name + '.faa',
-                      'gff': name + '.gff'}
-        self.target = name + '.ok'
+    def __init__(self, directory, name=__file__):
+        super().__init__(directory, name=name)
+        self.files = {'faa': self.name + '.faa',
+                      'gff': self.name + '.gff'}
+        self.ok = self.name + '.ok'
 
-    def parse(self, fp='prodigal.gff'):
+    def parse(self):
         '''Parse the annotation and add it to interval metadata.
 
         Parameters
@@ -37,4 +37,7 @@ class Module(BaseMod):
             seq_id and interval metadata
         '''
         logger.debug('Parsing prodigal prediction')
-        return read(fp, format='gff3')
+        self.result = {sid: imd for sid, imd in read(self.files['gff'], format='gff3')}
+
+    def report(self):
+        ''''''

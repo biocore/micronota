@@ -12,39 +12,49 @@ import re
 from skbio.metadata import IntervalMetadata
 
 from ..util import split, split_head
-
+from . import BaseMod
 
 logger = getLogger(__name__)
 
 
-def parse(fp='aragorn.txt'):
-    '''Parse the annotation and add it to interval metadata.
+class Module(BaseMod):
+    def __init__(self, directory, name=__file__):
+        super().__init__(directory, name=name)
+        self.files = {'txt': self.name + '.txt'}
+        self.ok = self.name + '.ok'
 
-    Parameters
-    ----------
-    fp : str
-        the file name from aragorn prediction
+    def parse(self):
+        '''Parse the annotation and add it to interval metadata.
 
-    Yield
-    -----
-    tuple of str and IntervalMetadata
-        seq_id and interval metadata
-    '''
-    logger.debug('Parsing aragorn prediction')
-    # aragorn output has a final summary line like this:
-    # >end    5 sequences 97 tRNA genes 1 tmRNA genes
-    # This line should be skipped and not parsed
-    p = re.compile(r'>end\s+\d+ sequences \d+ tRNA genes \d+ tmRNA genes')
-    splitter = split(split_head)
-    with open(fp) as fh:
-        for lines in splitter(fh):
-            headline = lines[0]
-            if p.match(headline):
-                return
-            sid = headline.split(None, 1)[0][1:]
-            # the first 2 lines are not actual data lines
-            yield sid, _parse_record(lines[2:])
+        Parameters
+        ----------
+        fp : str
+            the file name from aragorn prediction
 
+        Yield
+        -----
+        tuple of str and IntervalMetadata
+            seq_id and interval metadata
+        '''
+        logger.debug('Parsing aragorn prediction')
+        # aragorn output has a final summary line like this:
+        # >end    5 sequences 97 tRNA genes 1 tmRNA genes
+        # This line should be skipped and not parsed
+        p = re.compile(r'>end\s+\d+ sequences \d+ tRNA genes \d+ tmRNA genes')
+        splitter = split(split_head)
+        with open(self.files['txt']) as fh:
+            for lines in splitter(fh):
+                headline = lines[0]
+                if p.match(headline):
+                    return
+                sid = headline.split(None, 1)[0][1:]
+                # the first 2 lines are not actual data lines
+                self.result[sid] = _parse_record(lines[2:])
+
+    def report(self):
+        self.report = {}
+        for sid, imd in self.result.items():
+            self.report[sid] = len(imd._intervals)
 
 def _parse_record(lines):
     '''Return interval metadata.'''

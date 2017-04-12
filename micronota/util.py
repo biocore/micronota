@@ -39,13 +39,38 @@ def convert(in_f, in_fmt, out_f, out_fmt):
         write(obj, format=out_fmt, into=out_f)
 
 
-def _filter_sequence_ids(in_fp, out_fp, ids):
+def _filter_sequence_ids(in_fp, out_fp, ids, negate=False):
     '''Filter away the seq with specified IDs.'''
     with open(out_fp, 'w') as out:
         for seq in read(in_fp, format='fasta', constructor=Sequence):
             seq_id = seq.metadata['id']
             if seq_id not in ids:
                 write(seq, format='fasta', into=out)
+
+    def filter_ident_overlap(df, pident=90, overlap=80):
+        '''Filter away the hits using the same UniRef clustering standards.
+
+        Parameters
+        ----------
+        df : ``pandas.DataFrame``
+            it must have columns of 'pident', 'gaps', and 'slen'
+        pident : ``Numeric``
+            minimal percentage of identity
+        overlap : ``Numeric``
+            minimal percentage of overlap for subject sequences.
+
+        Returns
+        -------
+        ``pandas.DataFrame``
+            The data frame only containing hits that pass the thresholds.
+        '''
+        select_id = df.pident >= pident
+        overlap_length = df.length - df.gaps
+        select_overlap = overlap_length * 100 / df.slen >= overlap
+        # if qlen * 100 / len(row.sequence) >= 80:
+        df_filtered = df[select_id & select_overlap]
+        # df_filtered.set_index('qseqid', drop=True, inplace=True)
+        return df_filtered
 
 
 class _DBTest(TestCase):

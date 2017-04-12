@@ -12,36 +12,43 @@ import re
 from skbio.metadata import IntervalMetadata
 
 from ..util import split, split_head
-
+from . import BaseMod
 
 logger = getLogger(__name__)
 
 
-def parse(f='transtermhp.tt'):
-    '''Parse the annotation and add it to interval metadata.
+class Module(BaseMod):
+    def __init__(self, directory, name=__file__):
+        super().__init__(directory, name=name)
+        self.files = {'txt': self.name + '.txt'}
+        self.ok = self.name + '.ok'
 
-    Parameters
-    ----------
-    f : str
-        the file path from prediction
+    def parse(self):
+        '''Parse the annotation and add it to interval metadata.
 
-    Yield
-    -----
-    tuple of str and IntervalMetadata
-        seq_id and interval metadata
-    '''
-    logger.debug('Parsing TransTermHP prediction')
-    p = re.compile(r'Genes are interspersed, and start the first column.')
-    p2 = re.compile(r'SEQUENCE ')
-    splitter = split(split_head, ignore=lambda s: not s.strip(),
-                     is_head=lambda s: p2.match(s),)
-    with open(f) as fh:
-        # skip the head part
-        for line in fh:
-            if p.match(line):
-                break
-        for lines in splitter(fh):
-            yield _parse_record(lines)
+        Parameters
+        ----------
+        f : str
+            the file path from prediction
+
+        Yield
+        -----
+        tuple of str and IntervalMetadata
+            seq_id and interval metadata
+        '''
+        logger.debug('Parsing TransTermHP prediction')
+        p = re.compile(r'Genes are interspersed, and start the first column.')
+        p2 = re.compile(r'SEQUENCE ')
+        splitter = split(split_head, ignore=lambda s: not s.strip(),
+                         is_head=lambda s: p2.match(s),)
+        with open(self.files['txt']) as fh:
+            # skip the head part
+            for line in fh:
+                if p.match(line):
+                    break
+            for lines in splitter(fh):
+                k, v = _parse_record(lines)
+                self.result[k] = v
 
 
 def _parse_record(lines):

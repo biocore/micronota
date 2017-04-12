@@ -10,18 +10,26 @@ from logging import getLogger
 
 from skbio.io import read
 
+from . import BaseMod
 
 logger = getLogger(__name__)
 
 
-def parse(fp='minced.gff'):
-    '''Parse the annotation and add it to interval metadata.
+class Module(BaseMod):
+    def __init__(self, directory, name=__file__):
+        super().__init__(directory, name=name)
+        self.files = {'faa': self.name + '.faa',
+                      'gff': self.name + '.gff'}
+        self.ok = self.name + '.ok'
 
-    Parameters
-    ----------
-    fp : str
-        file path from minced prediction
+    def parse(self):
+        '''Parse the annotation and add it to interval metadata.
 
-    '''
-    logger.debug('Parsing minced prediction')
-    return read(fp, format='gff3')
+        Parameters
+        ----------
+        fp : str
+            file path from minced prediction
+
+        '''
+        logger.debug('Parsing minced prediction')
+        self.result = {sid: imd for sid, imd in read(self.files['gff'], format='gff3')}

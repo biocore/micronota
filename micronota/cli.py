@@ -93,9 +93,9 @@ def cmd(ctx, log_config, log_level):
         log = resource_filename(__package__, 'log.cfg')
     disable_snakemake_log = True
     if log_level > 2:
-        disable_snakemake_log = False
+        disable_snakemake_log = True
     # setting False allows snakemake logger to print log.
-    fileConfig(log, disable_existing_loggers=disable_snakemake_log)
+    fileConfig(log, disable_existing_loggers=False)
 
-    logger = getLogger()
+    logger = getLogger('micronota')
     logger.setLevel(log_level * 10)

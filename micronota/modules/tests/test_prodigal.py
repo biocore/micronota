@@ -11,10 +11,14 @@ from unittest import TestCase, main
 from skbio.util import get_data_path
 from skbio.metadata import IntervalMetadata
 
-from micronota.parsers.prodigal import parse
+from micronota.modules.prodigal import Module
 
 
-class ParseTests(TestCase):
+class Tests(TestCase):
+    def test_init(self):
+        obs = Module()
+        import ipdb; ipdb.set_trace()
+
     def test_parse(self):
         imd1 = IntervalMetadata(None)
         imd1.add(bounds=[(336, 2799)],

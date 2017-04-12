@@ -11,31 +11,38 @@ from logging import getLogger
 from skbio.metadata import IntervalMetadata
 
 from ..util import split, split_head
-
+from . import BaseMod
 
 logger = getLogger(__name__)
 
 
-def parse(fp='tandem_repeats_finder.txt'):
-    '''Parse the annotation and add it to interval metadata.
+class Module(BaseMod):
+    def __init__(self, directory, name=__file__):
+        super().__init__(directory, name=name)
+        self.files = {'txt': self.name + '.txt',
+                      'gff': self.name + '.gff'}
+        self.ok = self.name + '.ok'
 
-    Parameters
-    ----------
-    fp : str
-        the file path from Tandem Repeat Finder prediction
+    def parse(self):
+        '''Parse the annotation and add it to interval metadata.
 
-    Yield
-    -----
-    tuple of str and IntervalMetadata
-        seq_id and interval metadata
-    '''
-    logger.debug('Parsing tandem repeat prediction')
+        Parameters
+        ----------
+        fp : str
+            the file path from Tandem Repeat Finder prediction
 
-    splitter = split(split_head, is_head=lambda line: line.startswith('@'))
-    with open(fp) as fh:
-        for lines in splitter(fh):
-            sid = lines[0].split(None, 1)[0][1:]
-            yield sid, _parse_record(lines[1:])
+        Yield
+        -----
+        tuple of str and IntervalMetadata
+            seq_id and interval metadata
+        '''
+        logger.debug('Parsing tandem repeat prediction')
+
+        splitter = split(split_head, is_head=lambda line: line.startswith('@'))
+        with open(self.files['txt']) as fh:
+            for lines in splitter(fh):
+                sid = lines[0].split(None, 1)[0][1:]
+                yield sid, _parse_record(lines[1:])
 
 
 def _parse_record(lines):

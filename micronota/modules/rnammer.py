@@ -11,31 +11,39 @@ from logging import getLogger
 from skbio.metadata import IntervalMetadata
 
 from ..util import split, SplitterID
-
+from . import BaseMod
 
 logger = getLogger(__name__)
 
 
-def parse(fp='rnammer.txt'):
-    '''Parse the annotation and add it to interval metadata.
+class Module(BaseMod):
+    def __init__(self, directory, name=__file__):
+        super().__init__(directory, name=name)
+        self.files = {'faa': self.name + '.faa',
+                      'gff': self.name + '.gff'}
+        self.ok = self.name + '.ok'
 
-    Parameters
-    ----------
-    fn : str
-        the file name from RNAmmer prediction
+    def parse(self):
+        '''Parse the annotation and add it to interval metadata.
 
-    Yield
-    -----
-    tuple of str and IntervalMetadata
-        seq_id and interval metadata
-    '''
-    logger.debug('Parsing RNAmmer prediction')
-    splitter = split(SplitterID(lambda s: s.split('\t')[0]),
-                     construct=lambda s: s.strip(),
-                     ignore=lambda s: s.startswith('#'))
-    with open(fp) as fh:
-        for lines in splitter(fh):
-            yield _parse_record(lines)
+        Parameters
+        ----------
+        fn : str
+            the file name from RNAmmer prediction
+
+        Yield
+        -----
+        tuple of str and IntervalMetadata
+            seq_id and interval metadata
+        '''
+        logger.debug('Parsing RNAmmer prediction')
+        splitter = split(SplitterID(lambda s: s.split('\t')[0]),
+                         construct=lambda s: s.strip(),
+                         ignore=lambda s: s.startswith('#'))
+        with open(self.files['gff']) as fh:
+            for lines in splitter(fh):
+                k, v = _parse_record(lines)
+                self.result[k] = v
 
 
 def _parse_record(lines):

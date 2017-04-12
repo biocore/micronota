@@ -7,7 +7,6 @@
 # ----------------------------------------------------------------------------
 
 import os
-from collections import defaultdict
 from os.path import join, exists, basename, splitext
 from logging import getLogger
 from importlib import import_module
@@ -18,7 +17,7 @@ from snakemake import snakemake
 from skbio import read, write, DNA
 import yaml
 
-# from . import parsers
+from . import modules
 # from .parsers.cds import _add_cds_metadata, _fetch_cds_metadata
 from .quality import compute_gene_score, compute_trna_score, compute_rrna_score, compute_seq_score
 from . import __version__
@@ -68,7 +67,8 @@ def annotate(in_fp, in_fmt, min_len, out_dir, out_fmt,
 
     logger.debug('create validated input sequence file')
     seq_fn = basename(in_fp)
-    seq_fn_val = join(out_dir, splitext(seq_fn)[0] + '.fna')
+    prefix = splitext(seq_fn)[0]
+    seq_fn_val = join(out_dir, prefix + '.fna')
     validate_seq(in_fp, in_fmt, min_len, seq_fn_val)
 
     if config is None:
@@ -83,10 +83,11 @@ def annotate(in_fp, in_fmt, min_len, out_dir, out_fmt,
     for k, v in cfg.items():
         # specify the annotation task
         if task is None or k in task:
-            for vk, vv in v.items():
-                if vk in rules:
-                    raise ValueError('You have multiple config for rule %s' % vk)
-                rules[vk] = vv
+            if v is not None:
+                for vk, vv in v.items():
+                    if vk in rules:
+                        raise ValueError('You have multiple config for rule %s' % vk)
+                    rules[vk] = vv
 
     if 'prodigal' in rules:
         prodigal = rules['prodigal']
@@ -98,24 +99,27 @@ def annotate(in_fp, in_fmt, min_len, out_dir, out_fmt,
         elif mode == 'metagenome':
             prodigal['params'] = '-p meta ' + param
 
+    logger.debug('run snakemake workflow')
+    # only run the targets specified in the yaml file
+    targets = list(rules.keys())
+
+    if not targets:
+        logger.info('No annotation task to run')
+        return
     rules['_seq_'] = seq_fn_val
     rules['_genetic_code_'] = gcode
-
     cfg_file = join(out_dir, 'snakemake.yaml')
     with open(cfg_file, 'w') as out:
         yaml.dump(rules, out, default_flow_style=False)
 
-    logger.debug('run snakemake workflow')
     snakefile = resource_filename(__package__, 'Snakefile')
-
-    targets = rules.keys()
     success = snakemake(
         snakefile,
         cores=cpus,
         targets=targets,
         # set work dir to output dir so simultaneous runs
         # doesn't interfere with each other.
-        workdir=join(out_dir, 'tmp'),
+        workdir=join(out_dir, prefix),
         printshellcmds=True,
         dryrun=dry_run,
         forceall=force,
@@ -126,7 +130,7 @@ def annotate(in_fp, in_fmt, min_len, out_dir, out_fmt,
 
     if success:
         # if snakemake finishes successfully
-        integrate(cfg, out_dir, seq_fn_val, out_fmt)
+        integrate(out_dir, seq_fn_val, '/Users/zech/database/protein.sqlite', out_fmt)
 
     logger.info('Done with annotation')
 
@@ -176,7 +180,19 @@ def validate_seq(in_fp, in_fmt, min_len, out_fp):
             write(seq, format='fasta', into=out)
 
 
-def integrate(cfg, out_dir, seq_fn, out_fmt='gff3'):
+def _add_cds_metadata(imd, cds_metadata):
+    '''Add metadata to all the CDS interval features.'''
+    for intvl in imd._intervals:
+        md = intvl.metadata
+        # this md is parsed from prodigal output, which
+        # has ID like "seq1_1", "seq1_2" for genes
+        idx = md['ID'].split('_')[1]
+        md['ID'] = 'micronota_' + idx
+        if idx in cds_metadata:
+            md.update(cds_metadata[idx])
+
+
+def integrate(out_dir, seq_fn, protein_metadata, out_fmt='gff3'):
     '''integrate all the annotations and write to disk.
 
     seq_fn : str
@@ -186,44 +202,37 @@ def integrate(cfg, out_dir, seq_fn, out_fmt='gff3'):
     out_fmt : str
         output format
     '''
-    # for entry_point in iter_entry_points(group='micronota.%s' % kingdom, name=None):
-
-    # rule_config = config['rules'][task]
-    # outputs.append('%s.ok' % task)
-
     logger.info('Integrating annotation for output')
     seqs = {}
-    for seq in read(join(out_dir, seq_fn), format='fasta'):
+    seq_fp = join(out_dir, seq_fn)
+    tmp_dir = splitext(seq_fp)[0]
+    for seq in read(seq_fp, format='fasta'):
         seqs[seq.metadata['id']] = seq
 
-    hits = []
-    for f in os.listdir(out_dir):
-        if f.endswith('.hit'):
-            # protein homologous map
-            hits.append(join(out_dir, f))
-        elif f.endswith('.ok'):
-            try:
-                # parse the output of each feature prediction tool into
-                # interval metadata
-                tool = f.split('.', 1)[0]
-                submodule = import_module('.%s' % tool, parsers.__name__)
-                func = getattr(submodule, 'parse')
-                fp = join(out_dir, f.replace('.ok', '.txt'))
-                for seq_id, imd in func(fp):
-                    seq = seqs[seq_id]
-                    imd._upper_bound = len(seq)
-                    seq.interval_metadata.merge(imd)
-            except Exception as e:
-                # print more useful info if exception is raised
-                raise Exception('Error while parsing %s into ``IntervalMetadata``' % f) from e
-    # add functional metadata to the protein-coding gene
-    # create defaultdict of defaultdict of dict
-    cds_metadata = defaultdict(lambda: defaultdict(dict))
-    for f in hits:
-        for seq_id, idx, md in _fetch_cds_metadata(f, cfg['metadata']):
-            cds_metadata[seq_id][idx].update(md)
-    if cds_metadata:
-        _add_cds_metadata(seqs, cds_metadata)
+    outputs = {f for f in os.listdir(tmp_dir) if f.endswith('.ok')}
+    if 'diamond' in outputs:
+        outputs.pop('diamond')
+        mod = import_module('.diamond', modules.__name__)
+        diamond = mod.Module(directory=tmp_dir)
+        diamond.parse(metadata=protein_metadata)
+        protein = diamond.result
+    else:
+        protein = {}
+
+    for f in outputs:
+        rule = splitext(f)[0]
+        # if rule not in {'prodigal', 'aragorn'}: continue
+        print(rule)
+        mod = import_module('.%s' % rule, modules.__name__)
+        obj = mod.Module(directory=tmp_dir)
+        obj.parse()
+        for seq_id, imd in obj.result.items():
+            seq = seqs[seq_id]
+            imd._upper_bound = len(seq)
+            if rule == 'prodigal':
+                cds_metadata = protein.get(seq_id, {})
+                _add_cds_metadata(imd, cds_metadata)
+            seq.interval_metadata.merge(imd)
 
     # write out the annotation
     if out_fmt == 'genbank':
@@ -251,22 +260,22 @@ def integrate(cfg, out_dir, seq_fn, out_fmt='gff3'):
     else:
         raise ValueError('Unknown specified output format: %r' % out_fmt)
 
-    # create faa file
-    faa_fp = join(out_dir, '%s.faa' % seq_fn)
-    create_faa(seqs.values(), faa_fp)
-    if cfg['mode'] != 'metagenome':
-        with open(join(out_dir, 'summary.txt'), 'w') as out:
-            if cfg['mode'] == 'finish':
-                contigs = False
-            else:
-                contigs = True
-            seq_score = compute_seq_score(seqs.values(), contigs)
-            trna_score = compute_trna_score((i.interval_metadata for i in seqs.values()))
-            rrna_score = compute_rrna_score((i.interval_metadata for i in seqs.values()))
-            gene_score = compute_gene_score(faa_fp)
-            out.write('# seq_score: %.2f  tRNA_score: %.2f  rRNA_score: %.2f  gene_score: %.2f\n' % (
-                seq_score, trna_score, rrna_score, gene_score))
-            summarize(seqs.values(), out)
+    # # create faa file
+    # faa_fp = join(out_dir, '%s.faa' % seq_fn)
+    # create_faa(seqs.values(), faa_fp)
+    # if cfg['mode'] != 'metagenome':
+    #     with open(join(out_dir, 'summary.txt'), 'w') as out:
+    #         if cfg['mode'] == 'finish':
+    #             contigs = False
+    #         else:
+    #             contigs = True
+    #         seq_score = compute_seq_score(seqs.values(), contigs)
+    #         trna_score = compute_trna_score((i.interval_metadata for i in seqs.values()))
+    #         rrna_score = compute_rrna_score((i.interval_metadata for i in seqs.values()))
+    #         gene_score = compute_gene_score(faa_fp)
+    #         out.write('# seq_score: %.2f  tRNA_score: %.2f  rRNA_score: %.2f  gene_score: %.2f\n' % (
+    #             seq_score, trna_score, rrna_score, gene_score))
+    #         summarize(seqs.values(), out)
 
 
 def summarize(seqs, out):
