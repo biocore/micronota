@@ -11,29 +11,37 @@ from logging import getLogger
 from skbio.metadata import IntervalMetadata
 
 from ..util import split, SplitterID
+from .modules import BaseMod
 
 
 logger = getLogger(__name__)
 
 
-def parse(fp='cmscan.txt'):
-    '''Parse the annotation and add it to interval metadata.
+class Module(BaseMod):
+    def __init__(self, directory, name=__file__):
+        super().__init__(directory, name=name)
+        self.files = {'txt': self.name + '.txt'}
+        self.ok = self.name + '.ok'
 
-    Parameters
-    ----------
-    fp : str
-        the file path from cmscan run.
+    def parse(self):
+        '''Parse the annotation and add it to interval metadata.
 
-    Yield
-    -----
-    tuple of str and IntervalMetadata
-        seq_id and interval metadata
-    '''
-    splitter = split(SplitterID(lambda s: s.split()[2]),
-                     ignore=lambda s: s.startswith('#'))
-    with open(fp) as fh:
-        for lines in splitter(fh):
-            yield _parse_record(lines)
+        Parameters
+        ----------
+        fp : str
+            the file path from cmscan run.
+
+        Yield
+        -----
+        tuple of str and IntervalMetadata
+            seq_id and interval metadata
+        '''
+        splitter = split(SplitterID(lambda s: s.split()[2]),
+                         ignore=lambda s: s.startswith('#'))
+        with open(self.files['txt']) as fh:
+            for lines in splitter(fh):
+                k, v =  _parse_record(lines)
+                self.result[k] = v
 
 
 def _parse_record(lines):

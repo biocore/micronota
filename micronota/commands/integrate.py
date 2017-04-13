@@ -33,6 +33,5 @@ from ..workflow import integrate
 @click.pass_context
 def cli(ctx, in_seq, out_file, annot_dir, out_fmt, protein_xref):
     '''Integrate annotations into final output.'''
-    print(protein_xref is None)
     integrate(in_seq, annot_dir, protein_xref, out_file,  out_fmt)
 
