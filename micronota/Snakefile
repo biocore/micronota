@@ -4,14 +4,8 @@ from collections import defaultdict
 # default is empty
 default = defaultdict(str)
 # the file path of the input sequence to annotate
-seq = config['_seq_']
-# the translation table
-genetic_code = config['_genetic_code_']
+seq = config['seq']
 
-# for task in config['protein']:
-#     rule_config = config['protein'][task]
-#     outputs.append('%s.hit' % rule_config['output'])
-#     include: '%s.rule' % task
 
 # =============================================================================
 # Prodigal
@@ -40,8 +34,8 @@ rule prodigal:
     priority:
         _prodigal['priority']
     shell:
-        'prodigal {params} -g %d -i {input[0]} -o {output.gff}'
-        ' -a {output.faa} -d {output.fna} &> {log}' % genetic_code
+        'prodigal {params} -i {input[0]} -o {output.gff}'
+        ' -a {output.faa} -d {output.fna} &> {log}'
 
 rule prodigal_coords:
     '''Create .coords file (from prodigal output) required by TransTermHP'''
@@ -128,7 +122,7 @@ rule aragorn:
     priority:
         _aragorn['priority']
     shell:
-        'aragorn {params} -gc%r -o {output[0]} {input.fna} &> {log}' % genetic_code
+        'aragorn {params} -o {output[0]} {input.fna} &> {log}'
 
 
 _cmscan = config.get('cmscan', defaultdict(str))

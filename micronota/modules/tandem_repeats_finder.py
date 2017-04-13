@@ -36,8 +36,6 @@ class Module(BaseMod):
         tuple of str and IntervalMetadata
             seq_id and interval metadata
         '''
-        logger.debug('Parsing tandem repeat prediction')
-
         splitter = split(split_head, is_head=lambda line: line.startswith('@'))
         with open(self.files['txt']) as fh:
             for lines in splitter(fh):

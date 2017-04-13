@@ -7,18 +7,19 @@
 # ----------------------------------------------------------------------------
 
 import os
-from os.path import join, exists, basename, splitext
-from logging import getLogger, NullHandler
+from os.path import join, exists, basename, splitext, expanduser
+from logging import getLogger
 from importlib import import_module
 from time import gmtime, strftime
 
-from pkg_resources import resource_filename, iter_entry_points
+from pkg_resources import resource_filename
 from snakemake import snakemake
 from skbio import read, write, DNA
 import yaml
+import numpy as np
 
 from . import modules
-# from .parsers.cds import _add_cds_metadata, _fetch_cds_metadata
+from .util import _add_cds_metadata
 from .quality import compute_gene_score, compute_trna_score, compute_rrna_score, compute_seq_score
 from . import __version__
 
@@ -64,9 +65,8 @@ def annotate(in_fp, in_fmt, min_len, out_dir, out_fmt,
 
     os.makedirs(out_dir, exist_ok=True)
 
-    seq_fn = basename(in_fp)
-    prefix = splitext(seq_fn)[0]
-    seq_fn_val = join(out_dir, prefix + '.fna')
+    out_prefix = join(out_dir, basename(splitext(in_fp)[0]))
+    seq_fn_val = out_prefix + '.fna'
     validate_seq(in_fp, in_fmt, min_len, seq_fn_val)
 
     if config is None:
@@ -77,10 +77,13 @@ def annotate(in_fp, in_fmt, min_len, out_dir, out_fmt,
     with open(config) as fh:
         cfg = yaml.load(fh)
 
+    general = cfg.pop('general', {})
     rules = {}
+    if not task:
+        task = [i for i in cfg]
     for k, v in cfg.items():
         # specify the annotation task
-        if task is None or k in task:
+        if k in task:
             if v is not None:
                 for vk, vv in v.items():
                     if vk in rules:
@@ -88,14 +91,18 @@ def annotate(in_fp, in_fmt, min_len, out_dir, out_fmt,
                     rules[vk] = vv
 
     if 'prodigal' in rules:
-        prodigal = rules['prodigal']
-        param = prodigal['params']
+        param = '%s -g %d' % (rules['prodigal']['params'], gcode)
         if mode == 'finished':
-            prodigal['params'] = '-p single -c ' + param
+            param = '-p single -c ' + param
         elif mode == 'draft':
-            prodigal['params'] = '-p single ' + param
+            param = '-p single ' + param
         elif mode == 'metagenome':
-            prodigal['params'] = '-p meta ' + param
+            param = '-p meta ' + param
+        rules['prodigal']['params'] = param
+    if 'aragorn' in rules:
+        rules['aragorn']['params'] = '%s -gc%d' % (rules['aragorn']['params'], gcode)
+    if 'rnammer' in rules:
+        rules['rnammer']['params'] = '-S %s %s' % (kingdom[:3], rules['rnammer']['params'])
 
     logger.debug('run snakemake workflow')
     # only run the targets specified in the yaml file
@@ -103,21 +110,21 @@ def annotate(in_fp, in_fmt, min_len, out_dir, out_fmt,
     if not targets:
         logger.warning('No annotation task to run')
         return
-    rules['_seq_'] = seq_fn_val
-    rules['_genetic_code_'] = gcode
+    rules['seq'] = seq_fn_val
+
     cfg_file = join(out_dir, 'snakemake.yaml')
     with open(cfg_file, 'w') as out:
         yaml.dump(rules, out, default_flow_style=False)
 
     snakefile = resource_filename(__package__, 'Snakefile')
-    logger.info('--- Run annotation pipeline')
+    logger.info('Run annotation pipeline')
     success = snakemake(
         snakefile,
         cores=cpus,
         targets=targets,
         # set work dir to output dir so simultaneous runs
         # doesn't interfere with each other.
-        workdir=join(out_dir, prefix),
+        workdir=out_prefix,
         printshellcmds=True,
         dryrun=dry_run,
         forceall=force,
@@ -131,9 +138,39 @@ def annotate(in_fp, in_fmt, min_len, out_dir, out_fmt,
 
     if success:
         # if snakemake finishes successfully
-        integrate(out_dir, seq_fn_val, '/Users/zech/database/protein.sqlite', out_fmt)
+        out_fp = out_prefix + out_fmt
+        protein_xref = general.get('protein_xref')
+        if protein_xref is not None:
+            protein_xref = expanduser(protein_xref)
+        seqs = integrate(seq_fn_val, out_prefix, protein_xref, out_fp, out_fmt)
 
-    logger.info('--- Done with annotation')
+        # create faa file
+        if 'CDS' in task:
+            logger.info('Write out protein file')
+            faa_fp = out_prefix + '.faa'
+            with open(faa_fp, 'w') as out:
+                create_faa(seqs.values(), out)
+
+        logger.info('Write summary of the annotation')
+        if mode != 'metagenome':
+            with open(out_prefix + '.summary', 'w') as out:
+                if mode == 'finish':
+                    contigs = False
+                else:
+                    contigs = True
+                seq_score = compute_seq_score(seqs.values(), contigs)
+                trna_score = rrna_score = gene_score = np.nan
+                if 'tRNA' in task:
+                    trna_score = compute_trna_score((i.interval_metadata for i in seqs.values()))
+                if 'rRNA' in task:
+                    rrna_score = compute_rrna_score((i.interval_metadata for i in seqs.values()))
+                if 'CDS' in task:
+                    gene_score = compute_gene_score(faa_fp)
+                out.write('# seq_score: %.2f  tRNA_score: %.2f  rRNA_score: %.2f  gene_score: %.2f\n' % (
+                    seq_score, trna_score, rrna_score, gene_score))
+                summarize(seqs.values(), out)
+
+    logger.info('Done with annotation')
 
 
 def validate_seq(in_fp, in_fmt, min_len, out_fp):
@@ -158,9 +195,9 @@ def validate_seq(in_fp, in_fmt, min_len, out_fp):
     if exists(out_fp):
         # do not overwrite because all the snakemake steps will be rerun when
         # this file is updated.
-        logger.debug('The sequence file already exists. Skip validating step.')
+        logger.debug('the sequence file already exists. skip validating step.')
         return
-    logger.info('--- Filter and validat input sequences')
+    logger.info('Filter and validate input sequences')
     ids = set()
     with open(out_fp, 'w') as out:
         for seq in read(in_fp, format=in_fmt, constructor=DNA):
@@ -181,19 +218,7 @@ def validate_seq(in_fp, in_fmt, min_len, out_fp):
             write(seq, format='fasta', into=out)
 
 
-def _add_cds_metadata(imd, cds_metadata):
-    '''Add metadata to all the CDS interval features.'''
-    for intvl in imd._intervals:
-        md = intvl.metadata
-        # this md is parsed from prodigal output, which
-        # has ID like "seq1_1", "seq1_2" for genes
-        idx = md['ID'].split('_')[1]
-        md['ID'] = 'micronota_' + idx
-        if idx in cds_metadata:
-            md.update(cds_metadata[idx])
-
-
-def integrate(out_dir, seq_fn, protein_metadata, out_fmt='gff3'):
+def integrate(seq_fp, annot_dir, protein_xref, out_fp, out_fmt='gff3'):
     '''integrate all the annotations and write to disk.
 
     seq_fn : str
@@ -203,26 +228,24 @@ def integrate(out_dir, seq_fn, protein_metadata, out_fmt='gff3'):
     out_fmt : str
         output format
     '''
-    logger.info('--- Integrate annotation for output')
+    logger.info('Integrate annotation for output')
     seqs = {}
-    seq_fp = join(out_dir, seq_fn)
-    tmp_dir = splitext(seq_fp)[0]
     for seq in read(seq_fp, format='fasta'):
         seqs[seq.metadata['id']] = seq
 
-    rules = {splitext(f)[0] for f in os.listdir(tmp_dir) if f.endswith('.ok')}
+    rules = {splitext(f)[0] for f in os.listdir(annot_dir) if f.endswith('.ok')}
     if 'diamond' in rules:
         rules.discard('diamond')
         mod = import_module('.diamond', modules.__name__)
-        diamond = mod.Module(directory=tmp_dir)
-        diamond.parse(metadata=protein_metadata)
+        diamond = mod.Module(directory=annot_dir)
+        diamond.parse(metadata=protein_xref)
         protein = diamond.result
     else:
         protein = {}
     for rule in rules:
         logger.debug('parse the result from %s output' % rule)
         mod = import_module('.%s' % rule, modules.__name__)
-        obj = mod.Module(directory=tmp_dir)
+        obj = mod.Module(directory=annot_dir)
         obj.parse()
         for seq_id, imd in obj.result.items():
             seq = seqs[seq_id]
@@ -234,7 +257,6 @@ def integrate(out_dir, seq_fn, protein_metadata, out_fmt='gff3'):
 
     # write out the annotation
     if out_fmt == 'genbank':
-        out_fp = join(out_dir, '%s.gbk' % seq_fn)
         with open(out_fp, 'w') as out:
             for sid, seq in seqs.items():
                 seq.metadata['LOCUS'] = {
@@ -252,28 +274,12 @@ def integrate(out_dir, seq_fn, protein_metadata, out_fmt='gff3'):
                 seq.metadata['COMMENT'] = 'Annotated with %s %s' % (__package__, __version__)
                 write(seq, into=out, format=out_fmt)
     elif out_fmt == 'gff3':
-        out_fp = join(out_dir, '%s.gff' % seq_fn)
         write(((sid, seq.interval_metadata) for sid, seq in seqs.items()),
               into=out_fp, format=out_fmt)
     else:
         raise ValueError('Unknown specified output format: %r' % out_fmt)
 
-    # # create faa file
-    # faa_fp = join(out_dir, '%s.faa' % seq_fn)
-    # create_faa(seqs.values(), faa_fp)
-    # if cfg['mode'] != 'metagenome':
-    #     with open(join(out_dir, 'summary.txt'), 'w') as out:
-    #         if cfg['mode'] == 'finish':
-    #             contigs = False
-    #         else:
-    #             contigs = True
-    #         seq_score = compute_seq_score(seqs.values(), contigs)
-    #         trna_score = compute_trna_score((i.interval_metadata for i in seqs.values()))
-    #         rrna_score = compute_rrna_score((i.interval_metadata for i in seqs.values()))
-    #         gene_score = compute_gene_score(faa_fp)
-    #         out.write('# seq_score: %.2f  tRNA_score: %.2f  rRNA_score: %.2f  gene_score: %.2f\n' % (
-    #             seq_score, trna_score, rrna_score, gene_score))
-    #         summarize(seqs.values(), out)
+    return seqs
 
 
 def summarize(seqs, out):
@@ -281,7 +287,7 @@ def summarize(seqs, out):
 
     Parameters
     ----------
-    seqs : list of ``Sequence``
+    seqs : list of ``Sequence`` objects
     out : file object
         the file object to output to
     '''
@@ -313,7 +319,7 @@ def create_faa(seqs, out, genetic_code=11):
     ----------
     seqs : iterable of ``Sequence``
         The list of DNA/RNA sequences
-    out : str
+    out : file object
         File object for output
     genetic_code : int
         The fallback genetic code to use
@@ -333,3 +339,4 @@ def create_faa(seqs, out, genetic_code=11):
                 write(faa, into=out, format='fasta')
             except NotImplementedError:
                 logger.warning('This gene has degenerate nucleotide and will not be translated.')
+

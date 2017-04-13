@@ -36,7 +36,6 @@ class Module(BaseMod):
         tuple of str and IntervalMetadata
             seq_id and interval metadata
         '''
-        logger.debug('Parsing RNAmmer prediction')
         splitter = split(SplitterID(lambda s: s.split('\t')[0]),
                          construct=lambda s: s.strip(),
                          ignore=lambda s: s.startswith('#'))

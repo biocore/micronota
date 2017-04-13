@@ -36,7 +36,6 @@ class Module(BaseMod):
         tuple of str and IntervalMetadata
             seq_id and interval metadata
         '''
-        logger.debug('Parsing aragorn prediction')
         # aragorn output has a final summary line like this:
         # >end    5 sequences 97 tRNA genes 1 tmRNA genes
         # This line should be skipped and not parsed

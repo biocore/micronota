@@ -1,3 +1,5 @@
+general:
+    protein_xref: '~/database/protein.sqlite'
 CDS:
     prodigal:
         params: '-f gff'
@@ -34,7 +36,7 @@ tandem_repeats:
         output: 'tandem_repeats_finder'
 rRNA:
     rnammer:
-        params: '-S bac -m lsu,ssu,tsu'
+        params: '-m lsu,ssu,tsu'
     # cmscan_rRNA:
     #     params: ''
     #     priority: 50

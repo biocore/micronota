@@ -31,5 +31,4 @@ class Module(BaseMod):
             file path from minced prediction
 
         '''
-        logger.debug('Parsing minced prediction')
         self.result = {sid: imd for sid, imd in read(self.files['gff'], format='gff3')}

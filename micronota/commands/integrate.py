@@ -16,23 +16,23 @@ from ..workflow import integrate
 
 
 @click.command()
-@click.option('-o', '--out-dir', type=click.Path(file_okay=False),
+@click.option('-i', '--in-seq', type=click.Path(exists=True, dir_okay=False),
               required=True,
-              help='Output directory path.')
+              help='Input sequence file (can be gzip file.')
+@click.option('-o', '--out-file', type=click.Path(exists=False, dir_okay=False),
+              required=True,
+              help='Output annotation file.')
+@click.option('-d', '--annot-dir', type=click.Path(file_okay=False),
+              required=True,
+              help='directory that has the outputs of annotation tools.')
 @click.option('--out-fmt', type=click.Choice(['gff3', 'genbank']),
-              default='genbank',
-              help='Output format for the annotated sequences.')
-@click.option('--config', type=click.Path(exists=True, dir_okay=False),
-              help='Config file for annotation workflow.')
+              default='gff3',
+              help='Output format for the annotation file.')
+@click.option('--protein-xref', type=click.Path(exists=True, dir_okay=False),
+              help='sqlite file that stores protein cross-ref info.')
 @click.pass_context
-def cli(ctx, out_dir, out_fmt, config):
+def cli(ctx, in_seq, out_file, annot_dir, out_fmt, protein_xref):
     '''Integrate annotations into final output.'''
-    if config is None:
-        config = resource_filename('micronota', 'config.yaml')
-    with open(config) as fh:
-        cfg = yaml.load(fh)
-    cfg['mode'] = 'draft'
-    for fn in os.listdir(out_dir):
-        if fn.endswith('.valid.fna'):
-            integrate(cfg, out_dir, fn, out_fmt)
-            break
+    print(protein_xref is None)
+    integrate(in_seq, annot_dir, protein_xref, out_file,  out_fmt)
+

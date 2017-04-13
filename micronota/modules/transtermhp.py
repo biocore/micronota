@@ -36,7 +36,6 @@ class Module(BaseMod):
         tuple of str and IntervalMetadata
             seq_id and interval metadata
         '''
-        logger.debug('Parsing TransTermHP prediction')
         p = re.compile(r'Genes are interspersed, and start the first column.')
         p2 = re.compile(r'SEQUENCE ')
         splitter = split(split_head, ignore=lambda s: not s.strip(),

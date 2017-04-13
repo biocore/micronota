@@ -29,7 +29,6 @@ def parse(fp='cmscan.txt'):
     tuple of str and IntervalMetadata
         seq_id and interval metadata
     '''
-    logger.debug('Parsing cmscan prediction of Rfam')
     splitter = split(SplitterID(lambda s: s.split()[2]),
                      ignore=lambda s: s.startswith('#'))
     with open(fp) as fh:

@@ -36,7 +36,6 @@ class Module(BaseMod):
         tuple of str and IntervalMetadata
             seq_id and interval metadata
         '''
-        logger.debug('Parsing prodigal prediction')
         self.result = {sid: imd for sid, imd in read(self.files['gff'], format='gff3')}
 
     def report(self):
