@@ -11,10 +11,10 @@ from unittest import main, TestCase
 from skbio.util import get_data_path
 from skbio.metadata import IntervalMetadata
 
-from micronota.parsers.aragorn import parse
+from micronota.format.aragorn import _generator
 
 
-class AragornTests(TestCase):
+class Tests(TestCase):
     def test_parse(self):
         imd1 = IntervalMetadata(None)
         imd1.add(bounds=[(237929, 238006)],
@@ -28,7 +28,7 @@ class AragornTests(TestCase):
         exp = (('NC_016822.1', imd1), ('NC_016833.1', imd2), ('NC_016834.1', imd3))
 
         fp = get_data_path('aragorn.txt')
-        gen = parse(fp)
+        gen = _generator(fp)
 
         for (exp_id, exp_imd), (obs_id, obs_imd) in zip(exp, gen):
             self.assertEqual(exp_id, obs_id)

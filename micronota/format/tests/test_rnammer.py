@@ -11,7 +11,7 @@ from unittest import TestCase, main
 from skbio.util import get_data_path
 from skbio.metadata import IntervalMetadata
 
-from micronota.parsers.rnammer import parse
+from micronota.format.rnammer import _generator
 
 
 class ParseTests(TestCase):
@@ -32,7 +32,7 @@ class ParseTests(TestCase):
                ('NZ_JXDA01000001.1', imd2))
 
         fp = get_data_path('rnammer.gff')
-        gen = parse(fp)
+        gen = _generator(fp)
 
         for (exp_id, exp_imd), (obs_id, obs_imd) in zip(exp, gen):
             self.assertEqual(exp_id, obs_id)

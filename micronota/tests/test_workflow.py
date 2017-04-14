@@ -10,6 +10,7 @@ from unittest import TestCase, main
 from tempfile import mkdtemp
 from os.path import join, splitext, exists
 from shutil import rmtree
+from io import StringIO
 
 import yaml
 from skbio import DNA, read, write
@@ -80,7 +81,7 @@ class Tests(TestCase):
                                              'output': 'minced',
                                              'threads': 1},
                                             'prodigal':
-                                            {'params': '-p meta',
+                                            {'params': '-p meta -f gff',
                                              'priority': 90,
                                              'output': 'prodigal',
                                              'threads': 1}},
@@ -91,10 +92,10 @@ class Tests(TestCase):
         with open(config_fp, 'w') as f:
             yaml.dump(config, f, default_flow_style=True)
         write(DNA('ATGC', {'id': 'seq1'}), into=self.i, format='fasta')
-        annotate(self.i, 'fasta', 1, self.tmpd, 'gff3', 11, 'bacteria', 1, True, False, config_fp)
-        output = join(self.tmpd, splitext(self.i)[0] + '.valid.fna')
-        self.assertTrue(exists(output))
-        self.assertTrue(exists(output + '.gff'))
+        annotate(self.i, 'fasta', 1, self.tmpd, 'gff3', 11, 'bacteria', 'metagenome', (), 1, True, False, config_fp)
+        output = join(self.tmpd, splitext(self.i)[0])
+        self.assertTrue(exists(output + '.fna'))
+        self.assertTrue(exists(output + '.gff3'))
 
     def test_summarize(self):
         gff = get_data_path('summarize.gff')
@@ -103,11 +104,9 @@ class Tests(TestCase):
         for (seq_id, imd), seq in zip(read(gff, format='gff3'), seqs):
             seq.interval_metadata = imd
 
-        with open(self.o, 'w') as obs, open(get_data_path('summarize.txt')) as exp:
+        with StringIO() as obs, open(get_data_path('summarize.txt')) as exp:
             summarize(seqs, obs)
-            obs.seek(0)
-            print(obs.read())
-            self.assertEqual(obs.read(), exp.read())
+            self.assertEqual(obs.getvalue(), exp.read())
 
     def test_create_faa(self):
         imd = IntervalMetadata(None)

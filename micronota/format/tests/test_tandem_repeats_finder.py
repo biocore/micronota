@@ -11,10 +11,10 @@ from unittest import TestCase, main
 from skbio.util import get_data_path
 from skbio.metadata import IntervalMetadata
 
-from micronota.parsers.tandem_repeats_finder import parse
+from micronota.format.tandem_repeats_finder import _generator
 
 
-class ParseTests(TestCase):
+class Tests(TestCase):
     def test_parse(self):
         imd1 = IntervalMetadata(None)
         imd1.add(bounds=[(252151, 252184)],
@@ -27,7 +27,7 @@ class ParseTests(TestCase):
         exp = (('NC_016822.1', imd1), ('NC_016833.1', imd2))
 
         fp = get_data_path('tandem_repeats_finder.txt')
-        gen = parse(fp)
+        gen = _generator(fp)
 
         for (exp_id, exp_imd), (obs_id, obs_imd) in zip(exp, gen):
             self.assertEqual(exp_id, obs_id)

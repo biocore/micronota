@@ -18,7 +18,7 @@ from skbio import read, write, DNA
 import yaml
 import numpy as np
 
-from . import modules
+from . import module
 from .util import _add_cds_metadata
 from .quality import compute_gene_score, compute_trna_score, compute_rrna_score, compute_seq_score
 from . import __version__
@@ -138,7 +138,7 @@ def annotate(in_fp, in_fmt, min_len, out_dir, out_fmt,
 
     if success:
         # if snakemake finishes successfully
-        out_fp = out_prefix + out_fmt
+        out_fp = '%s.%s' % (out_prefix, out_fmt)
         protein_xref = general.get('protein_xref')
         if protein_xref is not None:
             protein_xref = expanduser(protein_xref)
@@ -236,7 +236,7 @@ def integrate(seq_fp, annot_dir, protein_xref, out_fp, out_fmt='gff3'):
     rules = {splitext(f)[0] for f in os.listdir(annot_dir) if f.endswith('.ok')}
     if 'diamond' in rules:
         rules.discard('diamond')
-        mod = import_module('.diamond', modules.__name__)
+        mod = import_module('.diamond', module.__name__)
         diamond = mod.Module(directory=annot_dir)
         diamond.parse(metadata=protein_xref)
         protein = diamond.result
@@ -244,7 +244,7 @@ def integrate(seq_fp, annot_dir, protein_xref, out_fp, out_fmt='gff3'):
         protein = {}
     for rule in rules:
         logger.debug('parse the result from %s output' % rule)
-        mod = import_module('.%s' % rule, modules.__name__)
+        mod = import_module('.%s' % rule, module.__name__)
         obj = mod.Module(directory=annot_dir)
         obj.parse()
         for seq_id, imd in obj.result.items():

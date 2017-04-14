@@ -9,3 +9,7 @@
 
 __credits__ = "https://github.com/biocore/micronota/graphs/contributors"
 __version__ = "1.0.dev0"
+
+
+from .format import cmscan, sam, aragorn, rnammer, transtermhp, tandem_repeats_finder  # noqa
+

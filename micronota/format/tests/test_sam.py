@@ -3,7 +3,7 @@ from unittest import TestCase, main
 from skbio.util import get_data_path
 from skbio import Protein, Sequence
 
-from micronota.parsers.sam import (
+from micronota.format.sam import (
     _sam_sniffer, _sam_to_protein, _sam_to_generator)
 
 

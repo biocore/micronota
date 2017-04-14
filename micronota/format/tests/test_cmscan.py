@@ -11,10 +11,10 @@ from unittest import TestCase, main
 from skbio.util import get_data_path
 from skbio.metadata import IntervalMetadata
 
-from micronota.parsers.cmscan import parse
+from micronota.format.cmscan import _generator
 
 
-class ParseTests(TestCase):
+class Tests(TestCase):
     def test_parse(self):
         imd1 = IntervalMetadata(None)
         imd1.add(bounds=[(3588441, 3588818)],
@@ -36,7 +36,7 @@ class ParseTests(TestCase):
                ('NC_016834.1', imd3))
 
         fp = get_data_path('cmscan.txt')
-        gen = parse(fp)
+        gen = _generator(fp)
 
         for (exp_id, exp_imd), (obs_id, obs_imd) in zip(exp, gen):
             self.assertEqual(exp_id, obs_id)

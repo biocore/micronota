@@ -11,7 +11,7 @@ from unittest import TestCase, main
 from skbio.util import get_data_path
 from skbio.metadata import IntervalMetadata
 
-from micronota.parsers.transtermhp import parse
+from micronota.format.transtermhp import _generator
 
 
 class ParseTests(TestCase):
@@ -19,7 +19,7 @@ class ParseTests(TestCase):
         fp = get_data_path('transtermhp.tt')
         exps = [('gi|556503834|ref|NC_000913.3|1', 12),
                 ('gi|556503834|ref|NC_000913.3|2', 4)]
-        for (sid, imd), exp in zip(parse(fp), exps):
+        for (sid, imd), exp in zip(_generator(fp), exps):
             self.assertEqual(sid, exp[0])
             self.assertEqual(imd.num_interval_features, exp[1])
 

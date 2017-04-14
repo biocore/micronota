@@ -1,47 +1,18 @@
-# ----------------------------------------------------------------------------
-# Copyright (c) 2015--, micronota development team.
-#
-# Distributed under the terms of the Modified BSD License.
-#
-# The full license is in the file COPYING.txt, distributed with this software.
-# ----------------------------------------------------------------------------
-
-from logging import getLogger
-
+from skbio.io import create_format
 from skbio.metadata import IntervalMetadata
 
 from ..util import split, SplitterID
-from .modules import BaseMod
 
 
-logger = getLogger(__name__)
+cmscan = create_format('cmscan')
 
 
-class Module(BaseMod):
-    def __init__(self, directory, name=__file__):
-        super().__init__(directory, name=name)
-        self.files = {'txt': self.name + '.txt'}
-        self.ok = self.name + '.ok'
-
-    def parse(self):
-        '''Parse the annotation and add it to interval metadata.
-
-        Parameters
-        ----------
-        fp : str
-            the file path from cmscan run.
-
-        Yield
-        -----
-        tuple of str and IntervalMetadata
-            seq_id and interval metadata
-        '''
-        splitter = split(SplitterID(lambda s: s.split()[2]),
-                         ignore=lambda s: s.startswith('#'))
-        with open(self.files['txt']) as fh:
-            for lines in splitter(fh):
-                k, v =  _parse_record(lines)
-                self.result[k] = v
+@cmscan.reader(None)
+def _generator(fh):
+    splitter = split(SplitterID(lambda s: s.split()[2]),
+                     ignore=lambda s: s.startswith('#'))
+    for lines in splitter(fh):
+        yield _parse_record(lines)
 
 
 def _parse_record(lines):
@@ -81,3 +52,4 @@ def _parse_line(line):
     else:
         raise ValueError('Unknown strand for the ncRNA: %s' % line)
     return [(start, end)], md
+
