@@ -5,38 +5,23 @@
 #
 # The full license is in the file COPYING.txt, distributed with this software.
 # ----------------------------------------------------------------------------
-
-from logging import getLogger
 import re
 
 from skbio import read
 
 from . import BaseMod
 
-logger = getLogger(__name__)
-
 
 class Module(BaseMod):
-    def __init__(self, directory, name=__file__):
-        super().__init__(directory, name=name)
-        self.files = {'txt': self.name + '.txt'}
-        self.ok = self.name + '.ok'
+    def __init__(self, directory, file_patterns=None):
+        if file_patterns is None:
+            file_patterns = {'txt': 'aragorn.txt'}
+        super().__init__(directory, file_patterns)
 
     def parse(self):
-        '''Parse the annotation and add it to interval metadata.
-
-        Parameters
-        ----------
-        fp : str
-            the file name from aragorn prediction
-
-        Yield
-        -----
-        tuple of str and IntervalMetadata
-            seq_id and interval metadata
-        '''
+        '''Parse the annotation and add it to interval metadata. '''
         for seqid, imd in read(self.files['txt'], format='aragorn'):
-            self.result[sid] = imd
+            self.result[seqid] = imd
 
     def report(self):
         self.report = {}

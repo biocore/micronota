@@ -7,7 +7,6 @@
 # ----------------------------------------------------------------------------
 
 from collections import defaultdict
-from logging import getLogger
 from sqlite3 import connect
 
 import pandas as pd
@@ -16,14 +15,11 @@ from . import BaseMod
 from ..database._util import query, format_xref
 
 
-logger = getLogger(__name__)
-
-
 class Module(BaseMod):
-    def __init__(self, directory, name=__file__):
-        super().__init__(directory, name=name)
-        self.files = {'hit': self.name + '.hit'}
-        self.ok = self.name + '.ok'
+    def __init__(self, directory, file_patterns=None):
+        if file_patterns is None:
+            file_patterns = {'hit': 'diamond.hit'}
+        super().__init__(directory, file_patterns)
 
     def parse(self,
               metadata,
@@ -53,8 +49,7 @@ class Module(BaseMod):
                 seq_id, i = row.qseqid.rsplit('_', 1)
                 accn = row.sseqid
                 hit = '{0}:{1}'.format(db, accn)
-                md['db_xref'] = [hit]
-                protein[seq_id][i] = md
+                protein[seq_id][i] = {'db_xref': hit}
             return protein
         else:
             with connect(metadata) as c:
