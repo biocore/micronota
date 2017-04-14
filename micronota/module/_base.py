@@ -19,10 +19,9 @@ class BaseMod(ABC):
         self.files = {}
 
         for k in file_patterns:
-            print(file_patterns[k])
             matched_f = [f for f in listdir(directory) if re.match(file_patterns[k], f)]
             if len(matched_f) != 1:
-                raise ValueError('')
+                raise ValueError('There are multiple files matching %s' % file_patterns[k])
             self.files[k] = join(directory, matched_f[0])
 
     @abstractmethod
