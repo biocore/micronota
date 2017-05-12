@@ -202,7 +202,8 @@ def validate_seq(in_fp, in_fmt, min_len, out_fp):
     logger.info('Filter and validate input sequences')
     ids = set()
     with open(out_fp, 'w') as out:
-        for seq in read(in_fp, format=in_fmt, constructor=DNA):
+        # allow lowercases in DNA seq
+        for seq in read(in_fp, format=in_fmt, constructor=DNA, lowercase=True):
             seq = seq.degap()
             if len(seq) < min_len:
                 continue
