@@ -64,8 +64,10 @@ def annotate(in_fp, in_fmt, min_len, out_dir, out_fmt,
         logger.debug('run in dry mode, will not produce output')
 
     os.makedirs(out_dir, exist_ok=True)
-
-    out_prefix = join(out_dir, basename(splitext(in_fp)[0]))
+    prefix, suffix = splitext(in_fp)
+    if suffix in {'.gz', '.bz2'}:
+        prefix = splitext(prefix)[0]
+    out_prefix = join(out_dir, basename(prefix))
     seq_fn_val = out_prefix + '.fna'
     validate_seq(in_fp, in_fmt, min_len, seq_fn_val)
 

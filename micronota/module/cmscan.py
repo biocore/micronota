@@ -20,5 +20,5 @@ class Module(BaseMod):
     def parse(self):
         '''Parse the annotation and add it to interval metadata. '''
         for seqid, imd in read(self.files['txt'], format='cmscan'):
-            self.result[sid] = imd
+            self.result[seqid] = imd
 
