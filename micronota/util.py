@@ -17,8 +17,12 @@ This module (:mod:`micronota.util`) provides various utility functionality,
 
 from unittest import TestCase
 from sqlite3 import connect
+from logging import getLogger
 
 from skbio import read, write, Sequence
+
+
+logger = getLogger(__name__)
 
 
 def convert(in_f, in_fmt, out_f, out_fmt):
@@ -84,6 +88,29 @@ def filter_ident_overlap(df, pident=90, overlap=80):
     df_filtered = df[select_id & select_overlap]
     # df_filtered.set_index('qseqid', drop=True, inplace=True)
     return df_filtered
+
+
+def filter_partial_genes(in_fp, out_fp, out_fmt='gff3'):
+    '''filter out partial genes from Prodigal predicted CDS.
+
+    It uses "partial" tag in the GFF3 from Prodigal to identify partial genes.
+
+    Parameters
+    ----------
+    in_fp : str
+        input gff3 file
+    out_fp : str
+        output gff3 file
+    '''
+    logger.info('filter out partial genes for genome %s' % in_fp)
+    with open(out_fp, 'w') as out:
+        for seq_id, imd in read(in_fp, format='gff3'):
+            for i in imd.query(metadata={'partial': '01'}):
+                i.drop()
+            for i in imd.query(metadata={'partial': '10'}):
+                i.drop()
+            # need to create a generator for write API to recoganize
+            imd.write(out, seq_id=seq_id, format='gff3')
 
 
 class _DBTest(TestCase):

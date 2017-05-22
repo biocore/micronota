@@ -38,14 +38,16 @@ class Module(BaseMod):
     def _fetch_cds_metadata(hits, db, metadata):
         '''Get metadata for the protein sequences matching any reference.
 
-        Prodigal outputs faa file with seq id like
-        'gi|556503834|ref|NC_000913.3|_3224'. It is needed to split to get
-        the input seq id and the index for the protein seq
-
+        metadata: file path to the sql tables
+        db : the table name in sql (corresponding to a protein database like uniprot, kegg, etc)
+        hits : pandas dataframe
         '''
         protein = defaultdict(defaultdict)
         if metadata is None:
             for row in hits.itertuples():
+                # Prodigal outputs faa file with seq id like
+                # 'gi|556503834|ref|NC_000913.3|_3224'. It is needed to split to get
+                # the input seq id and the index for the protein seq
                 seq_id, i = row.qseqid.rsplit('_', 1)
                 accn = row.sseqid
                 hit = '{0}:{1}'.format(db, accn)
