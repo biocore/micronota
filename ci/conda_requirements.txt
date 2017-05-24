@@ -2,8 +2,9 @@ nose
 pep8
 flake8
 sphinx
-click>=6.0
-scikit-bio>=0.5
+click>=6.7
+#scikit-bio>=0.5.1
+pyyaml
 snakemake
 infernal
 hmmer
