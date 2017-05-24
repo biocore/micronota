@@ -1,1 +1,2 @@
 coveralls
+git+git://github.com/biocore/scikit-bio.git
