@@ -92,7 +92,8 @@ class Tests(TestCase):
         with open(config_fp, 'w') as f:
             yaml.dump(config, f, default_flow_style=True)
         write(DNA('ATGC', {'id': 'seq1'}), into=self.i, format='fasta')
-        annotate(self.i, 'fasta', 1, self.tmpd, 'gff3', 11, 'bacteria', 'metagenome', (), 1, True, False, config_fp)
+        annotate(self.i, 'fasta', 1, self.tmpd, 'gff3', 11, 'bacteria', 'metagenome', (), 1,
+                 True, False, True, config_fp)
         output = join(self.tmpd, splitext(self.i)[0])
         self.assertTrue(exists(output + '.fna'))
         self.assertTrue(exists(output + '.gff3'))

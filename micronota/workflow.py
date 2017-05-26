@@ -28,7 +28,7 @@ logger = getLogger(__name__)
 
 
 def annotate(in_fp, in_fmt, min_len, out_dir, out_fmt,
-             gcode, kingdom, mode, task,
+             gcode, kingdom, mode, task, quality,
              cpus, force, dry_run, config):
     '''Annotate the sequences in the input file.
 
@@ -145,17 +145,12 @@ def annotate(in_fp, in_fmt, min_len, out_dir, out_fmt,
         if protein_xref is not None:
             protein_xref = expanduser(protein_xref)
         seqs = integrate(seq_fn_val, out_prefix, protein_xref, out_fp, out_fmt)
-
-        # create faa file
-        if 'CDS' in task:
-            logger.info('Write out protein file')
-            faa_fp = out_prefix + '.faa'
-            with open(faa_fp, 'w') as out:
-                create_faa(seqs.values(), out)
-
         logger.info('Write summary of the annotation')
-        if mode != 'metagenome':
-            with open(out_prefix + '.summary', 'w') as out:
+        with open(out_prefix + '.summary.txt', 'w') as out:
+            summarize(seqs.values(), out)
+
+        if mode != 'metagenome' and quality is True:
+            with open(out_prefix + '.quality.txt', 'w') as out:
                 if mode == 'finish':
                     contigs = False
                 else:
@@ -170,7 +165,15 @@ def annotate(in_fp, in_fmt, min_len, out_dir, out_fmt,
                     gene_score = compute_gene_score(faa_fp)
                 out.write('# seq_score: %.2f  tRNA_score: %.2f  rRNA_score: %.2f  gene_score: %.2f\n' % (
                     seq_score, trna_score, rrna_score, gene_score))
-                summarize(seqs.values(), out)
+    else:
+        logger.error('The snakemake run failed.')
+
+        # create faa file
+        # if 'CDS' in task:
+        #     logger.info('Write out protein file')
+        #     faa_fp = out_prefix + '.faa'
+        #     with open(faa_fp, 'w') as out:
+        #         create_faa(seqs.values(), out)
 
     logger.info('Done with annotation')
 
@@ -221,15 +224,22 @@ def validate_seq(in_fp, in_fmt, min_len, out_fp):
             write(seq, format='fasta', into=out)
 
 
-def integrate(seq_fp, annot_dir, protein_xref, out_fp, out_fmt='gff3'):
+def integrate(seq_fp, annot_dir, protein_xref, out_fp, quality=False, out_fmt='gff3'):
     '''integrate all the annotations and write to disk.
 
+    Parameters
+    ----------
     seq_fn : str
         input seq file name.
     out_dir : str
         annotation output directory.
     out_fmt : str
         output format
+
+    Returns
+    -------
+    dict
+        key is the str of seq_id and ``Sequence`` objects
     '''
     logger.info('Integrate annotation for output')
     seqs = {}
@@ -255,7 +265,7 @@ def integrate(seq_fp, annot_dir, protein_xref, out_fp, out_fmt='gff3'):
             imd._upper_bound = len(seq)
             if rule == 'prodigal':
                 cds_metadata = protein.get(seq_id, {})
-                _add_cds_metadata(imd, cds_metadata)
+                _add_cds_metadata(seq_id, imd, cds_metadata)
             seq.interval_metadata.merge(imd)
 
     # write out the annotation
