@@ -145,10 +145,10 @@ def annotate(in_fp, in_fmt, min_len, out_dir, out_fmt,
         if protein_xref is not None:
             protein_xref = expanduser(protein_xref)
         seqs = integrate(seq_fn_val, out_prefix, protein_xref, out_fp, out_fmt)
+
         logger.info('Write summary of the annotation')
         with open(out_prefix + '.summary.txt', 'w') as out:
             summarize(seqs.values(), out)
-
         if mode != 'metagenome' and quality is True:
             with open(out_prefix + '.quality.txt', 'w') as out:
                 if mode == 'finish':
@@ -205,7 +205,7 @@ def validate_seq(in_fp, in_fmt, min_len, out_fp):
     logger.info('Filter and validate input sequences')
     ids = set()
     with open(out_fp, 'w') as out:
-        # allow lowercases in DNA seq
+        # allow lowercase in DNA seq
         for seq in read(in_fp, format=in_fmt, constructor=DNA, lowercase=True):
             seq = seq.degap()
             if len(seq) < min_len:
