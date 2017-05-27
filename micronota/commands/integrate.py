@@ -12,7 +12,7 @@ import os
 from pkg_resources import resource_filename
 import yaml
 
-from ..workflow import integrate
+from ..workflow import integrate, summarize
 
 
 @click.command()
@@ -29,9 +29,17 @@ from ..workflow import integrate
               default='gff3',
               help='Output format for the annotation file.')
 @click.option('--protein-xref', type=click.Path(exists=True, dir_okay=False),
+              default=None, required=False,
               help='sqlite file that stores protein cross-ref info.')
 @click.pass_context
 def cli(ctx, in_seq, out_file, annot_dir, out_fmt, protein_xref):
-    '''Integrate annotations into final output.'''
-    integrate(in_seq, annot_dir, protein_xref, out_file,  out_fmt)
+    '''Integrate annotations into final output.
 
+    Example:
+    micronota -vvv integrate -i input.fna -d annot_dir -o output.gff
+    micronota -vvv integrate -i input.fna -d annot_dir -o output.gff --protein-xref ~/databases/uniprot.sqlite
+    '''
+    integrate(in_seq, annot_dir, protein_xref, out_file,  out_fmt)
+    out_prefix = out_file.rsplit('.', 1)[0]
+    with open(out_prefix + '.summary.txt', 'w') as out:
+        summarize(seqs.values(), out)

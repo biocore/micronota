@@ -36,7 +36,7 @@ def validate_gcode(ctx, param, value):
               help='Output format for the annotated sequences.')
 @click.option('--gcode', type=int, default=None,
               help='Genetic code to predict ORFs. Default value depends on Kingdom. '
-                   '11 for bacteria and archea; 1 for eukaryo')
+                   '11 for bacteria and archea; 1 for eukarya')
 @click.option('--kingdom', type=click.Choice(['bacteria', 'archaea', 'eukarya']), default='bacteria',
               required=True,
               help='which Kingdom the sequences are from')
@@ -46,16 +46,18 @@ def validate_gcode(ctx, param, value):
                    '(finished genome, draft genome, or metagenome.')
 @click.option('--cpu', type=int, default=1,
               help='Number of CPUs to use.')
-@click.option('--force', is_flag=True, default=False,
+@click.option('-f', '--force', is_flag=True, default=False,
               help='Force overwrite if the output directory exists')
 @click.option('-d', '--dry-run', is_flag=True,
               help='Do not execute anything.')
+@click.option('--quality', type=bool, default=False,
+              help='whether to compute the quality score for the sequence/annotation')
 @click.option('--config', type=click.Path(exists=True, dir_okay=False),
               help='yaml file to config annotation workflow.')
 @click.argument('task', type=str, nargs=-1)
 @click.pass_context
 def cli(ctx, in_seq, in_fmt, min_len, out_dir, out_fmt, gcode, kingdom, mode, task,
-        cpu, force, dry_run, config):
+        cpu, force, dry_run, quality, config):
     '''Annotate genomic sequences.'''
     if gcode is None:
         if kingdom == 'eukarya':
@@ -66,4 +68,4 @@ def cli(ctx, in_seq, in_fmt, min_len, out_dir, out_fmt, gcode, kingdom, mode, ta
     annotate(in_seq, in_fmt, min_len,
              out_dir, out_fmt,
              gcode, kingdom, mode, task,
-             cpu, force, dry_run, config)
+             cpu, force, dry_run, quality, config)

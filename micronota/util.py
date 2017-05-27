@@ -52,14 +52,14 @@ def _filter_sequence_ids(in_fp, out_fp, ids, negate=False):
                 write(seq, format='fasta', into=out)
 
 
-def _add_cds_metadata(imd, cds_metadata):
+def _add_cds_metadata(seq_id, imd, cds_metadata):
     '''Add metadata to all the CDS interval features.'''
     for intvl in imd._intervals:
         md = intvl.metadata
         # this md is parsed from prodigal output, which
         # has ID like "seq1_1", "seq1_2" for genes
-        idx = md['ID'].split('_')[1]
-        md['ID'] = 'micronota_' + idx
+        idx = md['ID'].rsplit('_', 1)[1]
+        md['ID'] = '%s_%s' % (seq_id, idx)
         if idx in cds_metadata:
             md.update(cds_metadata[idx])
 
@@ -109,7 +109,6 @@ def filter_partial_genes(in_fp, out_fp, out_fmt='gff3'):
                 i.drop()
             for i in imd.query(metadata={'partial': '10'}):
                 i.drop()
-            # need to create a generator for write API to recoganize
             imd.write(out, seq_id=seq_id, format='gff3')
 
 
