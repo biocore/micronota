@@ -7,30 +7,6 @@
 # ----------------------------------------------------------------------------
 
 
-def _count_interval_features(obj, feature_type):
-    '''Count number of interval features
-
-    Parameters
-    ----------
-    obj : ``Sequence``
-        sequence with interval features
-    feature_type : str
-        type of features to count
-
-    Returns
-    -------
-    int
-        number of features of the type
-
-    Raises
-    ------
-    AttributeError
-        obj has no attribute 'interval_metadata'
-    '''
-    return sum(1 for x in obj.interval_metadata.query(
-        metadata={'type': feature_type}))
-
-
 def summarize(obj, types=('length', 'nuc_freq', 'CDS', 'ncRNA', 'rRNA', 'tRNA',
                           'tandem_repeat', 'terminator', 'CRISPR')):
     '''Summarize the sequence and its annotation.
@@ -52,7 +28,8 @@ def summarize(obj, types=('length', 'nuc_freq', 'CDS', 'ncRNA', 'rRNA', 'tRNA',
         elif t == 'nuc_freq':
             stats.append(obj.frequencies())
         else:
-            stats.append(_count_interval_features(obj, t))
+            stats.append(sum(1 for x in obj.interval_metadata.query(
+                metadata={'type': t})))
     return stats
 
 
