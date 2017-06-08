@@ -27,20 +27,20 @@ class Tests(TestCase):
         gb = Sequence.read(self.input_genbank_fp, format='genbank')
         # test length
         obs = summarize(gb, types=('length',))
-        exp = (159662,)
-        self.assertTupleEqual(obs, exp)
+        exp = [159662]
+        self.assertListEqual(obs, exp)
         # test nucleotide frequencies
         obs = summarize(gb, types=('nuc_freq',))
-        exp = ({'A': 66734, 'C': 13501, 'G': 12946, 'T': 66481},)
-        self.assertTupleEqual(obs, exp)
+        exp = [{'A': 66734, 'C': 13501, 'G': 12946, 'T': 66481}]
+        self.assertListEqual(obs, exp)
         # test number of CDS'
         obs = summarize(gb, types=('CDS',))
-        exp = (175,)
-        self.assertTupleEqual(obs, exp)
+        exp = [175]
+        self.assertListEqual(obs, exp)
         # test numbers of ncRNA's, rRNA's, and tRNAs
         obs = summarize(gb, types=('ncRNA', 'rRNA', 'tRNA'))
-        exp = (0, 2, 24)
-        self.assertTupleEqual(obs, exp)
+        exp = [0, 2, 24]
+        self.assertListEqual(obs, exp)
         # test invalid object
         self.assertRaises(AttributeError, summarize, 'not_a_sequence',
                           types=('CDS',))

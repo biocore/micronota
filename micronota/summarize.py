@@ -27,8 +27,8 @@ def _count_interval_features(obj, feature_type):
     AttributeError
         obj has no attribute 'interval_metadata'
     '''
-    return len([x for x in obj.interval_metadata._intervals
-                if x.metadata['type'] == feature_type])
+    return sum(1 for x in obj.interval_metadata.query(
+        metadata={'type': feature_type}))
 
 
 def summarize(obj, types=('length', 'nuc_freq', 'CDS', 'ncRNA', 'rRNA', 'tRNA',
@@ -42,7 +42,7 @@ def summarize(obj, types=('length', 'nuc_freq', 'CDS', 'ncRNA', 'rRNA', 'tRNA',
 
     Returns
     -------
-    tuple
+    list
         summary stat
     '''
     stats = []
@@ -53,7 +53,7 @@ def summarize(obj, types=('length', 'nuc_freq', 'CDS', 'ncRNA', 'rRNA', 'tRNA',
             stats.append(obj.frequencies())
         else:
             stats.append(_count_interval_features(obj, t))
-    return tuple(stats)
+    return stats
 
 
 def summarize_iter(objs, types=('length', 'nuc_freq', 'CDS', 'ncRNA', 'rRNA',
