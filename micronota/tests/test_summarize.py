@@ -15,7 +15,7 @@ from skbio import write, read, Sequence
 from skbio.metadata import IntervalMetadata
 from skbio.util import get_data_path
 
-from micronota.summarize import summarize
+from micronota.summarize import summarize, summarize_iter
 
 
 class Tests(TestCase):
@@ -44,6 +44,13 @@ class Tests(TestCase):
         # test invalid object
         self.assertRaises(AttributeError, summarize, 'not_a_sequence',
                           types=('CDS',))
+
+    def test_summarize_iter(self):
+        gb = Sequence.read(self.input_genbank_fp, format='genbank')
+        # test length
+        obs = list(summarize_iter([gb] * 3, types=('length',)))
+        exp = [[159662]] * 3
+        self.assertListEqual(obs, exp)
 
     def tearDown(self):
         rmtree(self.tmpd)
