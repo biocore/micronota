@@ -39,7 +39,7 @@ def cli(ctx, in_seq, out_file, annot_dir, out_fmt, protein_xref):
     micronota -vvv integrate -i input.fna -d annot_dir -o output.gff
     micronota -vvv integrate -i input.fna -d annot_dir -o output.gff --protein-xref ~/databases/uniprot.sqlite
     '''
-    integrate(in_seq, annot_dir, protein_xref, out_file,  out_fmt)
+    seqs = integrate(in_seq, annot_dir, protein_xref, out_file,  out_fmt)
     out_prefix = out_file.rsplit('.', 1)[0]
     with open(out_prefix + '.summary.txt', 'w') as out:
         summarize(seqs.values(), out)
