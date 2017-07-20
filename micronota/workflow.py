@@ -19,7 +19,7 @@ import yaml
 import numpy as np
 
 from . import module
-from .util import _add_cds_metadata
+from .util import _add_cds_metadata, filter_seq
 from .quality import compute_gene_score, compute_trna_score, compute_rrna_score, compute_seq_score
 from . import __version__
 
@@ -28,8 +28,8 @@ logger = getLogger(__name__)
 
 
 def annotate(in_fp, in_fmt, min_len, out_dir, out_fmt,
-             gcode, kingdom, mode, task, quality,
-             cpus, force, dry_run, config):
+             gcode, kingdom, mode, task,
+             cpus, force, dry_run, quality, config):
     '''Annotate the sequences in the input file.
 
     Parameters
@@ -59,23 +59,36 @@ def annotate(in_fp, in_fmt, min_len, out_dir, out_fmt,
     '''
     logger.debug('working dir: %s' % out_dir)
     if force:
-        logger.debug('run in force mode, will overwrite existing files')
+        logger.debug('run in force mode - will overwrite existing files.')
     if dry_run:
-        logger.debug('run in dry mode, will not produce output')
+        logger.debug('run in dry mode - will not produce output.')
 
+    ## prepare the file paths
     os.makedirs(out_dir, exist_ok=True)
-    prefix, suffix = splitext(in_fp)
+    prefix, suffix = splitext(basename(in_fp))
     if suffix in {'.gz', '.bz2'}:
         prefix = splitext(prefix)[0]
-    out_prefix = join(out_dir, basename(prefix))
-    seq_fn_val = out_prefix + '.fna'
-    validate_seq(in_fp, in_fmt, min_len, seq_fn_val)
+    out_prefix = join(out_dir, prefix)
+    seq_fp = out_prefix + '.fna'
 
+    ## validate and filter the input seq file
+    if exists(seq_fp):
+        # do not overwrite because all the snakemake steps will be rerun when
+        # this file is updated.
+        logger.debug('the filtered sequence file already exists. skip validating step.')
+    else:
+        ids = set()
+        with open(seq_fp, 'w') as out:
+            for seq in filter_seq(in_fp, in_fmt, lambda s: len(s) >= min_len):
+                write(seq, format='fasta', into=out)
+
+    ## prepare snakemake workflow
+    snakefile = resource_filename(__package__, 'Snakefile')
     if config is None:
         config = resource_filename(__package__, kingdom + '.yaml')
-    logger.debug('set annotation in %s mode' % mode)
-    logger.debug('set annotation as %s' % kingdom)
-    logger.debug('use config file: %s' % config)
+    logger.debug('set annotation in %s mode.' % mode)
+    logger.debug('set annotation as %s.' % kingdom)
+    logger.debug('use config file: %s.' % config)
     with open(config) as fh:
         cfg = yaml.load(fh)
 
@@ -92,6 +105,7 @@ def annotate(in_fp, in_fmt, min_len, out_dir, out_fmt,
                         raise ValueError('You have multiple config for rule %s' % vk)
                     rules[vk] = vv
 
+    ## update the parameters of relevant tools with options from cmd line
     if 'prodigal' in rules:
         param = '%s -g %d' % (rules['prodigal']['params'], gcode)
         if mode == 'finished':
@@ -106,20 +120,18 @@ def annotate(in_fp, in_fmt, min_len, out_dir, out_fmt,
     if 'rnammer' in rules:
         rules['rnammer']['params'] = '-S %s %s' % (kingdom[:3], rules['rnammer']['params'])
 
-    logger.debug('run snakemake workflow')
     # only run the targets specified in the yaml file
     targets = list(rules.keys())
     if not targets:
         logger.warning('No annotation task to run')
         return
-    rules['seq'] = seq_fn_val
+    rules['seq'] = seq_fp
 
     cfg_file = join(out_dir, 'snakemake.yaml')
     with open(cfg_file, 'w') as out:
         yaml.dump(rules, out, default_flow_style=False)
 
-    snakefile = resource_filename(__package__, 'Snakefile')
-    logger.info('Run annotation pipeline')
+    logger.debug('run snakemake workflow')
     success = snakemake(
         snakefile,
         cores=cpus,
@@ -144,7 +156,7 @@ def annotate(in_fp, in_fmt, min_len, out_dir, out_fmt,
         protein_xref = general.get('protein_xref')
         if protein_xref is not None:
             protein_xref = expanduser(protein_xref)
-        seqs = integrate(seq_fn_val, out_prefix, protein_xref, out_fp, out_fmt)
+        seqs = integrate(seq_fp, out_prefix, protein_xref, out_fp, out_fmt)
 
         logger.info('Write summary of the annotation')
         with open(out_prefix + '.summary.txt', 'w') as out:
@@ -168,60 +180,7 @@ def annotate(in_fp, in_fmt, min_len, out_dir, out_fmt,
     else:
         logger.error('The snakemake run failed.')
 
-        # create faa file
-        # if 'CDS' in task:
-        #     logger.info('Write out protein file')
-        #     faa_fp = out_prefix + '.faa'
-        #     with open(faa_fp, 'w') as out:
-        #         create_faa(seqs.values(), out)
-
     logger.info('Done with annotation')
-
-
-def validate_seq(in_fp, in_fmt, min_len, out_fp):
-    '''Validate input seq file.
-
-    1. filter out short seq;
-    2. validate seq IDs (no duplicates)
-    3. remove gaps in the sequence if there is any
-    4. convert to fasta format
-
-    Parameters
-    ----------
-    in_fp : str
-        input seq file path
-    in_fmt : str
-        the format of seq file
-    min_len : int
-        cutoff of seq len to filter away
-    out_fp : str
-        output seq file path
-    '''
-    if exists(out_fp):
-        # do not overwrite because all the snakemake steps will be rerun when
-        # this file is updated.
-        logger.debug('the sequence file already exists. skip validating step.')
-        return
-    logger.info('Filter and validate input sequences')
-    ids = set()
-    with open(out_fp, 'w') as out:
-        # allow lowercase in DNA seq
-        for seq in read(in_fp, format=in_fmt, constructor=DNA, lowercase=True):
-            seq = seq.degap()
-            if len(seq) < min_len:
-                continue
-            if in_fmt == 'genbank':
-                seq.metadata['id'] = seq.metadata['LOCUS']['locus_name']
-            try:
-                ident = seq.metadata['id']
-            except KeyError:
-                raise KeyError('Ill input file format: at least one sequences do not have IDs.')
-            if ident in ids:
-                raise ValueError(
-                    'Duplicate seq IDs in your input file: {}'.format(ident))
-            else:
-                ids.add(ident)
-            write(seq, format='fasta', into=out)
 
 
 def integrate(seq_fp, annot_dir, protein_xref, out_fp, quality=False, out_fmt='gff3'):

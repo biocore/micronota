@@ -33,5 +33,5 @@ from ..workflow import validate_seq
               help='Minimum seq length to keep')
 @click.pass_context
 def cli(ctx, in_file, in_fmt, out_file, out_fmt, length):
-    '''Filter input sequences.'''
-    validate_seq(in_file, in_fmt, length, out_fp)
+    '''Filter and validate input sequences.'''
+    validate_seq(in_file, in_fmt, length, out_file)

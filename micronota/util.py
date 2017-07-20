@@ -19,7 +19,7 @@ from unittest import TestCase
 from sqlite3 import connect
 from logging import getLogger
 
-from skbio import read, write, Sequence
+from skbio import read, write, Sequence, DNA
 
 
 logger = getLogger(__name__)
@@ -88,6 +88,49 @@ def filter_ident_overlap(df, pident=90, overlap=80):
     df_filtered = df[select_id & select_overlap]
     # df_filtered.set_index('qseqid', drop=True, inplace=True)
     return df_filtered
+
+
+def filter_seq(in_fp, in_fmt, keep=lambda s: len(s) > 500):
+    '''Validate and filter input seq file.
+
+    1. filter seq;
+    2. validate seq IDs (no duplicates)
+    3. remove gaps in the sequence if there is any
+
+    Parameters
+    ----------
+    in_fp : str
+        input seq file path
+    in_fmt : str
+        the format of seq file
+
+    Yields
+    ------
+    sequence object
+
+    TODO
+    ----
+    add an option to ignore the abnormal seq and continue yielding
+    '''
+    logger.info('Filter and validate input sequences')
+    ids = set()
+
+    # allow lowercase in DNA seq
+    for seq in read(in_fp, format=in_fmt, constructor=DNA, lowercase=True):
+        seq = seq.degap()
+        if keep(seq):
+            if in_fmt == 'genbank':
+                seq.metadata['id'] = seq.metadata['LOCUS']['locus_name']
+            try:
+                ident = seq.metadata['id']
+            except KeyError:
+                raise KeyError('Ill input file format: at least one sequences do not have IDs.')
+            if ident in ids:
+                raise ValueError(
+                    'Duplicate seq IDs in your input file: {}'.format(ident))
+            else:
+                ids.add(ident)
+                yield seq
 
 
 def filter_partial_genes(in_fp, out_fp, out_fmt='gff3'):

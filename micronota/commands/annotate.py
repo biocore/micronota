@@ -11,18 +11,10 @@ import click
 from ..workflow import annotate
 
 
-def validate_gcode(ctx, param, value):
-    try:
-        rolls, dice = map(int, value.split('d', 2))
-        return (dice, rolls)
-    except ValueError:
-        raise click.BadParameter('rolls need to be in format NdM')
-
-
 @click.command()
 @click.option('-i', '--in-seq', type=click.Path(exists=True, dir_okay=False),
               required=True,
-              help='Input sequence file (can be gzip file.')
+              help='Input sequence file (can be gzip/bzip file.')
 @click.option('--in-fmt', type=click.Choice(['fasta', 'genbank', 'gff3']),
               default='fasta',
               help='The format of input file. If it is gff3 format, it must contain seq in it.')
@@ -33,10 +25,10 @@ def validate_gcode(ctx, param, value):
               help='Output directory.')
 @click.option('--out-fmt', type=click.Choice(['gff3', 'genbank']),
               default='genbank',
-              help='Output format for the annotated sequences.')
+              help='Output format for the annotation.')
 @click.option('--gcode', type=int, default=None,
               help='Genetic code to predict ORFs. Default value depends on Kingdom. '
-                   '11 for bacteria and archea; 1 for eukarya')
+                   '11 for bacteria and archaea; 1 for eukarya')
 @click.option('--kingdom', type=click.Choice(['bacteria', 'archaea', 'eukarya']), default='bacteria',
               required=True,
               help='which Kingdom the sequences are from')
