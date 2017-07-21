@@ -90,7 +90,7 @@ def filter_ident_overlap(df, pident=90, overlap=80):
     return df_filtered
 
 
-def filter_seq(in_fp, in_fmt, keep=lambda s: len(s) > 500):
+def check_seq(in_seq, in_fmt=None, discard=lambda s: len(s) < 500):
     '''Validate and filter input seq file.
 
     1. filter seq;
@@ -99,14 +99,16 @@ def filter_seq(in_fp, in_fmt, keep=lambda s: len(s) > 500):
 
     Parameters
     ----------
-    in_fp : str
-        input seq file path
+    in_seq : str or Iterable of ``Sequence`` objects
+        input seq file path if it is a str
     in_fmt : str
         the format of seq file
+    discard : callable
+        a callable that applies on a ``Sequence`` and return a boolean
 
     Yields
     ------
-    sequence object
+    ``Sequence`` object
 
     TODO
     ----
@@ -115,22 +117,27 @@ def filter_seq(in_fp, in_fmt, keep=lambda s: len(s) > 500):
     logger.info('Filter and validate input sequences')
     ids = set()
 
-    # allow lowercase in DNA seq
-    for seq in read(in_fp, format=in_fmt, constructor=DNA, lowercase=True):
+    if isinstance(in_seq, str):
+        # allow lowercase in DNA seq
+        in_seq = read(in_seq, format=in_fmt, constructor=DNA, lowercase=True)
+
+    for seq in in_seq:
         seq = seq.degap()
-        if keep(seq):
-            if in_fmt == 'genbank':
-                seq.metadata['id'] = seq.metadata['LOCUS']['locus_name']
-            try:
-                ident = seq.metadata['id']
-            except KeyError:
-                raise KeyError('Ill input file format: at least one sequences do not have IDs.')
-            if ident in ids:
-                raise ValueError(
-                    'Duplicate seq IDs in your input file: {}'.format(ident))
-            else:
-                ids.add(ident)
-                yield seq
+        if discard(seq):
+            continue
+
+        if in_fmt == 'genbank':
+            seq.metadata['id'] = seq.metadata['LOCUS']['locus_name']
+        try:
+            ident = seq.metadata['id']
+        except KeyError:
+            raise KeyError('Ill input file format: at least one sequences do not have IDs.')
+        if ident in ids:
+            raise ValueError(
+                'Duplicate seq IDs in your input file: {}'.format(ident))
+        else:
+            ids.add(ident)
+            yield seq
 
 
 def filter_partial_genes(in_fp, out_fp, out_fmt='gff3'):

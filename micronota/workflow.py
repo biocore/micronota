@@ -7,7 +7,7 @@
 # ----------------------------------------------------------------------------
 
 import os
-from os.path import join, exists, basename, splitext, expanduser
+from os.path import join, exists, basename, splitext, expanduser, abspath
 from logging import getLogger
 from importlib import import_module
 from time import gmtime, strftime
@@ -19,7 +19,7 @@ import yaml
 import numpy as np
 
 from . import module
-from .util import _add_cds_metadata, filter_seq
+from .util import _add_cds_metadata, check_seq
 from .quality import compute_gene_score, compute_trna_score, compute_rrna_score, compute_seq_score
 from . import __version__
 
@@ -69,7 +69,7 @@ def annotate(in_fp, in_fmt, min_len, out_dir, out_fmt,
     if suffix in {'.gz', '.bz2'}:
         prefix = splitext(prefix)[0]
     out_prefix = join(out_dir, prefix)
-    seq_fp = out_prefix + '.fna'
+    seq_fp = abspath(out_prefix + '.fna')
 
     ## validate and filter the input seq file
     if exists(seq_fp):
@@ -79,7 +79,7 @@ def annotate(in_fp, in_fmt, min_len, out_dir, out_fmt,
     else:
         ids = set()
         with open(seq_fp, 'w') as out:
-            for seq in filter_seq(in_fp, in_fmt, lambda s: len(s) >= min_len):
+            for seq in check_seq(in_fp, in_fmt, lambda s: len(s) < min_len):
                 write(seq, format='fasta', into=out)
 
     ## prepare snakemake workflow

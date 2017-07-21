@@ -8,7 +8,7 @@
 
 import click
 
-from ..workflow import validate_seq
+from ..util import check_seq
 
 
 @click.command()
@@ -34,4 +34,7 @@ from ..workflow import validate_seq
 @click.pass_context
 def cli(ctx, in_file, in_fmt, out_file, out_fmt, length):
     '''Filter and validate input sequences.'''
-    validate_seq(in_file, in_fmt, length, out_file)
+    with open(out_file, 'w') as out:
+        for seq in filter_seq(in_file, in_fmt, lambda s: len(s) < length):
+            write(seq, format='fasta', into=out)
+

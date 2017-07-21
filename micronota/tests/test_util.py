@@ -11,10 +11,10 @@ from os.path import join
 from tempfile import mkdtemp
 from shutil import rmtree
 
-from skbio import write, read, Sequence
+from skbio import write, read, Sequence, DNA
 from skbio.metadata import IntervalMetadata
 
-from micronota.util import _filter_sequence_ids, filter_partial_genes
+from micronota.util import _filter_sequence_ids, filter_partial_genes, check_seq
 
 
 class Tests(TestCase):
@@ -55,6 +55,31 @@ class Tests(TestCase):
         obs = read(out_fp, format='gff3')
         for i, j in zip(obs, [('seq2', imd3)]):
             self.assertEqual(i, j)
+
+    def test_check_seq(self):
+        seqs = [DNA('ATGC', {'id': 'a', 'description': 'A'}),
+                DNA('A', {'id': 'b', 'description': 'B'})]
+        for l in [0, 2, 4, 5]:
+            obs = list(check_seq(seqs, 'fasta', lambda s: len(s) < l))
+            exp = [i for i in seqs if len(i) >= l]
+            self.assertEqual(exp, obs)
+
+    def test_check_seq_degap(self):
+        seqs_gaps = [DNA('AT-GC', {'id': 'a', 'description': 'A'}),
+                     DNA('A-', {'id': 'b', 'description': 'B'})]
+        seqs = [DNA('ATGC', {'id': 'a', 'description': 'A'}),
+                DNA('A', {'id': 'b', 'description': 'B'})]
+        for l in [0, 2, 4, 5]:
+            obs = list(check_seq(seqs_gaps, 'fasta', lambda s: len(s) < l))
+            exp = [i for i in seqs if len(i) >= l]
+            self.assertEqual(exp, obs)
+
+    def test_check_seq_duplicate_ids(self):
+        seqs = [DNA('A', {'id': 'a'}),
+                DNA('T', {'id': 'a'})]
+
+        with self.assertRaisesRegex(ValueError, 'Duplicate'):
+            list(check_seq(seqs, discard=lambda s: len(s) < 1))
 
     def tearDown(self):
         rmtree(self.tmpd)
