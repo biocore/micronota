@@ -7,32 +7,51 @@
 # ----------------------------------------------------------------------------
 
 
-def summarize(obj, types=('length', 'nuc_freq', 'CDS', 'ncRNA', 'rRNA', 'tRNA', 'tandem_repeat', 'terminator', 'CRISPR')):
-    '''Summarize the sequence and its annotation.
+def summarize(obj, types=('length', 'nuc_freq', 'CDS', 'ncRNA', 'rRNA', 'tRNA',
+                          'tandem_repeat', 'terminator', 'CRISPR')):
+    '''Summarize the sequence and its annotation in a genome or metagenome
+    sample.
 
     Parameters
     ----------
-    seq : ``Sequence`` or ``IntervalMetadata`` object
+    obj : ``Sequence``
+        sequence to summarize
 
     Returns
     -------
-    tuple
+    list
         summary stat
     '''
+    stats = []
+    for t in types:
+        if t == 'length':
+            stats.append(len(obj))
+        elif t == 'nuc_freq':
+            stats.append(obj.frequencies())
+        else:
+            stats.append(sum(1 for x in obj.interval_metadata.query(
+                metadata={'type': t})))
+    return stats
 
 
-def summarize_iter(objs, types=('length', 'nuc_freq', 'CDS', 'ncRNA', 'rRNA', 'tRNA', 'tandem_repeat', 'terminator', 'CRISPR')):
-    '''Summarize the sequences and their annotations in a genome or metagenome sample.
+def summarize_iter(objs, types=('length', 'nuc_freq', 'CDS', 'ncRNA', 'rRNA',
+                                'tRNA', 'tandem_repeat', 'terminator',
+                                'CRISPR')):
+    '''Summarize the sequences and their annotations in a genome or metagenome
+    sample.
 
     Parameters
     ----------
-    seq : iterable of ``Sequence`` or ``IntervalMetadata`` objects
+    objs : iterable of ``Sequence``
+        sequences to summarize
 
     Yields
     ------
-    tuple
+    list
         summary stat
     '''
+    for obj in objs:
+        yield summarize(obj, types)
 
 
 def compute_condon_usage(cds, genetic_code=11):
