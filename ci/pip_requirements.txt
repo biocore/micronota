@@ -1,2 +1,3 @@
 coveralls
 git+git://github.com/biocore/scikit-bio.git
+git+git://github.com/pallets/click.git
