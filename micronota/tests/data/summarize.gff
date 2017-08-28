@@ -1,0 +1,15 @@
+##gff-version 3
+gi|556503834|ref|NC_000913.3|	Prodigal_v2.60	CDS	3	98	1.15	+	0	ID=1_1;conf=56.57;cscore=-1.57;Dbxref=uniprot:A0A0J2F368;gc_cont=0.427;partial=10;rbs_motif=None;rbs_spacer=None;rscore=0.00;sscore=2.72;start_type=Edge;tscore=3.22;uscore=0.00
+gi|556503834|ref|NC_000913.3|	Prodigal_v2.60	CDS	337	2799	336.87	+	0	EC_number=2.7.2.4,1.1.1.3;ID=1_2;conf=99.99;cscore=320.95;Dbxref=GO:0005737,GO:0005829,GO:0005524,GO:0050661,GO:0016597,GO:0004072,GO:0004412,GO:0009089,GO:0009088,GO:0009090,TIGRFAM:TIGR00657,eggNOG:COG0460,eggNOG:COG0527,eggNOG:ENOG4105CFH,KEGG:ecj:JW0001,KEGG:eco:b0002,Pfam:PF01842,Pfam:PF00696,Pfam:PF00742,Pfam:PF03447,Pfam:PF13840,uniprot:P00561;gc_cont=0.531;partial=00;product=Bifunctional aspartokinase/homoserine dehydrogenase 1;rbs_motif=GGAG/GAGG;rbs_spacer=5-10bp;rscore=11.24;sscore=15.93;start_type=ATG;tscore=3.94;uscore=1.40
+gi|556503834|ref|NC_000913.3|	Prodigal_v2.60	CDS	2801	3733	118.08	+	0	EC_number=2.7.1.39;ID=1_3;conf=100.00;cscore=97.71;Dbxref=GO:0005737,GO:0005524,GO:0009088,GO:0004413,TIGRFAM:TIGR00191,eggNOG:ENOG4105D5I,eggNOG:COG0083,KEGG:ebi:EbC_06610,Pfam:PF00288,Pfam:PF08544,uniprot:D8MMY5;gc_cont=0.563;partial=00;product=Homoserine kinase;rbs_motif=AGGAG;rbs_spacer=5-10bp;rscore=14.85;sscore=20.37;start_type=ATG;tscore=3.94;uscore=0.32
+gi|556503834|ref|NC_000913.3|	TransTermHP	terminator	281	301	.	+	.	ID=TERM_1;confidence=100;gene_id=1_1;sequence=GAAACACAGAAAAAA/GCCCGCAC/CTGACA/GTGCGGGC/TTTTTTTTTCGACCA
+gi|556503834|ref|NC_000913.3|	Aragorn	tRNA	225500	225575	.	+	.	product=tRNA-Ala
+gi|556503834|ref|NC_000913.3|	Aragorn	tRNA	228928	229004	.	+	.	product=tRNA-Asp
+gi|556503834|ref|NC_000913.3|	Tandem_Repeats_Finder	tandem_repeat	59178	59230	.	.	.	repeat=AAAAAAGTTGCTACT
+gi|556503834|ref|NC_000913.3|	Tandem_Repeats_Finder	tandem_repeat	4621732	4621765	.	.	.	repeat=AATCTATTCAAG
+gi|556503834|ref|NC_000913.3|	Rfam	ncRNA	4168641	4171544	.	+	.	Dbxref=RF02541;ncRNA_class=LSU_rRNA_bacteria
+gi|556503834|ref|NC_000913.3|	Rfam	ncRNA	72135	72221	.	-	.	Dbxref=RF02564;ncRNA_class=naRNA4
+gi|556503834|ref|NC_000913.3|	minced:0.2.0	CRISPR	2877701	2878463	13	.	.	ID=CRISPR1
+gi|556503834|ref|NC_000913.3|	minced:0.2.0	CRISPR	2904014	2904407	7	.	.	ID=CRISPR2
+gi|556503834|ref|NC_000913.2|	Rfam	rRNA	416	1817	.	+	.	Dbxref=RF02541;ncRNA_class=SSU_rRNA_bacteria
+gi|556503834|ref|NC_000913.2|	Rfam	rRNA	4168641	4171544	.	+	.	Dbxref=RF00001;ncRNA_class=5S_rRNA

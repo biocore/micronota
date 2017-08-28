@@ -1,7 +1,0 @@
-DEFINITION  seqnum=1;seqlen=2757;seqhdr="Mycoplasma genitalium M2288 chromosome, partial genome.";version=Prodigal.v2.6.3;run_type=Metagenomic;model="0|Mycoplasma_bovis_PG45|B|29.3|4|1";gc_cont=29.30;transl_table=4;uses_sd=1
-FEATURES             Location/Qualifiers
-     CDS             686..1828
-                     /note="ID=1_1;partial=00;start_type=ATG;rbs_motif=None;rbs_spacer=None;gc_cont=0.236;conf=100.00;score=130.98;cscore=132.85;sscore=-1.87;rscore=-5.22;uscore=-0.59;tscore=3.94;"
-     CDS             1828..>2757
-                     /note="ID=1_2;partial=01;start_type=ATG;rbs_motif=None;rbs_spacer=None;gc_cont=0.271;conf=100.00;score=110.52;cscore=105.30;sscore=5.22;rscore=-5.22;uscore=-0.26;tscore=3.94;"
-//

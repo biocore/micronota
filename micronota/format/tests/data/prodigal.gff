@@ -1,0 +1,4 @@
+##gff-version  3
+# Sequence Data: seqnum=1;seqlen=4988504;seqhdr="NC_016822.1 Shigella sonnei 53G main chromosome, complete genome"
+# Model Data: version=Prodigal.v2.60;run_type=Single;model="Ab initio";gc_cont=50.72;transl_table=11;uses_sd=1
+NC_016822.1	Prodigal_v2.60	CDS	337	2799	326.9	+	0	ID=1_1;partial=00;start_type=ATG;rbs_motif=GGAG/GAGG;rbs_spacer=5-10bp;gc_cont=0.533;conf=99.99;score=326.87;cscore=312.13;sscore=14.74;rscore=10.55;uscore=0.36;tscore=3.83;

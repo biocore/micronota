@@ -1,0 +1,16 @@
+#target name         accession query name           accession mdl mdl from   mdl to seq from   seq to strand trunc pass   gc  bias  score   E-value inc description of target
+#------------------- --------- -------------------- --------- --- -------- -------- -------- -------- ------ ----- ---- ---- ----- ------ --------- --- ---------------------
+RNaseP_bact_a        RF00010   NC_016822.1          -          cm        1      367  3588818  3588442      -    no    1 0.62   6.8  312.6  1.9e-100 !   -
+5S_rRNA              RF00001   NC_016822.1          -          cm        1      188  3355450  3355633      +    no    1 0.55   0.0  129.5   1.7e-27 !   -
+LSU_rRNA_bacteria    RF02541   NC_016833.1          -          cm        1      193    85216    85384      +    no    1 0.37   0.1   27.1    0.0015 !   -
+SSU_rRNA_bacteria    RF00177   NC_016834.1          -          cm       43       84     8740     8777      +    no    1 0.11   4.0    6.3       6.2 ?   -
+#
+# Program:         cmscan
+# Version:         1.1.1 (July 2014)
+# Pipeline mode:   SCAN
+# Query file:      NC_016822.1.fna
+# Target file:     /Users/zech/Dropbox/git/micronota/micronota/data/rfam.cm
+# Option settings: cmscan --tblout cmscan.txt --cpu 1 /Users/zech/Dropbox/git/micronota/micronota/data/rfam.cm NC_016822.1.fna
+# Current dir:     /Users/zech/Dropbox/git/micronota/tmp/NC_016822.1
+# Date:            Wed Jan 18 11:25:50 2017
+# [ok]

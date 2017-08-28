@@ -1,5 +1,0 @@
-@HD	VN:1.5	SO:query
-@PG	PN:DIAMOND
-@mm	BlastX
-@CO	BlastX-like alignments
-@CO	Reporting AS: biScore, ZR: rawScore, ZE: expected, ZI: percent identity, SL: reference length, ZF: frame, ZS: query start DNA coordinate

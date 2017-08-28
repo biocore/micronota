@@ -58,16 +58,17 @@ setup(name='micronota',
       url='http://microbio.me/micronota',
       test_suite='nose.collector',
       packages=find_packages(),
-      package_data={'micronota': ['support_files/*']},
+      package_data={'micronota': [
+          'log.cfg', 'log2file.cfg', 'config.yaml',
+          'data/*',
+          'rules/*']},
       install_requires=[
-          'click >= 6',
-          'scikit-bio >= 0.4.0',
-          'burrito >= 0.9'
+          'click > 6',
+          'scikit-bio >= 0.5.0',
       ],
       extras_require={'test': ["nose", "pep8", "flake8"],
                       'coverage': ["coverage"],
-                      'doc': ["Sphinx == 1.3.3"]},
+                      'doc': ["Sphinx >= 1.5"]},
       entry_points={
-          'console_scripts': [
-              'micronota=micronota.cli:cmd',
-          ]})
+          'console_scripts': ['micronota=micronota.cli:cmd'],
+      })
