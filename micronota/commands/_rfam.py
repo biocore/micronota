@@ -20,29 +20,31 @@ logger = getLogger(__name__)
 # keep this command hidden from help msg
 # this option is only available in click v7
 @click.command(hidden=True)
-@click.option('--operation', type=click.Choice(['kingdom', 'other', 'all']),
-              default='kingdom', required=True, help='')
+@click.option('--operation', type=click.Choice(['bacteria', 'archaea', 'eukarya', 'default']),
+              default='default', required=True,
+              help='Keep bacteria/archaea/eukarya rRNA models or filter away tRNA, tmRNA, rRNA models (default)')
 @click.argument('infile', type=click.File('r'), nargs=1)
-@click.argument('outfile', type=click.Path(),  nargs=1)
+@click.argument('outfile', type=click.Path(),  nargs=1, default=None)
 @click.pass_context
 def cli(ctx, operation, infile, outfile):
     '''Create rfam database for micronota usage.'''
-    if operation in ['other', 'all']:
-        with open(join(outfile, 'miscRfam.cm'), 'w') as outfile:
-            filter_models(infile, outfile)
-    if operation in ['kingdom', 'all']:
-        kingdom_models = {'bacteria': {('RF00001', '5S_rRNA'),
-                                       ('RF00177', 'SSU_rRNA_bacteria'),
-                                       ('RF02541', 'LSU_rRNA_bacteria')},
-                          'archaea': {('RF00001', '5S_rRNA'),
-                                      ('RF01959', 'SSU_rRNA_archaea'),
-                                      ('RF02540', 'LSU_rRNA_archaea')},
-                          'eukarya': {('RF00001', '5S_rRNA'),
-                                      ('RF00002', '5_8S_rRNA'),
-                                      ('RF01960', 'SSU_rRNA_eukarya'),
-                                      ('RF02543', 'LSU_rRNA_eukarya')}}
-        for kingdom in kingdom_models:
-            with open(join(outfile, kingdom + '.cm'), 'w') as outfile:
-                filter_models(infile, outfile, negate=True, models=kingdom_models[kingdom])
-            # don't forget to restart from the beginning of the file.
-            infile.seek(0, 0)
+    kingdom_models = {'bacteria': {('RF00001', '5S_rRNA'),
+                                   ('RF00177', 'SSU_rRNA_bacteria'),
+                                   ('RF02541', 'LSU_rRNA_bacteria')},
+                      'archaea': {('RF00001', '5S_rRNA'),
+                                  ('RF01959', 'SSU_rRNA_archaea'),
+                                  ('RF02540', 'LSU_rRNA_archaea')},
+                      'eukarya': {('RF00001', '5S_rRNA'),
+                                  ('RF00002', '5_8S_rRNA'),
+                                  ('RF01960', 'SSU_rRNA_eukarya'),
+                                  ('RF02543', 'LSU_rRNA_eukarya')}}
+    if operation == 'default':
+        if outfile is None:
+            outfile = 'miscRfam.cm'
+        with open(join(outfile), 'w') as out:
+            filter_models(infile, out)
+    else:
+        if outfile is None:
+            outfile = join(kingdom + '.cm')
+        with open(outfile, 'w') as out:
+            filter_models(infile, out, negate=True, models=kingdom_models[kingdom])

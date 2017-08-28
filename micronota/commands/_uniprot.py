@@ -22,7 +22,13 @@ logger = getLogger(__name__)
 @click.argument('outfile', type=click.Path(),  nargs=1)
 @click.pass_context
 def cli(ctx, infile, outfile):
-    '''Create UniProt protein cross-ref database.'''
+    '''Create UniProt protein cross-ref database.
+
+    Example:
+    micronota _uniprot uniprot_sprot.xml.gz uniprot_trembl.xml.gz <out_dir>/<uniprot.sql>
+
+    '''
+    click.echo('=======+')
     n = 0
     for fp in infile:
         if fp.endswith('.gz'):
