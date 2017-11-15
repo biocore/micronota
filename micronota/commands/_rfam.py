@@ -19,12 +19,12 @@ logger = getLogger(__name__)
 
 # keep this command hidden from help msg
 # this option is only available in click v7
-@click.command(hidden=True)
+@click.command()
 @click.option('--operation', type=click.Choice(['bacteria', 'archaea', 'eukarya', 'default']),
               default='default', required=True,
               help='Keep bacteria/archaea/eukarya rRNA models or filter away tRNA, tmRNA, rRNA models (default)')
 @click.argument('infile', type=click.File('r'), nargs=1)
-@click.argument('outfile', type=click.Path(),  nargs=1, default=None)
+@click.argument('outfile', type=click.Path(),  nargs=1, default='rfam_filtered.cm')
 @click.pass_context
 def cli(ctx, operation, infile, outfile):
     '''Create rfam database for micronota usage.'''
@@ -39,12 +39,8 @@ def cli(ctx, operation, infile, outfile):
                                   ('RF01960', 'SSU_rRNA_eukarya'),
                                   ('RF02543', 'LSU_rRNA_eukarya')}}
     if operation == 'default':
-        if outfile is None:
-            outfile = 'miscRfam.cm'
         with open(join(outfile), 'w') as out:
             filter_models(infile, out)
     else:
-        if outfile is None:
-            outfile = join(kingdom + '.cm')
         with open(outfile, 'w') as out:
             filter_models(infile, out, negate=True, models=kingdom_models[kingdom])

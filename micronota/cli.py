@@ -55,7 +55,8 @@ class ComplexCLI(AliasedGroup):
         rv = []
         cmd_folder = abspath(join(dirname(__file__), 'commands'))
         for filename in listdir(cmd_folder):
-            if filename.endswith('.py') and filename != '__init__.py':
+            # don't list the commands that starts with "_"; but they are still available to run
+            if filename.endswith('.py') and not filename.startswith('_'):
                 rv.append(splitext(filename)[0])
         rv.sort()
         return rv
