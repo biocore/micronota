@@ -13,150 +13,75 @@ As Python 3 matures and majority python packages support Python 3, the scientifi
   micronota can annotate multiple features including coding genes, prophage, CRISPR, tRNA, rRNA and other ncRNAs. It has a customizable framework to integrate additional tools and databases. Generally, the annotation can be classified into 2 categories: structural annotation and functional annotation. Structural annotation is the identification of the genetic elements on the sequence and functional annotation is to assign functions to those elements.
 
 * Install
-
-  To install the latest release of micronota:
+** install via conda
+   To install the latest release of micronota:
   #+BEGIN_SRC sh
     conda install micronota
   #+END_SRC
-
-
-  Or you can install through ~pip~:
+** install via pip
+   You can install through ~pip~:
   #+BEGIN_SRC sh
     pip install micronota
   #+END_SRC
 
-  To install the latest developping version:
+  To install or update to the latest developping version:
   #+BEGIN_SRC
     pip install git+git://github.com/biocore/micronota.git
   #+END_SRC
 
+  micronota relies on external packages like prodigal, aragorn, etc. for annotation. You need to install those external packages (this is implicitly installed when micronota is installed via conda). To simplify the process, you can install with conda:
+  #+BEGIN_SRC
+    conda install --file https://raw.githubusercontent.com/biocore/micronota/master/ci/conda_requirements.txt
+  #+END_SRC
+
 * Prepare Databases
+  You need to download database files:
+    | Databases | Supported | Download URL |
+    |-----------+-----------+--------------|
+    | UniRef    | yes       |              |
+    | Rfam      | yes       |              |
+    | ResFam    | ongoing   |              |
 
-  To prepare (download and format) the files of TIGRFAM to the right form read by micronota:
-  #+BEGIN_SRC
-    micronota database prepare tigrfam --cache_dir ~/database
-  #+END_SRC
-* Print Configure Info
+* Usage
+** You can see the command supported by micronota with:
+   #+BEGIN_SRC sh
+     micronota -h
+   #+END_SRC
+** To run the default annotation pipeline:
+   #+BEGIN_SRC sh
+     micronota annotate -i <input.fna> -o <output-dir> --out-fmt genbank --kingdom bacteria
+   #+END_SRC
+** Customize the annotaton:
+   You can set up what annotation to run with what parameters by providing a config file when running annotation:
+   #+BEGIN_SRC sh
+     micronota annotate -i <input.fna> -o <output-dir> --out-fmt genbank --kingdom bacteria --config <your-config>
+   #+END_SRC
 
-  To check the micronota setup, you can run:
-  #+BEGIN_SRC
-    micronota info
-  #+END_SRC
+   You can modify the [[https://github.com/biocore/micronota/blob/master/micronota/bacteria.yaml][default config file]] to create your own config file.
 
-  It will print out the system info, databases available, external tools, and other configuration info.
+* Sequence Features to Annotate
 
-* Config Files
+    | Features                                 | Supported | Tools                                            |
+    |------------------------------------------+-----------+--------------------------------------------------|
+    | coding gene                              | yes       | Prodigal                                         |
+    | tRNA                                     | yes       | Aragorn                                          |
+    | ncRNA                                    | yes       | Infernal + Rfam                                  |
+    | CRISPR                                   | yes       | MinCED                                           |
+    | rho-independent transcription terminator | yes       | transtermhp                                      |
+    | tandem repeat                            | yes       | tandem repeat finder (trf)                       |
+    | ribosomal binding sites                  | ongoing   | RBSFinder                                        |
+    | prophage                                 | ongoing   | PHAST                                            |
+    | replication origin                       | todo      | Ori-Finder 1 (bacteria) & Ori-Finder 2 (archaea) |
+    | microsatellites                          | todo      | nhmmer?                                          |
+    | signal peptide                           | ongoing   | SignalP                                          |
+    | transmembrane proteins                   | ongoing   | TMHMM                                            |
 
-  There are 3 types of config files user can set for workflow, logging, and parameters, respectively. All of the 3 config files can be specified on the command line (=--cfg=, =--log=, and =--param=) to override the default settings. Besides, you can also put the frequently used settings into global config files. The global config files should be put in the config directory of micronota. On linux it is usually =~/.config/micronota=; on Mac, it is usually =~/Library/Application Support/micronota=. You can also find the directory by running the following command
-  #+BEGIN_SRC python
-    python -c "import click; print(click.get_app_dir('micronota'))"
-  #+END_SRC
+* Contributing
 
-  If the directory does not exist, just simply create it with =mkdir= command.
+  If you're interested in getting involved in micronota development, see [[https://github.com/biocore/micronota/blob/master/CONTRIBUTING.md][CONTRIBUTING.md]].
 
-  It is always good to confirm your settings by printing out the setup:
-  #+BEGIN_EXAMPLE
-    micronota info
-    # OR if you provide it on command line:
-    micronota --cfg misc.cfg --param param.cfg info
-  #+END_EXAMPLE
-
-** workflow config
-   This is how [[https://github.com/biocore/micronota/blob/master/micronota/support_files/misc.cfg][default workflow config]] looks like. You can copy and modify that to create your own config file either put in the config dir (with file name of =misc.cfg=) or provided in command with =--cfg=. micronota will only read one workflow config file, which is the first one it finds in the order of command line > global > default.
-
-   Here is an example modified that you can use on command line or global config dir:
-   #+BEGIN_EXAMPLE
-    [general]
-    # use another dir as database dir
-    db_dir = better/db
-
-    [feature]
-    # run prodigal first
-    prodigal = 1
-    # don't run infernal
-    infernal = 0
-
-    # next to annotate CDS
-    [cds]
-    # run diamond tegother with uniref50
-    diamond = uniref50
-   #+END_EXAMPLE
-
-   The format of the config file is widely used in different OS platforms and described [[https://docs.python.org/3/library/configparser.html#supported-ini-file-structure][here]]. =0= / =1=, =no= / =yes= , =false= / =true=, =on= / =off= can all be used to turn off or on each tool. If the tool need a database file to run with, specify the database instead of the indicator.
-
-** Logging config
-   This is how [[https://github.com/biocore/micronota/blob/master/micronota/support_files/log.cfg][default logging config]] looks like. It is used to config logging utilitiy to print out useful info. You can change logging config similarly as you do for workflow config. The global file should be named as =log.cfg= in the config dir if you plan to define global logging config.
-
-   For example, if you want to reduce the verbosity of logging, you can change level to =ERROR= in your global logging config file:
-   #+BEGIN_EXAMPLE
-     [loggers]
-     keys=root
-
-     [handlers]
-     keys=consoleHandler
-
-     [formatters]
-     keys=simpleFormatter
-
-     [logger_root]
-     level=ERROR
-     handlers=consoleHandler
-
-     [handler_consoleHandler]
-     class=StreamHandler
-     formatter=simpleFormatter
-     args=(sys.stdout,)
-
-     [formatter_simpleFormatter]
-     format=%(asctime)s %(name)s %(levelname)s %(message)s
-     datefmt=%Y-%m-%d %H:%M:%S
-   #+END_EXAMPLE
-** Parameter config
-   The parameter config is used to tune the parameters of each external tools. This is how the [[https://github.com/biocore/micronota/blob/master/micronota/support_files/param.cfg][default parameter config]] looks like. You can specify the parameter for each individual tools. For example, if you want to run Prodigal with genetic translation table 1, instead of the default translation table, you can create a file param.cfg:
-  #+BEGIN_EXAMPLE
-    [prodigal]
-    # set translation table to 1
-    -t = 1
-  #+END_EXAMPLE
-
-  Different from the other 2 config files, all the param config files will be read by micronota in the order of default, global and command line param config, with the following one overriding its previous.
-
-
-* Sequence Features to Identify
-
-    | Features                | Supported | Tools                                            |
-    |-------------------------+-----------+--------------------------------------------------|
-    | coding gene             | yes       | Prodigal                                         |
-    | tRNA                    | ongoing   | Aragorn                                          |
-    | ncRNA                   | yes       | Infernal                                         |
-    | CRISPR                  | ongoing   | MinCED                                           |
-    | ribosomal binding sites | ongoing   | RBSFinder                                        |
-    | prophage                | ongoing   | PHAST                                            |
-    | replication origin      | todo      | Ori-Finder 1 (bacteria) & Ori-Finder 2 (archaea) |
-    | microsatellites         | todo      | nhmmer?                                          |
-    | signal peptide          | ongoing   | SignalP                                          |
-    | transmembrane proteins  | ongoing   | TMHMM                                            |
-
-* Databases Supported
-
-    | Databases | Supported |
-    |-----------+-----------|
-    | TIGRFAM   | yes       |
-    | UniRef    | yes       |
-    | Rfam      | ongoing   |
-
-* Getting help
-
-To get help with micronota, you should use the [[https://biostars.org/t/micronota][micronota tag]] on Biostars. The developers regularly monitor the =micronota= tag on Biostars.
-
-
-* Developing
-
-If you're interested in getting involved in micronota development, see [[https://github.com/biocore/micronota/blob/master/CONTRIBUTING.md][CONTRIBUTING.md]].
-
-See the list of [[https://github.com/biocore/micronota/graphs/contributors][micronota's contributors]].
-
+  See the list of [[https://github.com/biocore/micronota/graphs/contributors][micronota's contributors]].
 
 * Licensing
 
-micronota is available under the new BSD license. See [[https://github.com/biocore/micronota/blob/master/COPYING.txt][COPYING.txt]] for micronota's license, and [[https://github.com/biocore/micronota/tree/master/licenses][the licenses directory]] for the licenses of third-party software and databasese that are (either partially or entirely) distributed with micronota.
+  micronota is available under the new BSD license. See [[https://github.com/biocore/micronota/blob/master/COPYING.txt][COPYING.txt]] for micronota's license, and [[https://github.com/biocore/micronota/tree/master/licenses][the licenses directory]] for the licenses of third-party software and databasese that are (either partially or entirely) distributed with micronota.
