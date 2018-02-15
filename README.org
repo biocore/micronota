@@ -35,12 +35,14 @@ As Python 3 matures and majority python packages support Python 3, the scientifi
   #+END_SRC
 
 * Prepare Databases
-  You need to download database files:
-    | Databases | Supported | Download URL |
-    |-----------+-----------+--------------|
-    | UniRef    | yes       |              |
-    | Rfam      | yes       |              |
-    | ResFam    | ongoing   |              |
+  You can download database files from XXX(coming up)
+
+  Or for ADVANCED users, you can download and process database files:
+  | Databases | Supported | URL                                                |
+  |-----------+-----------+----------------------------------------------------|
+  | UniRef    | yes       | http://www.uniprot.org/downloads                   |
+  | Rfam      | yes       | http://rfam.readthedocs.io/en/latest/ftp-help.html |
+  | ResFam    | ongoing   | http://www.dantaslab.org/resfams/                  |
 
 * Usage
 ** You can see the command supported by micronota with:
@@ -61,20 +63,26 @@ As Python 3 matures and majority python packages support Python 3, the scientifi
 
 * Sequence Features to Annotate
 
-    | Features                                 | Supported | Tools                                            |
-    |------------------------------------------+-----------+--------------------------------------------------|
-    | coding gene                              | yes       | Prodigal                                         |
-    | tRNA                                     | yes       | Aragorn                                          |
-    | ncRNA                                    | yes       | Infernal + Rfam                                  |
-    | CRISPR                                   | yes       | MinCED                                           |
-    | rho-independent transcription terminator | yes       | transtermhp                                      |
-    | tandem repeat                            | yes       | tandem repeat finder (trf)                       |
-    | ribosomal binding sites                  | ongoing   | RBSFinder                                        |
-    | prophage                                 | ongoing   | PHAST                                            |
-    | replication origin                       | todo      | Ori-Finder 1 (bacteria) & Ori-Finder 2 (archaea) |
-    | microsatellites                          | todo      | nhmmer?                                          |
-    | signal peptide                           | ongoing   | SignalP                                          |
-    | transmembrane proteins                   | ongoing   | TMHMM                                            |
+  | Features                                 | Supported | Tools                                            |
+  |------------------------------------------+-----------+--------------------------------------------------|
+  | coding gene                              | yes       | Prodigal                                         |
+  | tRNA                                     | yes       | Aragorn                                          |
+  | ncRNA                                    | yes       | Infernal + Rfam                                  |
+  | CRISPR                                   | yes       | MinCED                                           |
+  | rho-independent transcription terminator | yes       | transtermhp                                      |
+  | tandem repeat                            | yes       | tandem repeat finder (trf)                       |
+  | ribosomal binding sites                  | ongoing   | RBSFinder                                        |
+  | prophage                                 | ongoing   | PHAST                                            |
+  | replication origin                       | todo      | Ori-Finder 1 (bacteria) & Ori-Finder 2 (archaea) |
+  | microsatellites                          | todo      | nhmmer?                                          |
+
+** protein related
+   | Protein Annotation          | Supported | Links/DB/Tools                    |
+   |-----------------------------+-----------+-----------------------------------|
+   | carbohydrate active enzymes |           | [[https://github.com/biocore/micronota/issues/13][#13]]                               |
+   | transmembrane proteins      | ongoing   | TMHMM/TransportDB [[https://github.com/biocore/micronota/issues/76][#76]]             |
+   | signal peptide              | ongoing   | SignalP [[https://github.com/biocore/micronota/issues/18][#18]]                       |
+   | ResFam                      | ongoing   | http://www.dantaslab.org/resfams/ |
 
 * Contributing
 
