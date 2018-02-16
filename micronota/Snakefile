@@ -4,7 +4,7 @@ from collections import defaultdict
 # default is empty
 default = defaultdict(str)
 # the file path of the input sequence to annotate
-seq = config['seq']
+seq = config.get('seq', 'input.fna')
 
 
 # =============================================================================
@@ -125,7 +125,7 @@ rule aragorn:
         'aragorn {params} -o {output[0]} {input.fna} &> {log}'
 
 
-_cmscan = config.get('cmscan', defaultdict(str))
+_cmscan = config.get('cmscan', default)
 rule cmscan:
     '''Predict ncRNA with cmscan and Rfam.'''
     input:

@@ -4,13 +4,24 @@
 [[https://travis-ci.org/biocore/micronota][https://travis-ci.org/biocore/micronota.svg?branch=master]]
 [[https://gitter.im/biocore/micronota?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge][https://badges.gitter.im/Join%20Chat.svg]]
 
-micronota is an open-source, BSD-licensed package to annotate microbial genomes and metagenomes.
+micronota is an open-source, BSD-licensed package to annotate
+microbial genomes and metagenomes.
 
-As Python 3 matures and majority python packages support Python 3, the scientific Python community is in favor of dropping Python 2 compatibility. Thus, micronota will only support Python 3. This will allow micronota to have few dependency and avoid maintenance of Python 2 legacy code.
+As Python 3 matures and majority python packages support Python 3, the
+scientific Python community is in favor of dropping Python 2
+compatibility. Thus, micronota will only support Python 3. This will
+allow micronota to have few dependency and avoid maintenance of Python
+2 legacy code.
 
 * Introduction
 
-  micronota can annotate multiple features including coding genes, prophage, CRISPR, tRNA, rRNA and other ncRNAs. It has a customizable framework to integrate additional tools and databases. Generally, the annotation can be classified into 2 categories: structural annotation and functional annotation. Structural annotation is the identification of the genetic elements on the sequence and functional annotation is to assign functions to those elements.
+  micronota can annotate multiple features including coding genes,
+  prophage, CRISPR, tRNA, rRNA and other ncRNAs. It has a customizable
+  framework to integrate additional tools and databases. Generally,
+  the annotation can be classified into 2 categories: structural
+  annotation and functional annotation. Structural annotation is the
+  identification of the genetic elements on the sequence and
+  functional annotation is to assign functions to those elements.
 
 * Install
 ** install via conda
@@ -53,7 +64,7 @@ As Python 3 matures and majority python packages support Python 3, the scientifi
    #+BEGIN_SRC sh
      micronota annotate -i <input.fna> -o <output-dir> --out-fmt genbank --kingdom bacteria
    #+END_SRC
-** Customize the annotaton:
+** Customize the annotation:
    You can set up what annotation to run with what parameters by providing a config file when running annotation:
    #+BEGIN_SRC sh
      micronota annotate -i <input.fna> -o <output-dir> --out-fmt genbank --kingdom bacteria --config <your-config>
@@ -61,27 +72,27 @@ As Python 3 matures and majority python packages support Python 3, the scientifi
 
    You can modify the [[https://github.com/biocore/micronota/blob/master/micronota/bacteria.yaml][default config file]] to create your own config file.
 
-* Sequence Features to Annotate
+* Genetic Features to Annotate
 
-  | Features                                 | Supported | Tools                                            |
-  |------------------------------------------+-----------+--------------------------------------------------|
-  | coding gene                              | yes       | Prodigal                                         |
-  | tRNA                                     | yes       | Aragorn                                          |
-  | ncRNA                                    | yes       | Infernal + Rfam                                  |
-  | CRISPR                                   | yes       | MinCED                                           |
-  | rho-independent transcription terminator | yes       | transtermhp                                      |
-  | tandem repeat                            | yes       | tandem repeat finder (trf)                       |
-  | ribosomal binding sites                  | ongoing   | RBSFinder                                        |
-  | prophage                                 | ongoing   | PHAST                                            |
-  | replication origin                       | todo      | Ori-Finder 1 (bacteria) & Ori-Finder 2 (archaea) |
-  | microsatellites                          | todo      | nhmmer?                                          |
+  | Features                                 | Supported | Tools                                              |
+  |------------------------------------------+-----------+----------------------------------------------------|
+  | coding gene                              | yes       | Prodigal                                           |
+  | tRNA                                     | yes       | Aragorn                                            |
+  | ncRNA                                    | yes       | Infernal + Rfam                                    |
+  | CRISPR                                   | yes       | MinCED                                             |
+  | rho-independent transcription terminator | yes       | transtermhp                                        |
+  | tandem repeat                            | yes       | tandem repeat finder (trf)                         |
+  | ribosomal binding sites                  | ongoing   | RBSFinder                                          |
+  | prophage                                 | ongoing   | PHAST                                              |
+  | replication origin                       | todo      | Ori-Finder 1 (bacteria) & Ori-Finder 2 (archaea) ? |
+  | microsatellites                          | todo      | nhmmer?                                            |
 
 ** protein related
    | Protein Annotation          | Supported | Links/DB/Tools                    |
    |-----------------------------+-----------+-----------------------------------|
-   | carbohydrate active enzymes | todo      | [[https://github.com/biocore/micronota/issues/13][#13]]                               |
-   | transmembrane proteins      | ongoing   | TMHMM/TransportDB [[https://github.com/biocore/micronota/issues/76][#76]]             |
-   | signal peptide              | ongoing   | SignalP [[https://github.com/biocore/micronota/issues/18][#18]]                       |
+   | carbohydrate active enzymes | todo      | ([[https://github.com/biocore/micronota/issues/13][#13]])                             |
+   | transmembrane proteins      | ongoing   | TMHMM/TransportDB ([[https://github.com/biocore/micronota/issues/76][#76]])           |
+   | signal peptide              | ongoing   | SignalP ([[https://github.com/biocore/micronota/issues/18][#18]])                     |
    | ResFam                      | ongoing   | http://www.dantaslab.org/resfams/ |
 
 * Contributing
@@ -92,4 +103,22 @@ As Python 3 matures and majority python packages support Python 3, the scientifi
 
 * Licensing
 
-  micronota is available under the new BSD license. See [[https://github.com/biocore/micronota/blob/master/COPYING.txt][COPYING.txt]] for micronota's license, and [[https://github.com/biocore/micronota/tree/master/licenses][the licenses directory]] for the licenses of third-party software and databasese that are (either partially or entirely) distributed with micronota.
+  micronota is available under the new BSD license. See [[https://github.com/biocore/micronota/blob/master/COPYING.txt][COPYING.txt]]
+  for micronota's license, and [[https://github.com/biocore/micronota/tree/master/licenses][the licenses directory]] for the licenses
+  of third-party software and databasese that are (either partially or
+  entirely) distributed with micronota.
+
+* Reference to cite if you use any tool
+  * Hyatt, D., Chen, G.-L., LoCascio, P.F., Land, M.L., Larimer, F.W., and
+    Hauser, L.J. (2010). Prodigal: prokaryotic gene recognition and
+    translation initiation site identification. BMC Bioinformatics 11, 119.
+
+  * C. Kingsford, K. Ayanbule and S.L. Salzberg. Rapid, accurate,
+    computational discovery of Rho-independent transcription terminators
+    illuminates their relationship to DNA uptake. Genome Biology 8:R22
+    (2007).
+
+  * Laslett D and Canback B (2004) ARAGORN, a program to detect tRNA
+    genes and tmRNA genes in nucleotide sequences. Nucl. Acids Res.,
+    32, 11–16.
+
