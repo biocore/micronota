@@ -79,7 +79,7 @@ As Python 3 matures and majority python packages support Python 3, the scientifi
 ** protein related
    | Protein Annotation          | Supported | Links/DB/Tools                    |
    |-----------------------------+-----------+-----------------------------------|
-   | carbohydrate active enzymes |           | [[https://github.com/biocore/micronota/issues/13][#13]]                               |
+   | carbohydrate active enzymes | todo      | [[https://github.com/biocore/micronota/issues/13][#13]]                               |
    | transmembrane proteins      | ongoing   | TMHMM/TransportDB [[https://github.com/biocore/micronota/issues/76][#76]]             |
    | signal peptide              | ongoing   | SignalP [[https://github.com/biocore/micronota/issues/18][#18]]                       |
    | ResFam                      | ongoing   | http://www.dantaslab.org/resfams/ |
