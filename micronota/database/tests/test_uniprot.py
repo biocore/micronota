@@ -25,12 +25,12 @@ class UniProtTests(_DBTest):
         self.uniprot_all = get_data_path('uniprot.sqlite')
 
     def test_parse_xml(self):
-        tag = '{http://uniprot.org/uniprot}entry'
+        tag = ['{http://uniprot.org/uniprot}entry']
         for xml, n in zip(self.uniprot_xml, self.uniprot_n):
             with gzip.open(xml) as fh:
                 entries = _parse_xml(fh, tag=tag)
                 for i, s in enumerate(entries, 1):
-                    self.assertEqual(s.tag, tag)
+                    self.assertEqual([s.tag], tag)
                 # there are 6 entries in the each xml file
                 self.assertEqual(i, n)
 
