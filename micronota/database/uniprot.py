@@ -35,7 +35,7 @@ def add_metadata(xml_fh, db_fp):
     # this is the namespace for uniprot xml files.
     ns_map = {'xmlns': 'http://uniprot.org/uniprot',
               'xsi': 'http://WWW.w3.org/2001/XMLSchema-instance'}
-    entry_tag = '{{{ns}}}{tag}'.format(ns=ns_map['xmlns'], tag='entry')
+    entry_tag_path = ['{{{ns}}}{path}'.format(ns=ns_map['xmlns'], path=tag) for tag in 'entry'.split('/')]
     paths = {'EC_number': './/xmlns:ecNumber',  # E.C. number
              'GO': './xmlns:dbReference[@type="GO"]',  # GO
              'KEGG': './xmlns:dbReference[@type="KEGG"]',  # KEGG,
@@ -60,7 +60,7 @@ def add_metadata(xml_fh, db_fp):
             c.execute(ct)
             c.execute(clt)
             inserts[other_table] = [it, ilt]
-        for n, entry in enumerate(_parse_xml(xml_fh, entry_tag), 1):
+        for n, entry in enumerate(_parse_xml(xml_fh, entry_tag_path), 1):
             try:
                 # get the primary accession number
                 accn = entry.find('./xmlns:accession', ns_map).text
@@ -129,8 +129,21 @@ def _parse_xml(xml_fh, tag):
     '''
     # it is very important to set the events to 'end'; otherwise,
     # elem would be an incomplete record.
-    for event, elem in ET.iterparse(xml_fh, events=['end']):
-        if elem.tag == tag:
-            yield elem
-            # this is necessary for garbage collection
-            elem.clear()
+    context = ET.iterparse(xml_fh, events=('start', 'end'))
+    # Skip the root element
+    next(context)
+    tag_stack = []
+    elem_stack = []
+    for event, elem in context:
+        if event == 'start':
+            tag_stack.append(elem.tag)
+            elem_stack.append(elem)
+        elif event == 'end':
+            if tag_stack == tag:
+                yield elem
+            try:
+                tag_stack.pop()
+                elem_stack.pop()
+            # for the rest 'end' events, the stacks are empty
+            except IndexError:
+                pass
