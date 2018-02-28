@@ -1,0 +1,6 @@
+##gff-version 3
+gi|00000001|	minced:0.2.0	CRISPR	1	100	4	.	.	ID=CRISPR10;Name=TestCrispr
+gi|00000001|	minced:0.2.0	CRISPR	150	200	5	.	.	ID=CRISPR11;Name=TestCrispr
+gi|00000001|	minced:0.2.0	CRISPR	210	300	3	.	.	ID=CRISPR12;Name=TestCrispr
+gi|15282445|ref|NC_000918.1|	minced:0.2.0	CRISPR	156460	156767	5	.	.	ID=CRISPR1
+gi|15282445|ref|NC_000918.1|	minced:0.2.0	CRISPR	244561	244791	4	.	.	ID=CRISPR2
